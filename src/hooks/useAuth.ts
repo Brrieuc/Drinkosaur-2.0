@@ -1,8 +1,8 @@
 /// <reference path="../firebase.d.ts" />
 
 import { useState, useEffect } from 'react';
-import { auth, googleProvider, signInWithPopup, signInAnonymously, signOut } from '../firebase';
-import { User, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
+import { auth, googleProvider, signInWithPopup, signInWithRedirect, signInAnonymously, signOut } from '../firebase';
+import { User, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence, getRedirectResult } from 'firebase/auth';
 
 export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -10,14 +10,24 @@ export const useAuth = () => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        // Default to local persistence unless changed
         const init = async () => {
             try {
                 // If the user previously chose NOT to stay connected, use session
                 const stayConnected = window.localStorage.getItem('drinkosaur_stay_connected') !== 'false';
                 await setPersistence(auth, stayConnected ? browserLocalPersistence : browserSessionPersistence);
-            } catch (e) {
-                console.error("Persistence Error:", e);
+
+                // Handle Redirect Result (for Mobile Flow)
+                const result = await getRedirectResult(auth);
+                if (result?.user) {
+                    console.log("Redirect Sign-In Success:", result.user.email);
+                    setUser(result.user);
+                }
+            } catch (e: any) {
+                console.error("Auth Init Error:", e);
+                // Don't show technical redirect errors to user unless critical
+                if (e.code !== 'auth/popup-closed-by-user') {
+                    setError(e.message);
+                }
             }
         };
 
@@ -35,7 +45,17 @@ export const useAuth = () => {
     const signIn = async () => {
         setError(null);
         try {
-            console.log("Attempting Popup Sign-In...");
+            // Mobile Optimization: Use Redirect on iOS/Android to avoid popup blocking & improve UX
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+            if (isMobile) {
+                console.log("Mobile device detected: Using Redirect Sign-In");
+                await signInWithRedirect(auth, googleProvider);
+                // Flow stops here, page will redirect
+                return;
+            }
+
+            console.log("Desktop detected: Attempting Popup Sign-In...");
             const result = await signInWithPopup(auth, googleProvider);
             if (result?.user) {
                 console.log("Popup Sign-In Success:", result.user.email);
@@ -45,7 +65,8 @@ export const useAuth = () => {
             console.error("Sign-In Error:", err.code, err.message);
 
             if (err.code === 'auth/popup-blocked') {
-                setError("La fenêtre a été bloquée. Cliquez sur 'Autoriser' en haut de votre écran Safari.");
+                // Determine if we should suggest redirect
+                setError("La fenêtre a été bloquée. Essayez de désactiver le bloqueur de pop-up ou utilisez le mode 'Invité'.");
             } else if (err.code === 'auth/popup-closed-by-user') {
                 setError("Connexion annulée.");
             } else {
