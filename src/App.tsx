@@ -156,12 +156,15 @@ const App: React.FC = () => {
           <Social
             friends={friends}
             requests={incomingRequests}
+            myProfile={user as UserProfile}
+            myBac={bacStatus}
             onAddFriend={addFriendByUsername}
             onRespondRequest={respondToRequest}
             onRemoveFriend={removeFriend}
             loading={socialLoading}
             language={user.language}
           />
+
         )}
 
         {view === AppView.DASHBOARD && (
