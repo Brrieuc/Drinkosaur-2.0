@@ -35,15 +35,25 @@ export const useUser = () => {
                     const docSnap = await getDoc(docRef);
 
                     if (docSnap.exists()) {
-                        // Merging remote data with local preferences if needed, or fully overwriting
-                        // For now, let's say remote is source of truth if it exists
                         const remoteData = docSnap.data() as UserProfile;
-                        setUserProfile({ ...defaultProfile, ...remoteData });
-                        // Update local storage to match
-                        window.localStorage.setItem('drinkosaur_user', JSON.stringify({ ...defaultProfile, ...remoteData }));
+                        // Always keep displayName and photoURL fresh from Google if available
+                        const updatedProfile = {
+                            ...defaultProfile,
+                            ...remoteData,
+                            displayName: authUser.displayName || remoteData.displayName,
+                            photoURL: authUser.photoURL || remoteData.photoURL
+                        };
+                        setUserProfile(updatedProfile);
+                        window.localStorage.setItem('drinkosaur_user', JSON.stringify(updatedProfile));
                     } else {
-                        // If no remote data, upload current local profile to init it
-                        await setDoc(docRef, userProfile);
+                        // Init new user with Google info
+                        const newProfile = {
+                            ...userProfile,
+                            displayName: authUser.displayName || '',
+                            photoURL: authUser.photoURL || ''
+                        };
+                        setUserProfile(newProfile);
+                        await setDoc(docRef, { ...newProfile, email: authUser.email?.toLowerCase() });
                     }
                 } catch (e) {
                     console.error("Error fetching user profile:", e);
@@ -65,7 +75,10 @@ export const useUser = () => {
         // 3. Update Firestore if auth
         if (authUser) {
             try {
-                await setDoc(doc(db, "users", authUser.uid), newProfile);
+                await setDoc(doc(db, "users", authUser.uid), {
+                    ...newProfile,
+                    email: authUser.email?.toLowerCase()
+                });
             } catch (e) {
                 console.error("Error saving profile to firestore:", e);
             }

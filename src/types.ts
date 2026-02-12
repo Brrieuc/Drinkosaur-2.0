@@ -16,7 +16,19 @@ export interface UserProfile {
   gender: 'male' | 'female';
   isSetup: boolean;
   language: 'en' | 'fr';
-  drinkingSpeed: 'slow' | 'average' | 'fast'; // New profile setting
+  drinkingSpeed: 'slow' | 'average' | 'fast';
+  displayName?: string;
+  photoURL?: string;
+}
+
+export interface FriendStatus {
+  uid: string;
+  displayName: string;
+  photoURL?: string;
+  currentBac: number;
+  statusMessage: string;
+  color: string;
+  lastUpdate: number;
 }
 
 export interface BacStatus {
@@ -32,5 +44,7 @@ export enum AppView {
   DASHBOARD = 'DASHBOARD',
   ADD_DRINK = 'ADD_DRINK',
   SETTINGS = 'SETTINGS',
-  HISTORY = 'HISTORY'
+  HISTORY = 'HISTORY',
+  SOCIAL = 'SOCIAL'
 }
+
