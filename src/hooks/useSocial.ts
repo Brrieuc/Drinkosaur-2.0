@@ -159,12 +159,21 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
         const requestData = reqSnap.data() as FriendRequest;
 
         if (accept) {
-            // Add to both friends lists
-            const myRef = doc(db, "users", authUser.uid);
-            const otherRef = doc(db, "users", requestData.from);
+            try {
+                const myRef = doc(db, "users", authUser.uid);
+                const otherRef = doc(db, "users", requestData.from);
 
-            await updateDoc(myRef, { friends: arrayUnion(requestData.from) });
-            await updateDoc(otherRef, { friends: arrayUnion(authUser.uid) });
+                // Add to my friends
+                await updateDoc(myRef, { friends: arrayUnion(requestData.from) });
+
+                // Add to their friends (with fallback if doc missing)
+                await updateDoc(otherRef, { friends: arrayUnion(authUser.uid) })
+                    .catch(async () => {
+                        await setDoc(otherRef, { friends: arrayUnion(authUser.uid) }, { merge: true });
+                    });
+            } catch (err) {
+                console.error("Error accepting friend request:", err);
+            }
         }
 
         // Delete the request

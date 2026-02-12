@@ -25,6 +25,8 @@ export interface UserProfile {
   username?: string;
   stayConnected?: boolean;
   hasSeenTour?: boolean;
+  friends?: string[];
+  groups?: string[];
 }
 
 

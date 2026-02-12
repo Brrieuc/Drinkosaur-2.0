@@ -31,33 +31,45 @@ export const useUser = () => {
     useEffect(() => {
         const fetchUserProfile = async () => {
             if (authUser) {
+                console.log("Checking Firestore profile for:", authUser.uid);
                 try {
                     const docRef = doc(db, "users", authUser.uid);
                     const docSnap = await getDoc(docRef);
 
                     if (docSnap.exists()) {
-                        const remoteData = docSnap.data() as UserProfile;
-                        const updatedProfile = {
+                        const remoteData = docSnap.data();
+                        const updatedProfile: UserProfile = {
                             ...defaultProfile,
                             ...remoteData,
                             uid: authUser.uid,
                             displayName: authUser.displayName || remoteData.displayName,
                             photoURL: authUser.photoURL || remoteData.photoURL
                         };
+                        console.log("Profile found & synced:", updatedProfile.username);
                         setUserProfile(updatedProfile);
                         window.localStorage.setItem('drinkosaur_user', JSON.stringify(updatedProfile));
                     } else {
-                        const newProfile = {
+                        console.log("No profile found, creating initial document...");
+                        const newProfile: UserProfile = {
                             ...userProfile,
                             uid: authUser.uid,
+                            isSetup: false,
                             displayName: authUser.displayName || '',
                             photoURL: authUser.photoURL || ''
                         };
                         setUserProfile(newProfile);
-                        await setDoc(docRef, { ...newProfile, email: authUser.email?.toLowerCase() });
+                        // CRITICAL: email is important for admin search but not in the Profile interface
+                        await setDoc(docRef, {
+                            ...newProfile,
+                            email: authUser.email?.toLowerCase(),
+                            createdAt: Date.now(),
+                            friends: [],
+                            groups: []
+                        }, { merge: true });
+                        console.log("Initial profile created successfully");
                     }
                 } catch (e) {
-                    console.error("Error fetching user profile:", e);
+                    console.error("CRITICAL error syncing with Firestore:", e);
                 }
             }
         };
