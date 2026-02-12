@@ -96,6 +96,14 @@ export const useGroups = () => {
         // Or keep it. Usually it's better to keep or check if members.length === 0.
     };
 
+    const inviteMemberToGroup = async (groupId: string, friendIds: string[]) => {
+        if (!authUser) return;
+        const groupRef = doc(db, "groups", groupId);
+        await updateDoc(groupRef, {
+            pendingInviteIds: arrayUnion(...friendIds)
+        });
+    };
+
     const fetchGroupMembersStatus = async (groupId: string): Promise<FriendStatus[]> => {
         const groupSnap = await getDoc(doc(db, "groups", groupId));
         if (!groupSnap.exists()) return [];
@@ -124,6 +132,7 @@ export const useGroups = () => {
         acceptGroupInvite,
         declineGroupInvite,
         leaveGroup,
+        inviteMemberToGroup,
         fetchGroupMembersStatus
     };
 };

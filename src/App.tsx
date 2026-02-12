@@ -46,6 +46,7 @@ const App: React.FC = () => {
     friends,
     incomingRequests,
     addFriendByUsername,
+    addFriendByUid,
     respondToRequest,
     removeFriend,
     refreshSocial,
@@ -62,7 +63,8 @@ const App: React.FC = () => {
     acceptGroupInvite,
     declineGroupInvite,
     leaveGroup,
-    fetchGroupMembersStatus
+    fetchGroupMembersStatus,
+    inviteMemberToGroup
   } = useGroups();
 
   const handleSelectFriend = async (uid: string) => {
@@ -386,6 +388,7 @@ const App: React.FC = () => {
               myUid={authUser?.uid || ''}
               isAnonymous={(authUser as any)?.isAnonymous}
               onAddFriend={addFriendByUsername}
+              onAddFriendByUid={addFriendByUid}
               onRespondRequest={respondToRequest}
               onRemoveFriend={removeFriend}
               onRefresh={refreshSocial}
@@ -401,6 +404,7 @@ const App: React.FC = () => {
               onDeclineGroupInvite={declineGroupInvite}
               onLeaveGroup={leaveGroup}
               onFetchGroupStatus={fetchGroupMembersStatus}
+              onInviteToGroup={inviteMemberToGroup}
             />
             {selectedFriend && (
               <FriendProfileModal

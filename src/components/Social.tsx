@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { FriendStatus, UserProfile, BacStatus, FriendGroup } from '../types';
 import { FriendRequest } from '../hooks/useSocial';
 import {
-    UserPlus, Loader2, AlertTriangle, Trash2, Check, X,
+    UserPlus, Loader2, AlertTriangle, Trash2, Check, X, LogOut,
     Bell, Trophy, Medal, RefreshCw, Sparkles, Share2, Users, Plus, ChevronLeft
 } from 'lucide-react';
 
@@ -14,6 +14,7 @@ interface SocialProps {
     myUid: string;
     isAnonymous?: boolean;
     onAddFriend: (username: string) => Promise<any>;
+    onAddFriendByUid: (uid: string) => Promise<any>;
     onRespondRequest: (requestId: string, accept: boolean) => Promise<void>;
     onRemoveFriend: (uid: string) => Promise<void>;
     onRefresh: () => Promise<void>;
@@ -31,6 +32,7 @@ interface SocialProps {
     onDeclineGroupInvite: (groupId: string) => Promise<void>;
     onLeaveGroup: (groupId: string) => Promise<void>;
     onFetchGroupStatus: (groupId: string) => Promise<FriendStatus[]>;
+    onInviteToGroup: (groupId: string, friendIds: string[]) => Promise<void>;
 }
 
 enum SocialTab {
@@ -47,6 +49,7 @@ export const Social: React.FC<SocialProps> = (props) => {
         myUid,
         isAnonymous,
         onAddFriend,
+        onAddFriendByUid,
         onRespondRequest,
         onRemoveFriend,
         onRefresh,
@@ -61,7 +64,8 @@ export const Social: React.FC<SocialProps> = (props) => {
         onAcceptGroupInvite,
         onDeclineGroupInvite,
         onLeaveGroup,
-        onFetchGroupStatus
+        onFetchGroupStatus,
+        onInviteToGroup
     } = props;
 
     const [searchUsername, setSearchUsername] = useState('');
@@ -86,6 +90,9 @@ export const Social: React.FC<SocialProps> = (props) => {
     const [isCreatingGroup, setIsCreatingGroup] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
     const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
+
+    // Invite to Group State
+    const [isInvitingToGroup, setIsInvitingToGroup] = useState(false);
 
     const t = useMemo(() => ({
         title: language === 'fr' ? 'Social' : 'Social',
@@ -118,7 +125,10 @@ export const Social: React.FC<SocialProps> = (props) => {
         selectFriends: language === 'fr' ? 'Inviter des amis' : 'Invite Friends',
         cancel: language === 'fr' ? 'Annuler' : 'Cancel',
         create: language === 'fr' ? 'Créer' : 'Create',
-        leaveGroup: language === 'fr' ? 'Quitter' : 'Leave group'
+        leaveGroup: language === 'fr' ? 'Quitter' : 'Leave group',
+        addMembers: language === 'fr' ? 'Ajouter des membres' : 'Add Members',
+        confirmAddFriend: language === 'fr' ? 'Ajouter cet utilisateur en ami ?' : 'Add this user as friend?',
+        invite: language === 'fr' ? 'Inviter' : 'Invite'
     }), [language]);
 
     if (isAnonymous) {
@@ -446,7 +456,10 @@ export const Social: React.FC<SocialProps> = (props) => {
                                 </button>
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-3xl font-black text-white">{groups.find(g => g.id === selectedGroupId)?.name}</h3>
-                                    <button onClick={() => { onLeaveGroup(selectedGroupId); setSelectedGroupId(null); }} className="text-[10px] font-black uppercase tracking-widest text-red-500/50 hover:text-red-500 transition-colors">{t.leaveGroup}</button>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => setIsInvitingToGroup(true)} className="p-2 bg-blue-600 rounded-xl text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20"><UserPlus size={16} /></button>
+                                        <button onClick={() => { onLeaveGroup(selectedGroupId); setSelectedGroupId(null); }} className="p-2 bg-white/5 rounded-xl text-red-400 hover:bg-red-500/20 transition-colors"><LogOut size={16} /></button>
+                                    </div>
                                 </div>
                                 {loadingGroup ? (
                                     <div className="flex justify-center py-20"><Loader2 className="animate-spin text-white/20" size={40} /></div>
@@ -455,8 +468,22 @@ export const Social: React.FC<SocialProps> = (props) => {
                                         {groupRanking.map((player, index) => {
                                             const isMe = player.uid === myUid;
                                             const rank = index + 1;
+                                            const isFriend = friends.some(f => f.uid === player.uid);
                                             return (
-                                                <div key={player.uid} onClick={() => !isMe && onSelectFriend(player.uid)} className={`glass-panel-3d p-4 rounded-3xl flex items-center gap-4 transition-all relative overflow-hidden ${isMe ? 'bg-blue-500/10 border-blue-500/30' : 'hover:bg-white/5 cursor-pointer'}`}>
+                                                <div
+                                                    key={player.uid}
+                                                    onClick={() => {
+                                                        if (isMe) return;
+                                                        if (isFriend) {
+                                                            onSelectFriend(player.uid);
+                                                        } else {
+                                                            if (window.confirm(t.confirmAddFriend)) {
+                                                                onAddFriendByUid(player.uid);
+                                                            }
+                                                        }
+                                                    }}
+                                                    className={`glass-panel-3d p-4 rounded-3xl flex items-center gap-4 transition-all relative overflow-hidden ${isMe ? 'bg-blue-500/10 border-blue-500/30' : 'hover:bg-white/5 cursor-pointer'}`}
+                                                >
                                                     <div className="w-8 flex justify-center items-center font-black text-lg italic text-white/20">{rank === 1 ? <Medal size={24} className="text-amber-400" /> : rank === 2 ? <Medal size={24} className="text-slate-300" /> : rank === 3 ? <Medal size={24} className="text-amber-700" /> : rank}</div>
                                                     <div className="relative">
                                                         <div className="absolute inset-0 rounded-full animate-pulse opacity-20" style={{ backgroundColor: player.color }} />
@@ -593,6 +620,59 @@ export const Social: React.FC<SocialProps> = (props) => {
                                     className="flex-[2] bg-white text-black py-5 rounded-3xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl disabled:opacity-20"
                                 >
                                     {t.create}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- INVITE TO GROUP MODAL --- */}
+            {isInvitingToGroup && selectedGroupId && (
+                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end animate-fade-in">
+                    <div className="w-full bg-[#0a0a0a] rounded-t-[40px] p-8 border-t border-white/10 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto no-scrollbar">
+                        <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-2xl font-black text-white">{t.addMembers}</h3>
+                            <button onClick={() => { setIsInvitingToGroup(false); setSelectedFriendIds([]); }} className="p-2 bg-white/5 rounded-full text-white/40"><X size={24} /></button>
+                        </div>
+                        <div className="space-y-6">
+                            <div className="space-y-4 text-left">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 block">{t.selectFriends}</label>
+                                <div className="space-y-2">
+                                    {friends.filter(f => !groupRanking.some(member => member.uid === f.uid)).length === 0 ? (
+                                        <p className="text-white/20 text-xs italic p-4 text-center">{t.empty}</p>
+                                    ) : (
+                                        friends
+                                            .filter(f => !groupRanking.some(member => member.uid === f.uid))
+                                            .map(friend => {
+                                                const isSelected = selectedFriendIds.includes(friend.uid);
+                                                return (
+                                                    <button
+                                                        key={friend.uid}
+                                                        onClick={() => setSelectedFriendIds(prev => isSelected ? prev.filter(id => id !== friend.uid) : [...prev, friend.uid])}
+                                                        className={`w-full p-4 rounded-2xl flex items-center gap-3 transition-all border ${isSelected ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                                                    >
+                                                        <img src={friend.photoURL || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-full border border-white/10 object-cover" />
+                                                        <span className="flex-1 text-left font-bold truncate text-white italic">@{friend.displayName}</span>
+                                                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isSelected ? 'bg-blue-500' : 'bg-white/10'}`}>{isSelected && <Check size={16} className="text-white" />}</div>
+                                                    </button>
+                                                );
+                                            })
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex gap-4 pt-4 pb-10">
+                                <button onClick={() => { setIsInvitingToGroup(false); setSelectedFriendIds([]); }} className="flex-1 py-5 rounded-3xl font-black text-white/40 uppercase tracking-widest active:scale-95 transition-all">{t.cancel}</button>
+                                <button
+                                    disabled={selectedFriendIds.length === 0}
+                                    onClick={async () => {
+                                        await onInviteToGroup(selectedGroupId, selectedFriendIds);
+                                        setIsInvitingToGroup(false);
+                                        setSelectedFriendIds([]);
+                                    }}
+                                    className="flex-[2] bg-white text-black py-5 rounded-3xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl disabled:opacity-20"
+                                >
+                                    {t.invite}
                                 </button>
                             </div>
                         </div>

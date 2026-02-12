@@ -130,9 +130,21 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
             throw new Error("Already friends");
         }
 
+        await sendFriendRequest(targetUid);
+    };
+
+    const addFriendByUid = async (targetUid: string) => {
+        if (!authUser) throw new Error("Not logged in");
+        if (targetUid === authUser.uid) throw new Error("You cannot add yourself");
+        if (friendIds.includes(targetUid)) throw new Error("Already friends");
+
+        await sendFriendRequest(targetUid);
+    }
+
+    const sendFriendRequest = async (targetUid: string) => {
         // Check if request already exists
         const reqsRef = collection(db, "friend_requests");
-        const reqQuery = query(reqsRef, where("from", "==", authUser.uid), where("to", "==", targetUid));
+        const reqQuery = query(reqsRef, where("from", "==", authUser!.uid), where("to", "==", targetUid));
         const reqSnap = await getDocs(reqQuery);
         if (!reqSnap.empty) {
             throw new Error("Request already sent");
@@ -140,9 +152,9 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
 
         // Create the request
         await addDoc(reqsRef, {
-            from: authUser.uid,
-            fromName: myProfile?.username || authUser.displayName || 'Anonymous',
-            fromPhoto: myProfile?.customPhotoURL || authUser.photoURL || '',
+            from: authUser!.uid,
+            fromName: myProfile?.username || authUser!.displayName || 'Anonymous',
+            fromPhoto: myProfile?.customPhotoURL || authUser!.photoURL || '',
             to: targetUid,
             timestamp: Date.now()
         });
@@ -282,6 +294,7 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
         suggestions,
         getSuggestions,
         addFriendByUsername,
+        addFriendByUid,
         respondToRequest,
         removeFriend,
         refreshSocial,
