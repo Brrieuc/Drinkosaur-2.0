@@ -12,11 +12,6 @@ export default defineConfig(({ mode }) => {
     define: {
       // Define process.env.API_KEY globally for the client
       'process.env.API_KEY': JSON.stringify(env.API_KEY),
-    },
-    build: {
-      rollupOptions: {
-        external: ['firebase/app', 'firebase/auth', 'firebase/firestore']
-      }
     }
   };
 });

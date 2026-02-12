@@ -7,12 +7,13 @@ import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 // TODO: Replace with your app's Firebase project configuration
 // See: https://firebase.google.com/docs/web/setup#config-object
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "SENDER_ID",
-    appId: "APP_ID"
+  apiKey: "AIzaSyBGkKn2DBlD0HLmI3Smc10lJF143Co2_Ew",
+  authDomain: "drinkosaur-5cebe.firebaseapp.com",
+  projectId: "drinkosaur-5cebe",
+  storageBucket: "drinkosaur-5cebe.firebasestorage.app",
+  messagingSenderId: "999271625766",
+  appId: "1:999271625766:web:b4104448736a297fc7e2e7",
+  measurementId: "G-38DLX5ZFKD"
 };
 
 // Initialize Firebase
