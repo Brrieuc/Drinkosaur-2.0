@@ -13,6 +13,7 @@ export interface Drink {
 }
 
 export interface UserProfile {
+  uid?: string;
   weightKg: number;
   gender: 'male' | 'female';
   isSetup: boolean;

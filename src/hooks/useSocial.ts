@@ -1,7 +1,7 @@
 /// <reference path="../firebase.d.ts" />
 
 import { useState, useEffect } from 'react';
-import { db, doc, updateDoc, arrayUnion, query, where, collection, getDocs, onSnapshot, arrayRemove, setDoc, addDoc, deleteDoc } from '../firebase';
+import { db, doc, updateDoc, arrayUnion, query, where, collection, getDocs, onSnapshot, arrayRemove, setDoc, addDoc, deleteDoc, getDoc } from '../firebase';
 import { useAuth } from './useAuth';
 import { FriendStatus, BacStatus, UserProfile, Drink } from '../types';
 
@@ -153,10 +153,10 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
         if (!authUser) return;
 
         const reqRef = doc(db, "friend_requests", requestId);
-        const reqSnap = await getDocs(query(collection(db, "friend_requests"), where("__name__", "==", requestId)));
+        const reqSnap = await getDoc(reqRef);
 
-        if (reqSnap.empty) return;
-        const requestData = reqSnap.docs[0].data() as FriendRequest;
+        if (!reqSnap.exists()) return;
+        const requestData = reqSnap.data() as FriendRequest;
 
         if (accept) {
             // Add to both friends lists

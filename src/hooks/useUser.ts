@@ -40,6 +40,7 @@ export const useUser = () => {
                         const updatedProfile = {
                             ...defaultProfile,
                             ...remoteData,
+                            uid: authUser.uid,
                             displayName: authUser.displayName || remoteData.displayName,
                             photoURL: authUser.photoURL || remoteData.photoURL
                         };
@@ -48,6 +49,7 @@ export const useUser = () => {
                     } else {
                         const newProfile = {
                             ...userProfile,
+                            uid: authUser.uid,
                             displayName: authUser.displayName || '',
                             photoURL: authUser.photoURL || ''
                         };
