@@ -12,7 +12,7 @@ interface SettingsProps {
   onUploadAvatar: (base64: string) => Promise<string>;
 }
 
-type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn';
+type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn' | 'errorWeight' | 'errorUsername';
 
 export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar }) => {
   const [showAdvanced, setShowAdvanced] = useState(!user.isSetup);
@@ -42,13 +42,26 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   };
 
   const handleSave = () => {
+    // Robust validation
+    const cleanUsername = username.trim().toLowerCase();
+
+    if (cleanUsername.length < 3) {
+      alert(t.errorUsername);
+      return;
+    }
+
+    if (!weight || weight < 30 || weight > 250) {
+      alert(t.errorWeight);
+      return;
+    }
+
     onSave({
       weightKg: weight,
       gender,
       language,
       drinkingSpeed,
       stayConnected,
-      username: username.trim().toLowerCase(),
+      username: cleanUsername,
       customPhotoURL,
       isSetup: true
     });
@@ -141,7 +154,9 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       usernameDesc: "Others can add you with @username",
       photo: "Custom Avatar URL",
       advancedBtn: "Advanced Settings",
-      backBtn: "Back to Profile"
+      backBtn: "Back to Profile",
+      errorWeight: "Please enter a valid weight (30-250kg)",
+      errorUsername: "Username must be at least 3 characters"
     },
     fr: {
       profileTitle: "Mon Profil",
@@ -169,7 +184,9 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       usernameDesc: "Les autres peuvent vous ajouter avec @pseudo",
       photo: "Lien Photo de Profil",
       advancedBtn: "Réglages de calcul",
-      backBtn: "Retour au profil"
+      backBtn: "Retour au profil",
+      errorWeight: "Veuillez entrer un poids valide (30-250kg)",
+      errorUsername: "Le pseudo doit faire au moins 3 caractères"
     }
   }[language] as any;
 

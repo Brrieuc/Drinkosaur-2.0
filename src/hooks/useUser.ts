@@ -104,15 +104,18 @@ export const useUser = () => {
             newProfile.username = cleanUsername;
         }
 
-        // 2. Update State & Local Storage
-        setUserProfile(newProfile);
-        window.localStorage.setItem('drinkosaur_user', JSON.stringify(newProfile));
+        // 2. Prepare merged profile
+        const mergedProfile = { ...userProfile, ...newProfile };
 
-        // 3. Update Firestore if auth
+        // 3. Update State & Local Storage
+        setUserProfile(mergedProfile);
+        window.localStorage.setItem('drinkosaur_user', JSON.stringify(mergedProfile));
+
+        // 4. Update Firestore if auth
         if (authUser) {
             try {
                 await setDoc(doc(db, "users", authUser.uid), {
-                    ...newProfile,
+                    ...newProfile, // We only send the changes/profile fields to let Firestore merge handle it too
                     email: authUser.email?.toLowerCase()
                 }, { merge: true });
                 return { success: true };
