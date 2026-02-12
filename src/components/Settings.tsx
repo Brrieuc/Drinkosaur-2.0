@@ -18,6 +18,14 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
   // Auth Hook
   const { user: authUser, loading: authLoading, error: authError, signIn, logout } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
+  const [stayConnected, setStayConnected] = useState(() => {
+    return window.localStorage.getItem('drinkosaur_stay_connected') !== 'false';
+  });
+
+  const handleToggleStayConnected = (val: boolean) => {
+    setStayConnected(val);
+    window.localStorage.setItem('drinkosaur_stay_connected', val.toString());
+  };
 
   const handleSave = () => {
     onSave({
@@ -25,6 +33,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
       gender,
       language,
       drinkingSpeed,
+      stayConnected,
       isSetup: true
     });
   };
@@ -54,7 +63,8 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
       syncDesc: "Sign in with Google to save your data across devices.",
       signIn: "Sign in with Google",
       signOut: "Sign Out",
-      loggedIn: "Signed in as"
+      loggedIn: "Signed in as",
+      stayConnected: "Stay connected"
     },
     fr: {
       title: "Profil",
@@ -74,7 +84,8 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
       syncDesc: "Connectez-vous avec Google pour sauvegarder vos données partout.",
       signIn: "Se connecter avec Google",
       signOut: "Se déconnecter",
-      loggedIn: "Connecté en tant que"
+      loggedIn: "Connecté en tant que",
+      stayConnected: "Rester connecté"
     }
   }[language];
 
@@ -88,7 +99,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
     }
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         {authUser ? (
           <div className="flex items-center justify-between bg-black/20 p-3 rounded-xl">
             <div className="flex items-center gap-3 overflow-hidden">
@@ -129,6 +140,16 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
           </button>
         )}
 
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs text-white/50">{t.stayConnected}</span>
+          <button
+            onClick={() => handleToggleStayConnected(!stayConnected)}
+            className={`w-10 h-5 rounded-full transition-colors relative ${stayConnected ? 'bg-blue-500' : 'bg-white/10'}`}
+          >
+            <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${stayConnected ? 'left-6' : 'left-1'}`} />
+          </button>
+        </div>
+
         {authError && (
           <p className="text-[11px] text-red-400 text-center font-medium leading-tight animate-shake bg-red-400/5 p-2 rounded-lg border border-red-400/10">
             {authError}
@@ -137,6 +158,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
       </div>
     );
   }
+
 
 
   return (

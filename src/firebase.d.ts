@@ -16,6 +16,7 @@ declare module 'firebase/auth' {
     export function signOut(auth: any): Promise<void>;
     export function setPersistence(auth: any, persistence: any): Promise<void>;
     export const browserLocalPersistence: any;
+    export const browserSessionPersistence: any;
     export interface User {
         uid: string;
         email: string | null;

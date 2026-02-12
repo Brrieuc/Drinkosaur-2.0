@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { auth, googleProvider, signInWithPopup, signOut } from '../firebase';
-import { User, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { User, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
 
 export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -10,8 +10,18 @@ export const useAuth = () => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        // Force persistence to LocalStorage (survives tab close)
-        setPersistence(auth, browserLocalPersistence).catch(console.error);
+        // Default to local persistence unless changed
+        const init = async () => {
+            try {
+                // If the user previously chose NOT to stay connected, use session
+                const stayConnected = window.localStorage.getItem('drinkosaur_stay_connected') !== 'false';
+                await setPersistence(auth, stayConnected ? browserLocalPersistence : browserSessionPersistence);
+            } catch (e) {
+                console.error("Persistence Error:", e);
+            }
+        };
+
+        init();
 
         const unsubscribe = onAuthStateChanged(auth, (authUser: any) => {
             console.log("Auth State Changed:", authUser ? "User Logged In" : "No User");

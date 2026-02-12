@@ -19,7 +19,9 @@ export interface UserProfile {
   drinkingSpeed: 'slow' | 'average' | 'fast';
   displayName?: string;
   photoURL?: string;
+  stayConnected?: boolean;
 }
+
 
 export interface FriendStatus {
   uid: string;
