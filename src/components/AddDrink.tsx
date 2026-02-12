@@ -161,6 +161,7 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
             timestamp: customTimestamp || Date.now(),
             icon,
             type,
+            color: selectedItem.color,
             isChug: isChug || drinkType === 'shot'
         });
         onClose();

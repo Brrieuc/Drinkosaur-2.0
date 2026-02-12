@@ -54,11 +54,47 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
     const fullStatus = useMemo(() => calculateBac(friendDrinks, friendProfile), [friendDrinks, friendProfile]);
 
     const liquidHeight = Math.min((fullStatus.currentBac / 0.20) * 100, 100);
-    const liquidGradient = fullStatus.currentBac > 0.08
-        ? 'from-red-500 via-rose-500 to-purple-600'
-        : fullStatus.currentBac > 0.05
-            ? 'from-orange-400 via-pink-500 to-rose-500'
-            : 'from-cyan-400 via-blue-500 to-indigo-500';
+    // Dynamic gradient based on consumed drinks
+    const { gradientStyle, glowStyle } = useMemo(() => {
+        const defaultGradient = 'linear-gradient(to top, #22d3ee, #3b82f6, #6366f1)';
+
+        if (fullStatus.currentBac <= 0 || friendDrinks.length === 0) {
+            return {
+                gradientStyle: { background: defaultGradient },
+                glowStyle: { background: 'rgb(59, 130, 246)' }
+            };
+        }
+
+        const now = Date.now();
+        const activeDrinks = friendDrinks
+            .filter(d => d.timestamp > now - 12 * 60 * 60 * 1000)
+            .sort((a, b) => a.timestamp - b.timestamp);
+
+        const colors = activeDrinks
+            .map(d => d.color || '#FCD34D')
+            .filter((c, i, self) => self.indexOf(c) === i);
+
+        if (colors.length === 0) {
+            return {
+                gradientStyle: { background: defaultGradient },
+                glowStyle: { background: 'rgb(59, 130, 246)' }
+            };
+        }
+
+        if (colors.length === 1) {
+            const c = colors[0];
+            return {
+                gradientStyle: { background: `linear-gradient(to top, ${c}, ${c}dd)` },
+                glowStyle: { background: c }
+            };
+        }
+
+        const gradientStr = `linear-gradient(to top, ${colors.join(', ')})`;
+        return {
+            gradientStyle: { background: gradientStr },
+            glowStyle: { background: colors[colors.length - 1] }
+        };
+    }, [friendDrinks, fullStatus.currentBac]);
 
     const soberTimeStr = useMemo(() => {
         if (!fullStatus.soberTimestamp) return null;
@@ -107,7 +143,12 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                     </div>
 
                     {/* The Bubble (Miniaturized Dash) */}
-                    <div className="flex justify-center mb-8">
+                    <div className="flex justify-center mb-8 relative">
+                        {/* Glow behind the sphere */}
+                        <div
+                            className="absolute w-40 h-40 rounded-full blur-[60px] opacity-30 animate-pulse top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                            style={glowStyle}
+                        />
                         <div
                             onClick={() => setShowChart(true)}
                             className="relative w-56 h-56 glass-sphere rounded-full overflow-hidden flex items-center justify-center transform transition-all hover:scale-105 cursor-pointer active:scale-95 group shadow-2xl"
@@ -117,7 +158,10 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
 
                             <div className="absolute bottom-0 left-0 right-0 z-0 transition-all duration-1000 ease-in-out w-full" style={{ height: `${liquidHeight}%`, maxHeight: '100%' }}>
                                 <div className="absolute -top-3 left-0 w-[200%] h-6 bg-white/30 rounded-[100%] animate-[liquid-wave_6s_linear_infinite]" />
-                                <div className={`w-full h-full bg-gradient-to-t ${liquidGradient} opacity-90 shadow-[inset_0_0_40px_rgba(0,0,0,0.5)]`}></div>
+                                <div
+                                    className="w-full h-full opacity-90 shadow-[inset_0_0_40px_rgba(0,0,0,0.5)]"
+                                    style={gradientStyle}
+                                ></div>
                             </div>
 
                             <div className="absolute inset-0 rounded-full shadow-[inset_0_0_20px_rgba(0,0,0,0.6)] z-10 pointer-events-none border border-white/5"></div>

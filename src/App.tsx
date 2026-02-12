@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Background } from './components/Background';
 import { Settings } from './components/Settings';
 import { Dashboard } from './components/Dashboard';
@@ -142,16 +142,7 @@ const App: React.FC = () => {
     setDrinks(prev => prev.filter(d => d.id !== id));
   };
 
-  const getHistoryData = useCallback(() => {
-    if (drinks.length === 0) return [];
-    const points = [];
-    const now = Date.now();
-    for (let i = 4; i >= 0; i--) {
-      const t = now - (i * 60 * 60 * 1000);
-      points.push({ time: t, bac: 0 });
-    }
-    return points;
-  }, [drinks]);
+
 
 
   // -- Navigation Bar --
@@ -254,7 +245,6 @@ const App: React.FC = () => {
         {view === AppView.DASHBOARD && (
           <Dashboard
             status={bacStatus}
-            historyData={getHistoryData()}
             language={user.language}
             drinks={drinks}
             user={user as UserProfile}

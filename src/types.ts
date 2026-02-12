@@ -8,6 +8,7 @@ export interface Drink {
   timestamp: number; // Unix timestamp in ms
   icon?: string;
   type?: 'beer' | 'wine' | 'cocktail' | 'spirit' | 'other';
+  color?: string; // Hex or rgba for liquid rendering
   isChug?: boolean; // If true, consumption time is 0
 }
 
