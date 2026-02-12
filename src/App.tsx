@@ -80,6 +80,44 @@ const App: React.FC = () => {
     }
   }, [statusChangeToast]);
 
+  // Handle Invitation Link
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const refParam = params.get('ref');
+    if (refParam) {
+      sessionStorage.setItem('pending_referral', refParam);
+    }
+
+    const pendingRef = sessionStorage.getItem('pending_referral');
+
+    if (pendingRef && user.isSetup && !socialLoading) {
+      const handleReferral = async () => {
+        try {
+          await addFriendByUsername(pendingRef);
+          setToast({
+            msg: user.language === 'fr' ? `Demande d'ami envoyée à @${pendingRef} !` : `Friend request sent to @${pendingRef}!`,
+            type: 'success'
+          });
+          sessionStorage.removeItem('pending_referral');
+          // Clean up URL if still there
+          if (window.location.search.includes('ref=')) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (err: any) {
+          // If already friends or request exists, just clear the pending ref
+          if (err.message === "Already friends" || err.message === "Request already sent") {
+            sessionStorage.removeItem('pending_referral');
+          } else {
+            console.error("Referral error:", err);
+          }
+        }
+      };
+
+      handleReferral();
+    }
+  }, [user.isSetup, socialLoading, addFriendByUsername]);
+
+
 
   // -- Effects --
   useEffect(() => {
@@ -87,6 +125,7 @@ const App: React.FC = () => {
       setView(AppView.DASHBOARD);
     }
   }, [user.isSetup]);
+
 
 
   // -- Handlers --

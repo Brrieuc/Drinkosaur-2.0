@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { FriendStatus, UserProfile, BacStatus } from '../types';
 import { FriendRequest } from '../hooks/useSocial';
-import { UserPlus, Loader2, Beer, AlertTriangle, Trash2, Check, X, Bell, Trophy, Medal, RefreshCw, Sparkles } from 'lucide-react';
+import { UserPlus, Loader2, Beer, AlertTriangle, Trash2, Check, X, Bell, Trophy, Medal, RefreshCw, Sparkles, Share2 } from 'lucide-react';
 
 interface SocialProps {
     friends: FriendStatus[];
@@ -79,6 +79,9 @@ export const Social: React.FC<SocialProps> = ({
         addDesc: language === 'fr' ? 'Ajoutez un ami par son pseudo.' : 'Add a friend by their username.',
         addPlaceholder: language === 'fr' ? 'pseudo' : 'username',
         addButton: language === 'fr' ? 'Ajouter' : 'Add',
+        inviteTitle: language === 'fr' ? 'Rejoins-moi sur Drinkosaur !' : 'Join me on Drinkosaur!',
+        inviteBody: (username: string) => language === 'fr' ? `Santé ! Ajoute-moi sur Drinkosaur pour suivre mon taux d'alcool en direct : @${username}` : `Cheers! Add me on Drinkosaur to follow my BAC live: @${username}`,
+        inviteSuccess: language === 'fr' ? 'Lien d\'invitation copié !' : 'Invite link copied!',
         empty: language === 'fr' ? 'Aucun ami pour le moment.' : 'No friends yet.',
         live: language === 'fr' ? 'EN DIRECT' : 'LIVE',
         requests: language === 'fr' ? 'Demandes en attente' : 'Pending Requests',
@@ -87,6 +90,33 @@ export const Social: React.FC<SocialProps> = ({
         you: language === 'fr' ? 'Moi' : 'Me',
         pull: language === 'fr' ? 'Tirez pour rafraîchir' : 'Pull to refresh',
         release: language === 'fr' ? 'Relâchez pour rafraîchir' : 'Release to refresh'
+    };
+
+    const handleInvite = async () => {
+        const username = myProfile.username || 'user';
+        const inviteUrl = `${window.location.origin}?ref=${username}`;
+        const shareData = {
+            title: t.inviteTitle,
+            text: t.inviteBody(username),
+            url: inviteUrl
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.log('Share failed', err);
+            }
+        } else {
+            // Fallback to clipboard
+            try {
+                await navigator.clipboard.writeText(`${shareData.text} ${inviteUrl}`);
+                setSuccess(t.inviteSuccess);
+                setTimeout(() => setSuccess(null), 3000);
+            } catch (err) {
+                setError('Failed to copy');
+            }
+        }
     };
 
     // --- LEADERBOARD LOGIC ---
@@ -212,7 +242,16 @@ export const Social: React.FC<SocialProps> = ({
                             {isAdding ? <Loader2 className="animate-spin" size={20} /> : <UserPlus size={20} />}
                             <span className="hidden sm:inline">{t.addButton}</span>
                         </button>
+                        <button
+                            type="button"
+                            onClick={handleInvite}
+                            className="bg-white/5 hover:bg-white/10 border border-white/10 px-4 rounded-2xl text-white/60 hover:text-white transition-all active:scale-95 flex items-center justify-center group"
+                            title="Invite a friend"
+                        >
+                            <Share2 size={24} className="group-hover:text-blue-400 transition-colors" />
+                        </button>
                     </div>
+
 
                     {/* Suggestions Dropdown */}
                     {showSuggestions && suggestions.length > 0 && (
