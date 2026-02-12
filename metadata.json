@@ -1,0 +1,5 @@
+{
+  "name": "Drinkosaur 2.0",
+  "description": "A premium, iOS-style alcohol tracker featuring real-time BAC estimation, smart drink logging powered by Gemini, and a stunning liquid glassmorphism interface.",
+  "requestFramePermissions": []
+}
