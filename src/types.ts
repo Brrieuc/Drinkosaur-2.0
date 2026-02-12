@@ -48,11 +48,20 @@ export interface BacStatus {
   color: string;
 }
 
+export interface FriendGroup {
+  id: string;
+  name: string;
+  creatorId: string;
+  memberIds: string[];
+  pendingInviteIds: string[];
+  createdAt: number;
+}
+
 export enum AppView {
   DASHBOARD = 'DASHBOARD',
   ADD_DRINK = 'ADD_DRINK',
   SETTINGS = 'SETTINGS',
   HISTORY = 'HISTORY',
-  SOCIAL = 'SOCIAL'
+  SOCIAL = 'SOCIAL',
 }
 

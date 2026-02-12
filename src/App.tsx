@@ -12,6 +12,8 @@ import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, 
 import { useUser } from './hooks/useUser';
 import { useDrinks } from './hooks/useDrinks';
 import { useSocial } from './hooks/useSocial';
+import { useGroups } from './hooks/useGroups';
+import { useAuth } from './hooks/useAuth';
 import useBacCalculator from './hooks/useBacCalculator';
 
 const Toast = ({ message, type = 'success' }: { message: string, type?: 'success' | 'warning' }) => (
@@ -26,6 +28,7 @@ const App: React.FC = () => {
   // -- State --
   const [view, setView] = useState<AppView>(AppView.SETTINGS);
   const [toast, setToast] = useState<{ msg: string, type: 'success' | 'warning' } | null>(null);
+  const { user: authUser } = useAuth();
 
   // Custom Hooks
   const [user, saveUser, uploadAvatar] = useUser();
@@ -51,6 +54,16 @@ const App: React.FC = () => {
     fetchFriendData,
     loading: socialLoading
   } = useSocial(bacStatus, user as UserProfile);
+
+  const {
+    groups,
+    groupInvites,
+    createGroup,
+    acceptGroupInvite,
+    declineGroupInvite,
+    leaveGroup,
+    fetchGroupMembersStatus
+  } = useGroups();
 
   const handleSelectFriend = async (uid: string) => {
     const friendStatus = friends.find(f => f.uid === uid);
@@ -229,6 +242,14 @@ const App: React.FC = () => {
               onFetchSuggestions={getSuggestions}
               loading={socialLoading}
               language={user.language}
+              groups={groups}
+              groupInvites={groupInvites}
+              onCreateGroup={createGroup}
+              onAcceptGroupInvite={acceptGroupInvite}
+              onDeclineGroupInvite={declineGroupInvite}
+              onLeaveGroup={leaveGroup}
+              onFetchGroupStatus={fetchGroupMembersStatus}
+              myUid={authUser?.uid || ''}
             />
             {selectedFriend && (
               <FriendProfileModal
