@@ -38,8 +38,10 @@ const App: React.FC = () => {
     addFriendByUsername,
     respondToRequest,
     removeFriend,
+    refreshSocial,
     loading: socialLoading
   } = useSocial(bacStatus, user as UserProfile);
+
 
   // Handle toast from BAC changes
   useEffect(() => {
@@ -161,9 +163,11 @@ const App: React.FC = () => {
             onAddFriend={addFriendByUsername}
             onRespondRequest={respondToRequest}
             onRemoveFriend={removeFriend}
+            onRefresh={refreshSocial}
             loading={socialLoading}
             language={user.language}
           />
+
 
         )}
 

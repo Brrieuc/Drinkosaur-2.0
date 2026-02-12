@@ -180,12 +180,31 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
         await updateDoc(otherRef, { friends: arrayRemove(authUser.uid) });
     };
 
+    const refreshSocial = async () => {
+        setLoading(true);
+        if (friendIds.length > 0) {
+            const statusQuery = query(
+                collection(db, "live_status"),
+                where("__name__", "in", friendIds)
+            );
+            const querySnapshot = await getDocs(statusQuery);
+            const statuses: FriendStatus[] = [];
+            querySnapshot.forEach((doc: any) => {
+                statuses.push({ uid: doc.id, ...doc.data() } as FriendStatus);
+            });
+            setFriends(statuses.sort((a, b) => b.currentBac - a.currentBac));
+        }
+        setLoading(false);
+    };
+
     return {
         friends,
         incomingRequests,
         addFriendByUsername,
         respondToRequest,
         removeFriend,
+        refreshSocial,
         loading
     };
 };
+
