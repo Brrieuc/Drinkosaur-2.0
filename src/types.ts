@@ -25,6 +25,7 @@ export interface UserProfile {
   username?: string;
   stayConnected?: boolean;
   hasSeenTour?: boolean;
+  hasSeenPwaInstallGuide?: boolean;
   friends?: string[];
   groups?: string[];
 }

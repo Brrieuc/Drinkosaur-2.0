@@ -6,6 +6,7 @@ import { AddDrink } from './components/AddDrink';
 import { DrinkList } from './components/DrinkList';
 import { Social } from './components/Social';
 import { OnboardingTour } from './components/OnboardingTour';
+import { InstallPwaGuide } from './components/InstallPwaGuide';
 import { FriendProfileModal } from './components/FriendProfileModal';
 import { AppView, Drink, UserProfile } from './types';
 import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users, Loader2, X, Mail } from 'lucide-react';
@@ -350,7 +351,18 @@ const App: React.FC = () => {
       <Background />
 
       {/* ONBOARDING TOUR */}
-      {user.isSetup && !user.hasSeenTour && (
+      {/* PWA INSTALL GUIDE */}
+      {user.isSetup && !user.hasSeenPwaInstallGuide && (
+        <InstallPwaGuide
+          language={user.language}
+          onComplete={() => {
+            saveUser({ ...user, hasSeenPwaInstallGuide: true });
+          }}
+        />
+      )}
+
+      {/* ONBOARDING TOUR */}
+      {user.isSetup && user.hasSeenPwaInstallGuide && !user.hasSeenTour && (
         <OnboardingTour
           language={user.language}
           onComplete={() => {
