@@ -1,7 +1,7 @@
 /// <reference path="./firebase.d.ts" />
 
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInAnonymously, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import {
   getFirestore, doc, setDoc, getDoc, collection,
   query, where, getDocs, updateDoc, arrayUnion,
@@ -31,7 +31,7 @@ const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export {
-  auth, db, storage, googleProvider, signInWithPopup, signInWithRedirect, signInAnonymously, signOut,
+  auth, db, storage, googleProvider, signInWithPopup, signInAnonymously, signOut,
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
   doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc,
   arrayUnion, onSnapshot, deleteDoc, arrayRemove, addDoc,

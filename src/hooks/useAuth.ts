@@ -1,8 +1,8 @@
 /// <reference path="../firebase.d.ts" />
 
 import { useState, useEffect } from 'react';
-import { auth, googleProvider, signInWithPopup, signInWithRedirect, signInAnonymously, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from '../firebase';
-import { User, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence, getRedirectResult } from 'firebase/auth';
+import { auth, googleProvider, signInWithPopup, signInAnonymously, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from '../firebase';
+import { User, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
 
 export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -10,69 +10,27 @@ export const useAuth = () => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        let unsubscribe: () => void;
+        // Set persistence preference
+        const stayConnected = window.localStorage.getItem('drinkosaur_stay_connected') !== 'false';
+        setPersistence(auth, stayConnected ? browserLocalPersistence : browserSessionPersistence)
+            .catch((e) => console.error("Persistence Error:", e));
 
-        const initAuth = async () => {
-            try {
-                // 1. Set Persistence
-                const stayConnected = window.localStorage.getItem('drinkosaur_stay_connected') !== 'false';
-                await setPersistence(auth, stayConnected ? browserLocalPersistence : browserSessionPersistence);
+        // Single source of truth: onAuthStateChanged
+        const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+            console.log("Auth State Changed:", authUser ? "User Logged In" : "No User");
+            setUser(authUser);
+            setLoading(false);
+        });
 
-                // 2. Setup Listener. Wait to process redirect until we know standard auth state is empty.
-                unsubscribe = onAuthStateChanged(auth, async (authUser) => {
-                    if (authUser) {
-                        // Standard Flow: User is already logged in (or persistence kicked in)
-                        console.log("Auth State: Logged In");
-                        setUser(authUser);
-                        setLoading(false);
-                    } else {
-                        // Edge Case Flow: No user found. Check if this is a return from a Redirect.
-                        console.log("Auth State: No User. Checking for Redirect Result...");
-                        try {
-                            const result = await getRedirectResult(auth);
-                            if (result?.user) {
-                                console.log("Redirect Success:", result.user.email);
-                                setUser(result.user);
-                            } else {
-                                // Really no user
-                                setUser(null);
-                            }
-                        } catch (e) {
-                            console.error("Redirect Check Error:", e);
-                            setUser(null);
-                        } finally {
-                            setLoading(false);
-                        }
-                    }
-                });
-
-            } catch (e: any) {
-                console.error("Auth Init Failed:", e);
-                setLoading(false);
-            }
-        };
-
-        initAuth();
-
-        return () => {
-            if (unsubscribe) unsubscribe();
-        };
+        return () => unsubscribe();
     }, []);
 
     const signIn = async () => {
         setError(null);
         try {
-            // Mobile Optimization: Use Redirect on iOS/Android to avoid popup blocking & improve UX
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-            if (isMobile) {
-                console.log("Mobile device detected: Using Redirect Sign-In");
-                await signInWithRedirect(auth, googleProvider);
-                // Flow stops here, page will redirect
-                return;
-            }
-
-            console.log("Desktop detected: Attempting Popup Sign-In...");
+            // Use Popup on ALL platforms — signInWithRedirect is broken on Safari/iOS
+            // due to ITP (Intelligent Tracking Prevention) blocking third-party cookies
+            console.log("Attempting Popup Sign-In...");
             const result = await signInWithPopup(auth, googleProvider);
             if (result?.user) {
                 console.log("Popup Sign-In Success:", result.user.email);
@@ -82,10 +40,11 @@ export const useAuth = () => {
             console.error("Sign-In Error:", err.code, err.message);
 
             if (err.code === 'auth/popup-blocked') {
-                // Determine if we should suggest redirect
-                setError("La fenêtre a été bloquée. Essayez de désactiver le bloqueur de pop-up ou utilisez le mode 'Invité'.");
+                setError("La fenêtre a été bloquée par votre navigateur. Autorisez les pop-ups pour drinkosaur.vercel.app, ou utilisez la connexion par Email.");
             } else if (err.code === 'auth/popup-closed-by-user') {
                 setError("Connexion annulée.");
+            } else if (err.code === 'auth/cancelled-popup-request') {
+                // Ignore this — happens when user clicks button twice fast
             } else {
                 setError("Erreur : " + err.message);
             }
@@ -113,7 +72,6 @@ export const useAuth = () => {
             if (result?.user) setUser(result.user);
         } catch (err: any) {
             console.error("Email Sign-In Error:", err);
-            // Firebase returns english error codes, map them to french if needed or just generic messages
             if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
                 setError("Email ou mot de passe incorrect.");
             } else if (err.code === "auth/too-many-requests") {

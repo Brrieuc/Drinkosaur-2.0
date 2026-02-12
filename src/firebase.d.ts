@@ -10,7 +10,9 @@ declare module 'firebase/auth' {
         setCustomParameters(params: any): void;
     }
     export function signInWithPopup(auth: any, provider: any): Promise<any>;
-    export function signInWithRedirect(auth: any, provider: any): Promise<void>;
+    export function signInAnonymously(auth: any): Promise<any>;
+    export function createUserWithEmailAndPassword(auth: any, email: string, password: string): Promise<any>;
+    export function signInWithEmailAndPassword(auth: any, email: string, password: string): Promise<any>;
     export function getRedirectResult(auth: any): Promise<any>;
     export function onAuthStateChanged(auth: any, next: (user: any) => void, error?: (error: any) => void): any;
     export function signOut(auth: any): Promise<void>;
