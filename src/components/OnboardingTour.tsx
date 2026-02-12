@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, ChevronRight, LayoutDashboard, PlusCircle, Users, Activity, History } from 'lucide-react';
+import { X, ChevronRight, LayoutDashboard, PlusCircle, Users, Activity, Download, Share } from 'lucide-react';
 
 interface OnboardingTourProps {
     language: 'en' | 'fr';
@@ -12,6 +12,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComp
 
     const steps = [
         {
+            id: 'welcome',
             title: language === 'fr' ? 'Bienvenue sur Drinkosaur !' : 'Welcome to Drinkosaur!',
             content: language === 'fr'
                 ? 'Drinkosaur calcule en temps réel votre taux d\'alcoolémie avec une précision scientifique basée sur votre profil.'
@@ -20,6 +21,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComp
             color: 'from-pink-500 to-rose-600'
         },
         {
+            id: 'monitor',
             title: language === 'fr' ? 'Le Moniteur' : 'The Monitor',
             content: language === 'fr'
                 ? 'Suivez votre courbe d\'alcoolémie, votre pic prévu et l\'heure à laquelle vous serez sobre.'
@@ -28,6 +30,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComp
             color: 'from-blue-500 to-indigo-600'
         },
         {
+            id: 'drinks',
             title: language === 'fr' ? 'Ajouter des verres' : 'Adding Drinks',
             content: language === 'fr'
                 ? 'Ajoutez vos boissons instantanément ou rétro-saisissez un verre bu plus tôt dans la soirée.'
@@ -36,22 +39,48 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComp
             color: 'from-emerald-500 to-teal-600'
         },
         {
+            id: 'social',
             title: language === 'fr' ? 'L\'aspect Social' : 'Social Features',
             content: language === 'fr'
                 ? 'Ajoutez des amis pour suivre leur consommation en direct et veiller les uns sur les autres !'
                 : 'Add friends to follow their consumption live and look out for each other!',
             icon: <Users className="w-12 h-12 text-amber-500" />,
             color: 'from-amber-500 to-orange-600'
+        },
+        {
+            id: 'install',
+            title: language === 'fr' ? 'Installez l\'App' : 'Install the App',
+            content: language === 'fr'
+                ? 'Pour une meilleure expérience, appuyez sur {icon} puis sur "Sur l\'écran d\'accueil". Cela débloque aussi les notifications !'
+                : 'For the best experience, tap {icon} then "Add to Home Screen". This also unlocks notifications!',
+            icon: <Download className="w-12 h-12 text-purple-500" />,
+            color: 'from-purple-500 to-violet-600'
         }
     ];
 
     const currentStep = steps[step];
 
+    const renderContent = (content: string) => {
+        if (currentStep.id === 'install') {
+            const parts = content.split('{icon}');
+            return (
+                <>
+                    {parts[0]}
+                    <span className="inline-flex items-center align-middle bg-white/10 p-1.5 rounded-lg mx-1">
+                        <Share size={16} className="text-white" />
+                    </span>
+                    {parts[1]}
+                </>
+            );
+        }
+        return content;
+    };
+
     return (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 backdrop-blur-md bg-black/40 animate-fade-in">
             <div className="glass-panel-3d w-full max-w-md p-8 rounded-[40px] relative overflow-hidden flex flex-col items-center text-center">
                 {/* Background Glow */}
-                <div className={`absolute -top-24 -left-24 w-48 h-48 bg-gradient-to-br ${currentStep.color} opacity-20 blur-3xl rounded-full`} />
+                <div className={`absolute -top-24 -left-24 w-48 h-48 bg-gradient-to-br ${currentStep.color} opacity-20 blur-3xl rounded-full transition-all duration-500`} />
 
                 <button
                     onClick={onComplete}
@@ -69,7 +98,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComp
                 </h2>
 
                 <p className="text-white/60 text-md leading-relaxed mb-10 min-h-[80px] relative z-10">
-                    {currentStep.content}
+                    {renderContent(currentStep.content)}
                 </p>
 
                 {/* Progress Indicators */}
