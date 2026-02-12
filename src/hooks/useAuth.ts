@@ -1,7 +1,7 @@
 /// <reference path="../firebase.d.ts" />
 
 import { useState, useEffect } from 'react';
-import { auth, googleProvider, signInWithPopup, signOut } from '../firebase';
+import { auth, googleProvider, signInWithPopup, signInAnonymously, signOut } from '../firebase';
 import { User, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
 
 export const useAuth = () => {
@@ -36,14 +36,13 @@ export const useAuth = () => {
         setError(null);
         try {
             console.log("Attempting Popup Sign-In...");
-            // Directly call popup to preserve "User Gesture" for Safari
             const result = await signInWithPopup(auth, googleProvider);
             if (result?.user) {
                 console.log("Popup Sign-In Success:", result.user.email);
                 setUser(result.user);
             }
         } catch (err: any) {
-            console.error("Sign-In Error Trace:", err.code, err.message);
+            console.error("Sign-In Error:", err.code, err.message);
 
             if (err.code === 'auth/popup-blocked') {
                 setError("La fenêtre a été bloquée. Cliquez sur 'Autoriser' en haut de votre écran Safari.");
@@ -52,6 +51,20 @@ export const useAuth = () => {
             } else {
                 setError("Erreur : " + err.message);
             }
+        }
+    };
+
+    const signInAnonymous = async () => {
+        setError(null);
+        try {
+            console.log("Attempting Anonymous Sign-In...");
+            const result = await signInAnonymously(auth);
+            if (result?.user) {
+                setUser(result.user);
+            }
+        } catch (err: any) {
+            console.error("Anonymous Sign-In Error:", err);
+            setError("Erreur de connexion anonyme : " + err.message);
         }
     };
 
@@ -64,5 +77,5 @@ export const useAuth = () => {
         }
     };
 
-    return { user, loading, error, signIn, logout };
+    return { user, loading, error, signIn, signInAnonymous, logout };
 };
