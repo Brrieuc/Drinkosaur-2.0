@@ -42,8 +42,9 @@ export const useUser = () => {
                             ...defaultProfile,
                             ...remoteData,
                             uid: authUser.uid,
-                            displayName: authUser.displayName || remoteData.displayName,
-                            photoURL: authUser.photoURL || remoteData.photoURL
+                            // Prioritize what we have in DB over what Google says
+                            displayName: remoteData.displayName || authUser.displayName || '',
+                            photoURL: remoteData.customPhotoURL || remoteData.photoURL || authUser.photoURL || ''
                         };
                         console.log("Profile found & synced:", updatedProfile.username);
                         setUserProfile(updatedProfile);

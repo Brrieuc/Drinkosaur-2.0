@@ -349,8 +349,11 @@ const App: React.FC = () => {
 
       {/* Floating Bottom Navigation */}
       {user.isSetup && (
-        <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
-          <div className="glass-panel-3d rounded-[32px] p-2 flex items-center gap-1 shadow-2xl backdrop-blur-xl pointer-events-auto">
+        <div
+          className="fixed left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
+          style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+        >
+          <div className="glass-panel-3d rounded-[32px] p-2 flex items-center gap-1 shadow-2xl backdrop-blur-xl pointer-events-auto border-white/20">
             <NavButton target={AppView.HISTORY} icon={History} label={navText.history} />
             <NavButton target={AppView.DASHBOARD} icon={LayoutDashboard} label={navText.monitor} />
 
