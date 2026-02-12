@@ -39,8 +39,12 @@ const App: React.FC = () => {
     respondToRequest,
     removeFriend,
     refreshSocial,
+    suggestions,
+    getSuggestions,
     loading: socialLoading
   } = useSocial(bacStatus, user as UserProfile);
+
+
 
 
   // Handle toast from BAC changes
@@ -164,6 +168,8 @@ const App: React.FC = () => {
             onRespondRequest={respondToRequest}
             onRemoveFriend={removeFriend}
             onRefresh={refreshSocial}
+            suggestions={suggestions}
+            onFetchSuggestions={getSuggestions}
             loading={socialLoading}
             language={user.language}
           />

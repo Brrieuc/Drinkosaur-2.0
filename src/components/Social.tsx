@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { FriendStatus, UserProfile, BacStatus } from '../types';
 import { FriendRequest } from '../hooks/useSocial';
-import { UserPlus, Loader2, Beer, AlertTriangle, Trash2, Check, X, Bell, Trophy, Medal, RefreshCw } from 'lucide-react';
+import { UserPlus, Loader2, Beer, AlertTriangle, Trash2, Check, X, Bell, Trophy, Medal, RefreshCw, Sparkles } from 'lucide-react';
 
 interface SocialProps {
     friends: FriendStatus[];
@@ -13,6 +13,8 @@ interface SocialProps {
     onRespondRequest: (requestId: string, accept: boolean) => Promise<void>;
     onRemoveFriend: (uid: string) => Promise<void>;
     onRefresh: () => Promise<void>;
+    suggestions: any[];
+    onFetchSuggestions: () => Promise<void>;
     loading: boolean;
     language: 'en' | 'fr';
 }
@@ -26,6 +28,8 @@ export const Social: React.FC<SocialProps> = ({
     onRespondRequest,
     onRemoveFriend,
     onRefresh,
+    suggestions,
+    onFetchSuggestions,
     loading,
     language
 }) => {
@@ -33,6 +37,7 @@ export const Social: React.FC<SocialProps> = ({
     const [isAdding, setIsAdding] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [showSuggestions, setShowSuggestions] = useState(false);
 
     // --- PULL TO REFRESH STATES ---
     const [startY, setStartY] = useState(0);
@@ -41,9 +46,9 @@ export const Social: React.FC<SocialProps> = ({
     const scrollRef = useRef<HTMLDivElement>(null);
     const REFRESH_THRESHOLD = 80;
 
-    const handleAdd = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const trimmed = searchUsername.trim();
+    const handleAdd = async (e: React.FormEvent | string) => {
+        if (typeof e !== 'string') e.preventDefault();
+        const trimmed = typeof e === 'string' ? e : searchUsername.trim();
         if (!trimmed) return;
 
         setIsAdding(true);
@@ -54,6 +59,7 @@ export const Social: React.FC<SocialProps> = ({
             await onAddFriend(trimmed);
             setSuccess(language === 'fr' ? 'Demande envoyée !' : 'Request sent!');
             setSearchUsername('');
+            setShowSuggestions(false);
             setTimeout(() => setSuccess(null), 3000);
         } catch (err: any) {
             setError(err.message || 'Error adding friend');
@@ -65,6 +71,8 @@ export const Social: React.FC<SocialProps> = ({
     const t = {
         title: language === 'fr' ? 'Mes Amis' : 'Friends',
         leaderboard: language === 'fr' ? 'Classement' : 'Leaderboard',
+        suggestions: language === 'fr' ? 'Suggestions' : 'Suggestions',
+        commonFriends: (n: number) => language === 'fr' ? `${n} amis en commun` : `${n} mutual friends`,
         addDesc: language === 'fr' ? 'Ajoutez un ami par son pseudo.' : 'Add a friend by their username.',
         addPlaceholder: language === 'fr' ? 'pseudo' : 'username',
         addButton: language === 'fr' ? 'Ajouter' : 'Add',
@@ -184,6 +192,10 @@ export const Social: React.FC<SocialProps> = ({
                             <input
                                 type="text"
                                 value={searchUsername}
+                                onFocus={() => {
+                                    setShowSuggestions(true);
+                                    onFetchSuggestions();
+                                }}
                                 onChange={(e) => setSearchUsername(e.target.value)}
                                 placeholder={t.addPlaceholder}
                                 className="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-4 text-white focus:outline-none focus:border-blue-500/50 transition-all font-medium shadow-inner"
@@ -199,6 +211,36 @@ export const Social: React.FC<SocialProps> = ({
                         </button>
                     </div>
 
+                    {/* Suggestions Dropdown */}
+                    {showSuggestions && suggestions.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a2e]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-slide-down">
+                            <div className="p-3 border-b border-white/5 flex items-center justify-between">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/30 flex items-center gap-1.5">
+                                    <Sparkles size={10} className="text-amber-400" /> {t.suggestions}
+                                </span>
+                                <button onClick={() => setShowSuggestions(false)} className="text-white/20 hover:text-white">
+                                    <X size={14} />
+                                </button>
+                            </div>
+                            <div className="max-h-60 overflow-y-auto no-scrollbar">
+                                {suggestions.map(s => (
+                                    <button
+                                        key={s.uid}
+                                        onClick={() => handleAdd(s.username)}
+                                        className="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 text-left"
+                                    >
+                                        <img src={s.photoURL || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-full border border-white/10" />
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-sm truncate">@{s.username}</div>
+                                            <div className="text-[10px] text-emerald-400 font-bold uppercase">{t.commonFriends(s.commonCount)}</div>
+                                        </div>
+                                        <UserPlus size={16} className="text-blue-400" />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {error && (
                         <div className="absolute -bottom-7 left-2 flex items-center gap-2 text-red-400 text-xs animate-shake">
                             <AlertTriangle size={12} /> {error}
@@ -210,6 +252,7 @@ export const Social: React.FC<SocialProps> = ({
                         </div>
                     )}
                 </form>
+
 
                 {/* --- PENDING REQUESTS --- */}
                 {requests.length > 0 && (

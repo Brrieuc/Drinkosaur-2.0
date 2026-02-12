@@ -197,9 +197,66 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
         setLoading(false);
     };
 
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+
+    const getSuggestions = async () => {
+        if (!authUser || friendIds.length === 0) return;
+
+        try {
+            // 1. Get friend lists of all my friends
+            const friendsQuery = query(collection(db, "users"), where("__name__", "in", friendIds.slice(0, 10))); // Limit to first 10 for performance
+            const friendsSnap = await getDocs(friendsQuery);
+
+            const potentialSuggestions: Record<string, number> = {};
+
+            friendsSnap.forEach((doc: any) => {
+                const data = doc.data();
+                const theirFriends = data.friends || [];
+                theirFriends.forEach((uid: string) => {
+                    if (uid !== authUser.uid && !friendIds.includes(uid)) {
+                        potentialSuggestions[uid] = (potentialSuggestions[uid] || 0) + 1;
+                    }
+                });
+            });
+
+            // 2. Filter UIDs with > 2 common friends
+            const suggestedUids = Object.entries(potentialSuggestions)
+                .filter(([_, count]) => count >= 2)
+                .map(([uid]) => uid);
+
+            if (suggestedUids.length === 0) {
+                setSuggestions([]);
+                return;
+            }
+
+            // 3. Fetch their profile info
+            const suggestedQuery = query(collection(db, "users"), where("__name__", "in", suggestedUids.slice(0, 10)));
+            const suggestedSnap = await getDocs(suggestedQuery);
+
+            const results: any[] = [];
+            suggestedSnap.forEach((doc: any) => {
+                const data = doc.data();
+                results.push({
+                    uid: doc.id,
+                    username: data.username,
+                    displayName: data.displayName,
+                    photoURL: data.customPhotoURL || data.photoURL,
+                    commonCount: potentialSuggestions[doc.id]
+                });
+            });
+
+
+            setSuggestions(results);
+        } catch (err) {
+            console.error("Error fetching suggestions:", err);
+        }
+    };
+
     return {
         friends,
         incomingRequests,
+        suggestions,
+        getSuggestions,
         addFriendByUsername,
         respondToRequest,
         removeFriend,
@@ -207,4 +264,5 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
         loading
     };
 };
+
 
