@@ -10,36 +10,46 @@ export const useAuth = () => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const init = async () => {
+        let unsubscribe: () => void;
+
+        const initAuth = async () => {
             try {
-                // If the user previously chose NOT to stay connected, use session
+                // 1. Set Persistence
                 const stayConnected = window.localStorage.getItem('drinkosaur_stay_connected') !== 'false';
                 await setPersistence(auth, stayConnected ? browserLocalPersistence : browserSessionPersistence);
 
-                // Handle Redirect Result (for Mobile Flow)
-                const result = await getRedirectResult(auth);
-                if (result?.user) {
-                    console.log("Redirect Sign-In Success:", result.user.email);
-                    setUser(result.user);
+                // 2. Check for Redirect Result (Mobile Flow)
+                // This is crucial to finalize the sign-in process on mobile after returning from Google
+                try {
+                    const result = await getRedirectResult(auth);
+                    if (result?.user) {
+                        console.log("Redirect Sign-In Success:", result.user.email);
+                        setUser(result.user);
+                    }
+                } catch (redirectError: any) {
+                    console.error("Redirect Error:", redirectError);
+                    if (redirectError.code !== 'auth/popup-closed-by-user') {
+                        setError(redirectError.message);
+                    }
                 }
+
             } catch (e: any) {
                 console.error("Auth Init Error:", e);
-                // Don't show technical redirect errors to user unless critical
-                if (e.code !== 'auth/popup-closed-by-user') {
-                    setError(e.message);
-                }
+            } finally {
+                // 3. Listen to Auth Changes
+                unsubscribe = onAuthStateChanged(auth, (authUser: any) => {
+                    console.log("Auth State Changed:", authUser ? "User Logged In" : "No User");
+                    setUser(authUser);
+                    setLoading(false);
+                });
             }
         };
 
-        init();
+        initAuth();
 
-        const unsubscribe = onAuthStateChanged(auth, (authUser: any) => {
-            console.log("Auth State Changed:", authUser ? "User Logged In" : "No User");
-            setUser(authUser);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
+        return () => {
+            if (unsubscribe) unsubscribe();
+        };
     }, []);
 
     const signIn = async () => {
