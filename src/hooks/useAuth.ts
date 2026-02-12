@@ -18,30 +18,37 @@ export const useAuth = () => {
                 const stayConnected = window.localStorage.getItem('drinkosaur_stay_connected') !== 'false';
                 await setPersistence(auth, stayConnected ? browserLocalPersistence : browserSessionPersistence);
 
-                // 2. Check for Redirect Result (Mobile Flow)
-                // This is crucial to finalize the sign-in process on mobile after returning from Google
-                try {
-                    const result = await getRedirectResult(auth);
-                    if (result?.user) {
-                        console.log("Redirect Sign-In Success:", result.user.email);
-                        setUser(result.user);
+                // 2. Setup Listener. Wait to process redirect until we know standard auth state is empty.
+                unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+                    if (authUser) {
+                        // Standard Flow: User is already logged in (or persistence kicked in)
+                        console.log("Auth State: Logged In");
+                        setUser(authUser);
+                        setLoading(false);
+                    } else {
+                        // Edge Case Flow: No user found. Check if this is a return from a Redirect.
+                        console.log("Auth State: No User. Checking for Redirect Result...");
+                        try {
+                            const result = await getRedirectResult(auth);
+                            if (result?.user) {
+                                console.log("Redirect Success:", result.user.email);
+                                setUser(result.user);
+                            } else {
+                                // Really no user
+                                setUser(null);
+                            }
+                        } catch (e) {
+                            console.error("Redirect Check Error:", e);
+                            setUser(null);
+                        } finally {
+                            setLoading(false);
+                        }
                     }
-                } catch (redirectError: any) {
-                    console.error("Redirect Error:", redirectError);
-                    if (redirectError.code !== 'auth/popup-closed-by-user') {
-                        setError(redirectError.message);
-                    }
-                }
+                });
 
             } catch (e: any) {
-                console.error("Auth Init Error:", e);
-            } finally {
-                // 3. Listen to Auth Changes
-                unsubscribe = onAuthStateChanged(auth, (authUser: any) => {
-                    console.log("Auth State Changed:", authUser ? "User Logged In" : "No User");
-                    setUser(authUser);
-                    setLoading(false);
-                });
+                console.error("Auth Init Failed:", e);
+                setLoading(false);
             }
         };
 
