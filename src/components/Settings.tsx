@@ -306,7 +306,15 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
             <ChevronRight className="text-white/20 group-hover:text-white transition-colors" />
           </button>
         </div>
+
+        {/* Footer Credits */}
+        <div className="mt-12 mb-8 flex justify-center opacity-30">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">
+            ©<a href="https://brieucpecqueraux.blogspot.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors pointer-events-auto">Brieuc Pecqueraux</a> - Drinkosaur
+          </p>
+        </div>
       </div>
+
     );
   }
 
@@ -434,7 +442,15 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
             <Save size={24} /> {t.save}
           </button>
         </div>
+
+        {/* Footer Credits */}
+        <div className="mt-12 mb-8 flex justify-center opacity-30">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">
+            ©<a href="https://brieucpecqueraux.blogspot.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors pointer-events-auto">Brieuc Pecqueraux</a> - Drinkosaur
+          </p>
+        </div>
       </div>
     </div>
+
   );
 };

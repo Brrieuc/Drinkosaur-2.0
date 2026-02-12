@@ -5,6 +5,7 @@ import { Dashboard } from './components/Dashboard';
 import { AddDrink } from './components/AddDrink';
 import { DrinkList } from './components/DrinkList';
 import { Social } from './components/Social';
+import { OnboardingTour } from './components/OnboardingTour';
 import { AppView, Drink, UserProfile } from './types';
 import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users } from 'lucide-react';
 import { useUser } from './hooks/useUser';
@@ -122,6 +123,15 @@ const App: React.FC = () => {
     >
       <Background />
 
+      {/* ONBOARDING TOUR */}
+      {user.isSetup && !user.hasSeenTour && (
+        <OnboardingTour
+          language={user.language}
+          onComplete={() => {
+            saveUser({ ...user, hasSeenTour: true });
+          }}
+        />
+      )}
 
       {/* TOAST NOTIFICATION */}
       {toast && <Toast message={toast.msg} type={toast.type} />}
@@ -195,15 +205,7 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-      {/* Credits */}
-      <div className="absolute bottom-2 left-0 right-0 flex justify-center z-40 pointer-events-none">
-        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/10 pointer-events-auto">
-          ©<a href="https://brieucpecqueraux.blogspot.com" target="_blank" rel="noopener noreferrer" className="hover:text-white/30 transition-colors">Brieuc Pecqueraux</a> - Drinkosaur
-        </p>
-      </div>
-
     </div>
-
   );
 };
 

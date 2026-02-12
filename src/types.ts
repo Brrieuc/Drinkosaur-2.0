@@ -22,7 +22,9 @@ export interface UserProfile {
   customPhotoURL?: string;
   username?: string;
   stayConnected?: boolean;
+  hasSeenTour?: boolean;
 }
+
 
 
 

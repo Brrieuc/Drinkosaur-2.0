@@ -11,8 +11,10 @@ export const useUser = () => {
         gender: 'male',
         isSetup: false,
         language: 'en',
-        drinkingSpeed: 'average'
+        drinkingSpeed: 'average',
+        hasSeenTour: false
     };
+
 
     const [userProfile, setUserProfile] = useState<UserProfile>(() => {
         try {
