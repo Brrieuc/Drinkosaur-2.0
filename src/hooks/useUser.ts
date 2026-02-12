@@ -89,7 +89,7 @@ export const useUser = () => {
         return downloadURL;
     };
 
-    const saveUserProfile = async (newProfile: UserProfile): Promise<{ success: boolean, error?: string }> => {
+    const saveUserProfile = async (newProfile: Partial<UserProfile>): Promise<{ success: boolean, error?: string }> => {
         // 1. Username changed check
         if (newProfile.username && newProfile.username !== userProfile.username) {
             const cleanUsername = newProfile.username.trim().toLowerCase();
@@ -97,10 +97,12 @@ export const useUser = () => {
 
             const usersRef = collection(db, "users");
             const q = query(usersRef, where("username", "==", cleanUsername));
-            const querySnapshot = await getDocs(q);
-
-            if (!querySnapshot.empty) {
-                return { success: false, error: "Username already taken" };
+            // Only check if username is actually being updated
+            if (userProfile.username !== cleanUsername) {
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    return { success: false, error: "Username already taken" };
+                }
             }
             newProfile.username = cleanUsername;
         }
@@ -123,7 +125,10 @@ export const useUser = () => {
         if (authUser) {
             try {
                 await setDoc(doc(db, "users", authUser.uid), {
-                    ...newProfile, // We only send the changes/profile fields to let Firestore merge handle it too
+                    ...newProfile, // Only updatable fields
+                    // FORCE update computed fields to ensure consistency in DB
+                    photoURL: mergedProfile.photoURL,
+                    displayName: mergedProfile.displayName,
                     email: authUser.email?.toLowerCase()
                 }, { merge: true });
                 return { success: true };

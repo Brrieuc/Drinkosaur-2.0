@@ -8,7 +8,7 @@ import heic2any from 'heic2any';
 
 interface SettingsProps {
   user: UserProfile;
-  onSave: (user: UserProfile) => void;
+  onSave: (user: Partial<UserProfile>) => void;
   onUploadAvatar: (base64: string) => Promise<string>;
 }
 
@@ -126,7 +126,6 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       // Auto save the new photo URL if we are already in profile view
       if (!showAdvanced) {
         onSave({
-          ...user,
           customPhotoURL: url
         });
       }
