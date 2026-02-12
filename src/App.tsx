@@ -8,7 +8,7 @@ import { Social } from './components/Social';
 import { OnboardingTour } from './components/OnboardingTour';
 import { FriendProfileModal } from './components/FriendProfileModal';
 import { AppView, Drink, UserProfile } from './types';
-import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users, Loader2, X } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users, Loader2, X, Mail } from 'lucide-react';
 import { useUser } from './hooks/useUser';
 import { useDrinks } from './hooks/useDrinks';
 import { useSocial } from './hooks/useSocial';
@@ -155,8 +155,9 @@ const App: React.FC = () => {
         <Background />
         <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-12 text-center animate-fade-in">
           <div className="flex flex-col items-center gap-6">
-            <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[32px] flex items-center justify-center shadow-[0_0_50px_rgba(59,130,246,0.5)] border-4 border-white/20">
-              <PlusCircle size={48} className="text-white" strokeWidth={2.5} />
+            <div className="w-32 h-32 bg-white/10 backdrop-blur-3xl rounded-[40px] flex items-center justify-center overflow-hidden shadow-[0_0_60px_rgba(59,130,246,0.5)] border-4 border-white/20 animate-float mb-4 relative group cursor-pointer hover:border-blue-400/50 transition-all">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-600/20 group-hover:opacity-100 opacity-0 transition-opacity" />
+              <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj3GwalK-_8qkiqtJ9wxjVPg7C3VGn-slPe3XK-DNhm4iSq2f0VBeOEjanUW_uoncmzZu74szYMJhs_o8xYV0RU3g-HZTflVBgh9Tj8wSy43r1MiQrgyrp8HIQJyP6wBQu5bT5tFCrLhskSvzeL8flCHnZ6T-7kheSEkcwm6fQuSGZE-LKrBq6KbB_pg4k/s16000/drinkosaur.png" alt="Drinkosaur" className="w-full h-full object-cover scale-110" />
             </div>
             <h1 className="text-5xl font-black tracking-tighter italic">DRINKOSAUR</h1>
             <p className="text-white/40 font-bold uppercase tracking-[0.3em] text-[10px]">Alcoolémie & Amis</p>
@@ -214,15 +215,18 @@ const App: React.FC = () => {
               <div className="flex flex-col gap-3">
                 <button
                   onClick={signInAnonymous}
-                  className="w-full py-4 bg-white/5 hover:bg-white/10 text-white/60 rounded-[20px] font-bold text-sm transition-all active:scale-95 border border-white/10"
+                  className="w-full py-4 bg-white/5 hover:bg-white/10 text-white/60 rounded-[24px] font-bold text-sm transition-all active:scale-95 border border-white/10 flex items-center justify-center gap-3"
                 >
+                  <User size={20} />
                   Continuer en tant qu'invité
                 </button>
+                <div className="w-full h-px bg-white/5 my-2" />
                 <button
                   onClick={() => setShowEmailAuth(true)}
-                  className="text-[10px] uppercase tracking-widest font-black text-white/20 hover:text-white/40 transition-colors"
+                  className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-[24px] font-bold text-sm transition-all active:scale-95 border border-white/10 flex items-center justify-center gap-3"
                 >
-                  Ou avec une adresse email
+                  <Mail size={20} />
+                  Adresse Email
                 </button>
               </div>
             )}
