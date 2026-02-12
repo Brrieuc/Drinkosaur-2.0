@@ -4,6 +4,7 @@ import { UserProfile } from '../types';
 import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { ImageCropper } from './ImageCropper';
+import heic2any from 'heic2any';
 
 interface SettingsProps {
   user: UserProfile;
@@ -25,6 +26,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   // Image Selection & Cropping
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auth Hook
@@ -59,11 +61,36 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
     setIsSyncing(false);
   };
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      let file = e.target.files[0];
+
+      // Handle HEIC from iPhones
+      const isHEIC = file.name.toLowerCase().endsWith('.heic') || file.type === 'image/heic';
+
+      if (isHEIC) {
+        setIsConverting(true);
+        try {
+          const convertedBlob = await heic2any({
+            blob: file,
+            toType: 'image/jpeg',
+            quality: 0.8
+          });
+          file = new File(
+            [Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob],
+            file.name.replace(/\.[^/.]+$/, "") + ".jpg",
+            { type: "image/jpeg" }
+          );
+        } catch (err) {
+          console.error("HEIC conversion error:", err);
+        } finally {
+          setIsConverting(false);
+        }
+      }
+
       const reader = new FileReader();
       reader.addEventListener('load', () => setSelectedImage(reader.result as string));
-      reader.readAsDataURL(e.target.files[0]);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -203,7 +230,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   // --- Simplified Profile View ---
   if (!showAdvanced) {
     return (
-      <div className="w-full h-full flex flex-col p-6 pb-40 overflow-y-auto no-scrollbar animate-fade-in">
+      <div className="w-full h-full flex flex-col p-6 pb-40 overflow-y-auto no-scrollbar animate-fade-in relative">
         {selectedImage && (
           <ImageCropper
             image={selectedImage}
@@ -215,27 +242,29 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
           type="file"
           ref={fileInputRef}
           onChange={onFileChange}
-          accept="image/*"
+          accept="image/*,.heic"
           className="hidden"
         />
 
         <div className="flex flex-col items-center mt-8 mb-8">
           <div className="relative mb-6">
             <div className="w-40 h-40 rounded-[48px] overflow-hidden border-4 border-white/5 shadow-2xl relative group">
-              {isUploading ? (
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+              {(isUploading || isConverting) ? (
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-20">
                   <Loader2 className="w-10 h-10 text-blue-400 animate-spin mb-2" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">Uploading</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">
+                    {isConverting ? 'Converting' : 'Uploading'}
+                  </span>
                 </div>
               ) : null}
               <img
                 src={customPhotoURL || authUser?.photoURL || 'https://via.placeholder.com/150'}
                 alt="Avatar"
-                className={`w-full h-full object-cover transition-transform group-hover:scale-110 ${isUploading ? 'opacity-30' : ''}`}
+                className={`w-full h-full object-cover transition-transform group-hover:scale-110 ${(isUploading || isConverting) ? 'opacity-30' : ''}`}
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
+                disabled={isUploading || isConverting}
                 className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Camera className="w-10 h-10 text-white" />
@@ -295,7 +324,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
         type="file"
         ref={fileInputRef}
         onChange={onFileChange}
-        accept="image/*"
+        accept="image/*,.heic"
         className="hidden"
       />
 

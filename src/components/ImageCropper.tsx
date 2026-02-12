@@ -50,14 +50,15 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({ image, onCropComplet
 
             // Resize to a standard profile size to save space/bandwidth
             const outputCanvas = document.createElement('canvas');
-            outputCanvas.width = 400;
-            outputCanvas.height = 400;
+            outputCanvas.width = 320;
+            outputCanvas.height = 320;
             const outCtx = outputCanvas.getContext('2d');
             if (outCtx) {
-                outCtx.drawImage(canvas, 0, 0, 400, 400);
+                outCtx.drawImage(canvas, 0, 0, 320, 320);
             }
 
-            const base64Image = outputCanvas.toDataURL('image/jpeg', 0.8);
+            const base64Image = outputCanvas.toDataURL('image/jpeg', 0.6);
+
             onCropComplete(base64Image);
         } catch (e) {
             console.error(e);

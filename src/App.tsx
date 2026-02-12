@@ -195,7 +195,15 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Credits */}
+      <div className="absolute bottom-2 left-0 right-0 flex justify-center z-40 pointer-events-none">
+        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/10 pointer-events-auto">
+          ©<a href="https://brieucpecqueraux.blogspot.com" target="_blank" rel="noopener noreferrer" className="hover:text-white/30 transition-colors">Brieuc Pecqueraux</a> - Drinkosaur
+        </p>
+      </div>
+
     </div>
+
   );
 };
 
