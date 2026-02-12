@@ -1,3 +1,4 @@
+
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut } from "firebase/auth";
 import {
@@ -21,10 +22,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
+// Force account selection to refresh session handling
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export {
   auth, db, googleProvider, signInWithPopup, signInWithRedirect, signOut,
   doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc,
   arrayUnion, onSnapshot, deleteDoc, arrayRemove
 };
-
