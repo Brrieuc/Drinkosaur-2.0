@@ -312,6 +312,8 @@ const App: React.FC = () => {
               requests={incomingRequests}
               myProfile={user as UserProfile}
               myBac={bacStatus}
+              myUid={authUser?.uid || ''}
+              isAnonymous={(authUser as any)?.isAnonymous}
               onAddFriend={addFriendByUsername}
               onRespondRequest={respondToRequest}
               onRemoveFriend={removeFriend}
@@ -328,7 +330,6 @@ const App: React.FC = () => {
               onDeclineGroupInvite={declineGroupInvite}
               onLeaveGroup={leaveGroup}
               onFetchGroupStatus={fetchGroupMembersStatus}
-              myUid={authUser?.uid || ''}
             />
             {selectedFriend && (
               <FriendProfileModal

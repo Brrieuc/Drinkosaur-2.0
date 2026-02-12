@@ -12,6 +12,7 @@ interface SocialProps {
     myProfile: UserProfile;
     myBac: BacStatus;
     myUid: string;
+    isAnonymous?: boolean;
     onAddFriend: (username: string) => Promise<any>;
     onRespondRequest: (requestId: string, accept: boolean) => Promise<void>;
     onRemoveFriend: (uid: string) => Promise<void>;
@@ -44,6 +45,7 @@ export const Social: React.FC<SocialProps> = (props) => {
         myProfile,
         myBac,
         myUid,
+        isAnonymous,
         onAddFriend,
         onRespondRequest,
         onRemoveFriend,
@@ -85,7 +87,7 @@ export const Social: React.FC<SocialProps> = (props) => {
     const [newGroupName, setNewGroupName] = useState('');
     const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
 
-    const t = {
+    const t = useMemo(() => ({
         title: language === 'fr' ? 'Social' : 'Social',
         friendsTab: language === 'fr' ? 'Amis' : 'Friends',
         groupsTab: language === 'fr' ? 'Groupes' : 'Groups',
@@ -98,6 +100,9 @@ export const Social: React.FC<SocialProps> = (props) => {
         inviteTitle: language === 'fr' ? 'Rejoins-moi sur Drinkosaur !' : 'Join me on Drinkosaur!',
         inviteBody: (username: string) => language === 'fr' ? `Santé ! Ajoute-moi sur Drinkosaur pour suivre mon taux d'alcool en direct : @${username}` : `Cheers! Add me on Drinkosaur to follow my BAC live: @${username}`,
         inviteSuccess: language === 'fr' ? 'Lien d\'invitation copié !' : 'Invite link copied!',
+        guestSocialTitle: language === 'fr' ? 'Mode Social Verrouillé' : 'Social Mode Locked',
+        guestSocialDesc: language === 'fr' ? 'Pour ajouter des amis et voir leur alcoolémie en direct, vous devez être connecté avec un compte Google.' : 'To add friends and see their live BAC, you must be logged in with a Google account.',
+        guestSocialButton: language === 'fr' ? 'Se connecter maintenant' : 'Sign in now',
         empty: language === 'fr' ? 'Aucun ami pour le moment.' : 'No friends yet.',
         emptyGroups: language === 'fr' ? 'Vous n\'avez pas encore de groupes.' : 'No groups yet.',
         live: language === 'fr' ? 'EN DIRECT' : 'LIVE',
@@ -114,7 +119,27 @@ export const Social: React.FC<SocialProps> = (props) => {
         cancel: language === 'fr' ? 'Annuler' : 'Cancel',
         create: language === 'fr' ? 'Créer' : 'Create',
         leaveGroup: language === 'fr' ? 'Quitter' : 'Leave group'
-    };
+    }), [language]);
+
+    if (isAnonymous) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-fade-in relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 to-transparent -z-10" />
+                <div className="w-24 h-24 bg-white/5 rounded-[32px] flex items-center justify-center border border-white/10 mb-8 shadow-2xl animate-float backdrop-blur-xl">
+                    <Users size={40} className="text-blue-400" />
+                </div>
+                <h2 className="text-3xl font-black text-white mb-4 italic uppercase tracking-tighter">{t.guestSocialTitle}</h2>
+                <p className="text-white/40 text-sm font-bold mb-10 leading-relaxed max-w-xs">{t.guestSocialDesc}</p>
+
+                <button
+                    onClick={() => window.location.reload()}
+                    className="px-10 py-5 bg-white text-black rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-[0_0_50px_rgba(255,255,255,0.2)] active:scale-95 transition-all"
+                >
+                    {t.guestSocialButton}
+                </button>
+            </div>
+        );
+    }
 
     const handleAdd = async (e: React.FormEvent | string) => {
         if (typeof e !== 'string') e.preventDefault();
