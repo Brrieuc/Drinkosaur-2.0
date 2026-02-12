@@ -248,36 +248,52 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
 
         <div className="flex flex-col items-center mt-8 mb-8">
           <div className="relative mb-6">
-            <div className="w-40 h-40 rounded-[48px] overflow-hidden border-4 border-white/5 shadow-2xl relative group">
+            <div
+              className={`w-40 h-40 rounded-[48px] overflow-hidden border-4 border-white/5 shadow-2xl relative group transition-all ${isUploading || isConverting ? 'cursor-wait' : 'cursor-pointer active:scale-95'}`}
+              onClick={() => !isUploading && !isConverting && fileInputRef.current?.click()}
+              role="button"
+              aria-label="Change profile photo"
+            >
               {(isUploading || isConverting) ? (
                 <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-20">
                   <Loader2 className="w-10 h-10 text-blue-400 animate-spin mb-2" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">
-                    {isConverting ? 'Converting' : 'Uploading'}
+                  <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 px-2 text-center">
+                    {isConverting ? 'Optimizing' : 'Uploading'}
                   </span>
                 </div>
               ) : null}
               <img
                 src={customPhotoURL || authUser?.photoURL || 'https://via.placeholder.com/150'}
                 alt="Avatar"
-                className={`w-full h-full object-cover transition-transform group-hover:scale-110 ${(isUploading || isConverting) ? 'opacity-30' : ''}`}
+                className={`w-full h-full object-cover transition-transform group-hover:scale-110 ${(isUploading || isConverting) ? 'opacity-30 blur-sm' : ''}`}
               />
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                <Camera className="w-10 h-10 text-white/0 group-hover:text-white/100 transition-all scale-50 group-hover:scale-100" />
+              </div>
+            </div>
+
+            {/* Always visible Camera Badge for mobile discovery */}
+            {!isUploading && !isConverting && (
               <button
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading || isConverting}
-                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute -bottom-2 -right-2 bg-blue-600 p-3 rounded-2xl border-4 border-[#050505] shadow-xl active:scale-90 transition-all z-30"
+                aria-label="Change profile photo"
               >
-                <Camera className="w-10 h-10 text-white" />
+                <Camera size={20} className="text-white" />
               </button>
-            </div>
-            {authUser && (
-              <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-blue-400 to-indigo-600 p-3 rounded-[20px] border-4 border-[#050505] shadow-lg">
-                <Globe size={20} className="text-white" />
+            )}
+
+            {authUser && !isUploading && (
+              <div
+                className="absolute -top-2 -left-2 bg-gradient-to-br from-emerald-400 to-teal-600 p-2 rounded-xl border-4 border-[#050505] shadow-lg"
+                title="Google Synchronized"
+              >
+                <Globe size={14} className="text-white" />
               </div>
             )}
           </div>
           <h2 className="text-4xl font-black text-white tracking-tight">@{username || 'joueur'}</h2>
-          <p className="text-white/40 text-sm mt-2 font-medium">{authUser?.email || 'Mode non-synchronisé'}</p>
+          <p className="text-white/60 text-sm mt-2 font-medium">{authUser?.email || 'Mode local (non-synchronisé)'}</p>
         </div>
 
         <div className="space-y-4">

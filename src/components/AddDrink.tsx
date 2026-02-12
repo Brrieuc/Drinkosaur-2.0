@@ -571,6 +571,7 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
                                 <button
                                     onClick={() => finalizeDrink()}
                                     className="w-full py-6 mt-8 rounded-[32px] bg-gradient-to-br from-blue-500 to-indigo-700 text-white font-black text-2xl shadow-2xl shadow-blue-900/40 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                    aria-label={t.logDrink}
                                 >
                                     <Check size={28} /> {t.logDrink}
                                 </button>

@@ -247,6 +247,7 @@ export const Social: React.FC<SocialProps> = ({
                             onClick={handleInvite}
                             className="bg-white/5 hover:bg-white/10 border border-white/10 px-4 rounded-2xl text-white/60 hover:text-white transition-all active:scale-95 flex items-center justify-center group"
                             title="Invite a friend"
+                            aria-label="Invite a friend"
                         >
                             <Share2 size={24} className="group-hover:text-blue-400 transition-colors" />
                         </button>
@@ -314,12 +315,14 @@ export const Social: React.FC<SocialProps> = ({
                                         <button
                                             onClick={() => onRespondRequest(req.id, false)}
                                             className="p-2 bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 rounded-xl transition-all"
+                                            aria-label={t.decline}
                                         >
                                             <X size={20} />
                                         </button>
                                         <button
                                             onClick={() => onRespondRequest(req.id, true)}
                                             className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all"
+                                            aria-label={t.accept}
                                         >
                                             <Check size={20} />
                                         </button>
