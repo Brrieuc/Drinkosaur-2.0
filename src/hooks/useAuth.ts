@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { auth, googleProvider, signInWithPopup, signOut } from '../firebase';
-import { User, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { auth, googleProvider, signInWithPopup, signInWithRedirect, signOut } from '../firebase';
+import { User, onAuthStateChanged, setPersistence, browserLocalPersistence, getRedirectResult } from 'firebase/auth';
 
 export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -9,14 +9,27 @@ export const useAuth = () => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        // Force session persistence to local storage
+        // 1. Force persistence
         setPersistence(auth, browserLocalPersistence).catch(console.error);
 
-        const unsubscribe = onAuthStateChanged(auth, (authUser) => {
-            console.log("Auth State Changed - User:", authUser?.email || "null");
+        // 2. Auth state listener
+        const unsubscribe = onAuthStateChanged(auth, (authUser: any) => {
+            console.log("Auth State Changed:", authUser ? authUser.email : "null");
             setUser(authUser);
             setLoading(false);
         });
+
+        // 3. Handle redirect result (Crucial for mobile)
+        getRedirectResult(auth)
+            .then((result: any) => {
+                if (result?.user) {
+                    console.log("Redirect sign-in success:", result.user.email);
+                    setUser(result.user);
+                }
+            })
+            .catch((err: any) => {
+                console.error("Redirect Result Error:", err);
+            });
 
         return () => unsubscribe();
     }, []);
@@ -24,17 +37,20 @@ export const useAuth = () => {
     const signIn = async () => {
         setError(null);
         try {
-            console.log("Starting Google Sign-In (Popup mode)...");
-            // Popup is more reliable on modern iOS Safari than Redirect if the user manually allows it once.
-            const result = await signInWithPopup(auth, googleProvider);
-            if (result.user) {
-                console.log("Sign-in successful:", result.user.email);
-                setUser(result.user);
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+            if (isMobile) {
+                console.log("Mobile: Using Redirect");
+                await signInWithRedirect(auth, googleProvider);
+            } else {
+                console.log("Desktop: Using Popup");
+                const result = await signInWithPopup(auth, googleProvider);
+                if (result.user) setUser(result.user);
             }
         } catch (err: any) {
-            console.error("Auth Error Detail:", err.code, err.message);
+            console.error("Auth Error:", err.code, err.message);
             if (err.code === 'auth/popup-blocked') {
-                setError("La fenêtre de connexion a été bloquée. Veuillez autoriser les popups pour ce site.");
+                setError("Fenêtre bloquée par le navigateur.");
             } else {
                 setError(err.message);
             }
@@ -45,7 +61,6 @@ export const useAuth = () => {
         try {
             await signOut(auth);
             setUser(null);
-            console.log("Logged out safely");
         } catch (err: any) {
             setError(err.message);
         }
