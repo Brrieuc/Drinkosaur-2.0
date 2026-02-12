@@ -81,15 +81,33 @@ export const useUser = () => {
     const uploadAvatar = async (base64Image: string): Promise<string> => {
         if (!authUser) throw new Error("Not logged in");
 
+        console.log("[uploadAvatar] Starting upload for user:", authUser.uid);
+        console.log("[uploadAvatar] Image data length:", base64Image.length);
+        console.log("[uploadAvatar] Image prefix:", base64Image.substring(0, 30));
+
         const storageRef = ref(storage, `avatars/${authUser.uid}_${Date.now()}.jpg`);
-        // Remove data:image/jpeg;base64, prefix
-        const base64Data = base64Image.split(',')[1];
-        await uploadString(storageRef, base64Data, 'base64');
-        const downloadURL = await getDownloadURL(storageRef);
-        return downloadURL;
+
+        try {
+            // Use 'data_url' format directly — this handles content type automatically
+            // and works with canvas.toDataURL() output without needing to strip the prefix
+            await uploadString(storageRef, base64Image, 'data_url');
+            console.log("[uploadAvatar] Upload successful");
+
+            const downloadURL = await getDownloadURL(storageRef);
+            console.log("[uploadAvatar] Download URL obtained:", downloadURL);
+
+            return downloadURL;
+        } catch (err) {
+            console.error("[uploadAvatar] UPLOAD FAILED:", err);
+            throw err;
+        }
     };
 
     const saveUserProfile = async (newProfile: Partial<UserProfile>): Promise<{ success: boolean, error?: string }> => {
+        console.log("[saveUserProfile] Called with:", JSON.stringify(newProfile, null, 2));
+        console.log("[saveUserProfile] Current userProfile.customPhotoURL:", userProfile.customPhotoURL);
+        console.log("[saveUserProfile] Current userProfile.photoURL:", userProfile.photoURL);
+
         // 1. Username changed check
         if (newProfile.username && newProfile.username !== userProfile.username) {
             const cleanUsername = newProfile.username.trim().toLowerCase();
@@ -117,6 +135,9 @@ export const useUser = () => {
             displayName: tempProfile.displayName || authUser?.displayName || ''
         };
 
+        console.log("[saveUserProfile] Merged customPhotoURL:", mergedProfile.customPhotoURL);
+        console.log("[saveUserProfile] Merged photoURL:", mergedProfile.photoURL);
+
         // 3. Update State & Local Storage
         setUserProfile(mergedProfile);
         window.localStorage.setItem('drinkosaur_user', JSON.stringify(mergedProfile));
@@ -124,16 +145,19 @@ export const useUser = () => {
         // 4. Update Firestore if auth
         if (authUser) {
             try {
-                await setDoc(doc(db, "users", authUser.uid), {
+                const firestorePayload = {
                     ...newProfile, // Only updatable fields
                     // FORCE update computed fields to ensure consistency in DB
                     photoURL: mergedProfile.photoURL,
                     displayName: mergedProfile.displayName,
                     email: authUser.email?.toLowerCase()
-                }, { merge: true });
+                };
+                console.log("[saveUserProfile] Firestore payload:", JSON.stringify(firestorePayload, null, 2));
+                await setDoc(doc(db, "users", authUser.uid), firestorePayload, { merge: true });
+                console.log("[saveUserProfile] Firestore write SUCCESS");
                 return { success: true };
             } catch (e) {
-                console.error("Error saving profile:", e);
+                console.error("[saveUserProfile] Firestore write FAILED:", e);
                 return { success: false, error: "Failed to save profile" };
             }
         }

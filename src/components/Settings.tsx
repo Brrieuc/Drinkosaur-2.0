@@ -120,17 +120,22 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   const handleCropComplete = async (croppedBase64: string) => {
     setSelectedImage(null);
     setIsUploading(true);
+    console.log("[Settings] handleCropComplete called, showAdvanced:", showAdvanced);
     try {
       const url = await onUploadAvatar(croppedBase64);
+      console.log("[Settings] Upload returned URL:", url);
       setCustomPhotoURL(url);
       // Auto save the new photo URL if we are already in profile view
       if (!showAdvanced) {
+        console.log("[Settings] Auto-saving customPhotoURL to profile");
         onSave({
           customPhotoURL: url
         });
+      } else {
+        console.log("[Settings] showAdvanced is true — photo will be saved on next manual Save");
       }
     } catch (e) {
-      console.error("Upload failed", e);
+      console.error("[Settings] Upload failed:", e);
     } finally {
       setIsUploading(false);
     }
