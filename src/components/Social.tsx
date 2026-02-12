@@ -13,8 +13,10 @@ interface SocialProps {
     onRespondRequest: (requestId: string, accept: boolean) => Promise<void>;
     onRemoveFriend: (uid: string) => Promise<void>;
     onRefresh: () => Promise<void>;
+    onSelectFriend: (uid: string) => void;
     suggestions: any[];
     onFetchSuggestions: () => Promise<void>;
+
     loading: boolean;
     language: 'en' | 'fr';
 }
@@ -28,6 +30,7 @@ export const Social: React.FC<SocialProps> = ({
     onRespondRequest,
     onRemoveFriend,
     onRefresh,
+    onSelectFriend,
     suggestions,
     onFetchSuggestions,
     loading,
@@ -302,7 +305,8 @@ export const Social: React.FC<SocialProps> = ({
                             return (
                                 <div
                                     key={player.uid}
-                                    className={`glass-panel-3d p-4 rounded-3xl flex items-center gap-4 transition-all relative overflow-hidden ${isMe ? 'bg-blue-500/10 border-blue-500/30 ring-1 ring-blue-500/20' : 'hover:bg-white/5'}`}
+                                    onClick={() => !isMe && onSelectFriend(player.uid)}
+                                    className={`glass-panel-3d p-4 rounded-3xl flex items-center gap-4 transition-all relative overflow-hidden ${isMe ? 'bg-blue-500/10 border-blue-500/30 ring-1 ring-blue-500/20' : 'hover:bg-white/5 cursor-pointer active:scale-[0.98]'}`}
                                 >
                                     {/* Rank Number / Icon */}
                                     <div className="w-8 flex justify-center items-center font-black text-lg italic text-white/20">

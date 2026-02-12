@@ -6,6 +6,7 @@ import { AddDrink } from './components/AddDrink';
 import { DrinkList } from './components/DrinkList';
 import { Social } from './components/Social';
 import { OnboardingTour } from './components/OnboardingTour';
+import { FriendProfileModal } from './components/FriendProfileModal';
 import { AppView, Drink, UserProfile } from './types';
 import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users } from 'lucide-react';
 import { useUser } from './hooks/useUser';
@@ -31,6 +32,12 @@ const App: React.FC = () => {
   const [drinks, setDrinks] = useDrinks();
   const { bacStatus, statusChangeToast } = useBacCalculator(drinks, user as UserProfile);
 
+  const [selectedFriend, setSelectedFriend] = useState<{
+    status: any;
+    profile: UserProfile;
+    drinks: Drink[];
+  } | null>(null);
+
   // Social Hook
   const {
     friends,
@@ -41,8 +48,26 @@ const App: React.FC = () => {
     refreshSocial,
     suggestions,
     getSuggestions,
+    fetchFriendData,
     loading: socialLoading
   } = useSocial(bacStatus, user as UserProfile);
+
+  const handleSelectFriend = async (uid: string) => {
+    const friendStatus = friends.find(f => f.uid === uid);
+    if (!friendStatus) return;
+
+    try {
+      const data = await fetchFriendData(uid);
+      setSelectedFriend({
+        status: friendStatus,
+        profile: data.profile,
+        drinks: data.drinks
+      });
+    } catch (err) {
+      console.error(err);
+      setToast({ msg: 'Error loading friend profile', type: 'warning' });
+    }
+  };
 
 
 
@@ -159,22 +184,32 @@ const App: React.FC = () => {
         )}
 
         {view === AppView.SOCIAL && (
-          <Social
-            friends={friends}
-            requests={incomingRequests}
-            myProfile={user as UserProfile}
-            myBac={bacStatus}
-            onAddFriend={addFriendByUsername}
-            onRespondRequest={respondToRequest}
-            onRemoveFriend={removeFriend}
-            onRefresh={refreshSocial}
-            suggestions={suggestions}
-            onFetchSuggestions={getSuggestions}
-            loading={socialLoading}
-            language={user.language}
-          />
-
-
+          <>
+            <Social
+              friends={friends}
+              requests={incomingRequests}
+              myProfile={user as UserProfile}
+              myBac={bacStatus}
+              onAddFriend={addFriendByUsername}
+              onRespondRequest={respondToRequest}
+              onRemoveFriend={removeFriend}
+              onRefresh={refreshSocial}
+              onSelectFriend={handleSelectFriend}
+              suggestions={suggestions}
+              onFetchSuggestions={getSuggestions}
+              loading={socialLoading}
+              language={user.language}
+            />
+            {selectedFriend && (
+              <FriendProfileModal
+                friend={selectedFriend.status}
+                friendDrinks={selectedFriend.drinks}
+                friendProfile={selectedFriend.profile}
+                onClose={() => setSelectedFriend(null)}
+                language={user.language}
+              />
+            )}
+          </>
         )}
 
         {view === AppView.DASHBOARD && (

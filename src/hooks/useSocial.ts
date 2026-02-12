@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { db, doc, updateDoc, arrayUnion, query, where, collection, getDocs, onSnapshot, arrayRemove, setDoc, addDoc, deleteDoc } from '../firebase';
 import { useAuth } from './useAuth';
-import { FriendStatus, BacStatus, UserProfile } from '../types';
+import { FriendStatus, BacStatus, UserProfile, Drink } from '../types';
 
 export interface FriendRequest {
     id: string;
@@ -252,6 +252,21 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
         }
     };
 
+    const fetchFriendData = async (friendUid: string) => {
+        const [profileSnap, drinksSnap] = await Promise.all([
+            getDocs(query(collection(db, "users"), where("__name__", "==", friendUid))),
+            getDocs(query(collection(db, "drinks"), where("__name__", "==", friendUid)))
+        ]);
+
+
+        if (profileSnap.empty) throw new Error("Friend not found");
+
+        const profile = profileSnap.docs[0].data() as UserProfile;
+        const drinks = drinksSnap.empty ? [] : (drinksSnap.docs[0].data()?.list || []) as Drink[];
+
+        return { profile, drinks };
+    };
+
     return {
         friends,
         incomingRequests,
@@ -261,8 +276,10 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
         respondToRequest,
         removeFriend,
         refreshSocial,
+        fetchFriendData,
         loading
     };
 };
+
 
 
