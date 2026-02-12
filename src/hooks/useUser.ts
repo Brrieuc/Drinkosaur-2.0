@@ -106,7 +106,14 @@ export const useUser = () => {
         }
 
         // 2. Prepare merged profile
-        const mergedProfile = { ...userProfile, ...newProfile };
+        const tempProfile = { ...userProfile, ...newProfile };
+        const mergedProfile = {
+            ...tempProfile,
+            // Ensure photoURL is always consistent with customPhotoURL
+            photoURL: tempProfile.customPhotoURL || tempProfile.photoURL || authUser?.photoURL || '',
+            // Ensure displayName is prioritized correctly
+            displayName: tempProfile.displayName || authUser?.displayName || ''
+        };
 
         // 3. Update State & Local Storage
         setUserProfile(mergedProfile);

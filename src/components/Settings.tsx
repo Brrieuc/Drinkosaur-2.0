@@ -23,6 +23,11 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   const [username, setUsername] = useState(user.username || '');
   const [customPhotoURL, setCustomPhotoURL] = useState(user.customPhotoURL || '');
 
+  // Pivot: Sync local state when user profile updates (e.g. initial load)
+  React.useEffect(() => {
+    if (user.customPhotoURL) setCustomPhotoURL(user.customPhotoURL);
+  }, [user.customPhotoURL]);
+
   // Image Selection & Cropping
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
