@@ -1,7 +1,7 @@
 /// <reference path="../firebase.d.ts" />
 
 import { useState, useEffect } from 'react';
-import { auth, googleProvider, signInWithPopup, signInWithRedirect, signInAnonymously, signOut } from '../firebase';
+import { auth, googleProvider, signInWithPopup, signInWithRedirect, signInAnonymously, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from '../firebase';
 import { User, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence, getRedirectResult } from 'firebase/auth';
 
 export const useAuth = () => {
@@ -89,6 +89,41 @@ export const useAuth = () => {
         }
     };
 
+    const signInWithEmail = async (email: string, pass: string) => {
+        setError(null);
+        try {
+            const result = await signInWithEmailAndPassword(auth, email, pass);
+            if (result?.user) setUser(result.user);
+        } catch (err: any) {
+            console.error("Email Sign-In Error:", err);
+            // Firebase returns english error codes, map them to french if needed or just generic messages
+            if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
+                setError("Email ou mot de passe incorrect.");
+            } else if (err.code === "auth/too-many-requests") {
+                setError("Trop d'essais. Réessayez plus tard.");
+            } else {
+                setError(err.message);
+            }
+        }
+    };
+
+    const signUpWithEmail = async (email: string, pass: string) => {
+        setError(null);
+        try {
+            const result = await createUserWithEmailAndPassword(auth, email, pass);
+            if (result?.user) setUser(result.user);
+        } catch (err: any) {
+            console.error("Email Sign-Up Error:", err);
+            if (err.code === "auth/email-already-in-use") {
+                setError("Cet email est déjà utilisé.");
+            } else if (err.code === "auth/weak-password") {
+                setError("Le mot de passe doit faire au moins 6 caractères.");
+            } else {
+                setError(err.message);
+            }
+        }
+    };
+
     const logout = async () => {
         try {
             await signOut(auth);
@@ -98,5 +133,5 @@ export const useAuth = () => {
         }
     };
 
-    return { user, loading, error, signIn, signInAnonymous, logout };
+    return { user, loading, error, signIn, signInAnonymous, signInWithEmail, signUpWithEmail, logout };
 };

@@ -8,7 +8,7 @@ import { Social } from './components/Social';
 import { OnboardingTour } from './components/OnboardingTour';
 import { FriendProfileModal } from './components/FriendProfileModal';
 import { AppView, Drink, UserProfile } from './types';
-import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users, Loader2 } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users, Loader2, X } from 'lucide-react';
 import { useUser } from './hooks/useUser';
 import { useDrinks } from './hooks/useDrinks';
 import { useSocial } from './hooks/useSocial';
@@ -82,7 +82,11 @@ const App: React.FC = () => {
     }
   };
 
-  const { signIn, signInAnonymous, loading: authLoading, error: authError } = useAuth();
+  const { signIn, signInAnonymous, signInWithEmail, signUpWithEmail, loading: authLoading, error: authError } = useAuth();
+  const [showEmailAuth, setShowEmailAuth] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   // -- Rendering Logic Gate (moved below hooks) --
 
@@ -167,15 +171,64 @@ const App: React.FC = () => {
               Se connecter avec Google
             </button>
 
-            <button
-              onClick={signInAnonymous}
-              className="w-full py-4 bg-white/5 hover:bg-white/10 text-white/60 rounded-[20px] font-bold text-sm transition-all active:scale-95 border border-white/10"
-            >
-              Continuer en tant qu'invité
-            </button>
+            {/* --- EMAIL AUTH --- */}
+            {showEmailAuth ? (
+              <div className="w-full bg-white/5 p-6 rounded-[28px] border border-white/10 animate-fade-in-up">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-white font-black italic text-xl">{isSignUp ? "Créer un compte" : "Connexion Email"}</h3>
+                  <button onClick={() => setShowEmailAuth(false)} className="text-white/30 hover:text-white"><X size={20} /></button>
+                </div>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  if (isSignUp) signUpWithEmail(email, password);
+                  else signInWithEmail(email, password);
+                }} className="space-y-4">
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-blue-500 transition-all placeholder:text-white/20"
+                    required
+                  />
+                  <input
+                    type="password"
+                    placeholder="Mot de passe"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-blue-500 transition-all placeholder:text-white/20"
+                    required
+                    minLength={6}
+                  />
+                  <button type="submit" className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-900/40 active:scale-95 transition-all">
+                    {isSignUp ? "S'inscrire" : "Se connecter"}
+                  </button>
+                </form>
+                <div className="mt-4 text-center">
+                  <button onClick={() => setIsSignUp(!isSignUp)} className="text-[10px] text-white/40 font-bold uppercase tracking-widest hover:text-white transition-colors">
+                    {isSignUp ? "J'ai déjà un compte" : "Créer un compte"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={signInAnonymous}
+                  className="w-full py-4 bg-white/5 hover:bg-white/10 text-white/60 rounded-[20px] font-bold text-sm transition-all active:scale-95 border border-white/10"
+                >
+                  Continuer en tant qu'invité
+                </button>
+                <button
+                  onClick={() => setShowEmailAuth(true)}
+                  className="text-[10px] uppercase tracking-widest font-black text-white/20 hover:text-white/40 transition-colors"
+                >
+                  Ou avec une adresse email
+                </button>
+              </div>
+            )}
 
             {authError && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 animate-shake">
+              <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 animate-shake mt-4">
                 <p className="text-red-400 text-[10px] font-bold leading-relaxed">{authError}</p>
               </div>
             )}
