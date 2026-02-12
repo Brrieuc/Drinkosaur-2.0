@@ -26,12 +26,19 @@ const App: React.FC = () => {
   const [toast, setToast] = useState<{ msg: string, type: 'success' | 'warning' } | null>(null);
 
   // Custom Hooks
-  const [user, saveUser] = useUser();
+  const [user, saveUser, uploadAvatar] = useUser();
   const [drinks, setDrinks] = useDrinks();
   const { bacStatus, statusChangeToast } = useBacCalculator(drinks, user as UserProfile);
 
   // Social Hook
-  const { friends, addFriendByUsername, removeFriend, loading: socialLoading } = useSocial(bacStatus, user as UserProfile);
+  const {
+    friends,
+    incomingRequests,
+    addFriendByUsername,
+    respondToRequest,
+    removeFriend,
+    loading: socialLoading
+  } = useSocial(bacStatus, user as UserProfile);
 
   // Handle toast from BAC changes
   useEffect(() => {
@@ -131,13 +138,16 @@ const App: React.FC = () => {
                 setTimeout(() => setToast(null), 3000);
               }
             }}
+            onUploadAvatar={uploadAvatar}
           />
         )}
 
         {view === AppView.SOCIAL && (
           <Social
             friends={friends}
+            requests={incomingRequests}
             onAddFriend={addFriendByUsername}
+            onRespondRequest={respondToRequest}
             onRemoveFriend={removeFriend}
             loading={socialLoading}
             language={user.language}

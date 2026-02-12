@@ -1,17 +1,20 @@
 
 import React, { useState } from 'react';
 import { FriendStatus } from '../types';
-import { UserPlus, Search, Loader2, Beer, AlertTriangle, Trash2 } from 'lucide-react';
+import { FriendRequest } from '../hooks/useSocial';
+import { UserPlus, Loader2, Beer, AlertTriangle, Trash2, Check, X, Bell } from 'lucide-react';
 
 interface SocialProps {
     friends: FriendStatus[];
+    requests: FriendRequest[];
     onAddFriend: (username: string) => Promise<any>;
+    onRespondRequest: (requestId: string, accept: boolean) => Promise<void>;
     onRemoveFriend: (uid: string) => Promise<void>;
     loading: boolean;
     language: 'en' | 'fr';
 }
 
-export const Social: React.FC<SocialProps> = ({ friends, onAddFriend, onRemoveFriend, loading, language }) => {
+export const Social: React.FC<SocialProps> = ({ friends, requests, onAddFriend, onRespondRequest, onRemoveFriend, loading, language }) => {
     const [searchUsername, setSearchUsername] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -28,7 +31,7 @@ export const Social: React.FC<SocialProps> = ({ friends, onAddFriend, onRemoveFr
 
         try {
             await onAddFriend(trimmed);
-            setSuccess(language === 'fr' ? 'Ami ajouté !' : 'Friend added!');
+            setSuccess(language === 'fr' ? 'Demande envoyée !' : 'Request sent!');
             setSearchUsername('');
             setTimeout(() => setSuccess(null), 3000);
         } catch (err: any) {
@@ -45,11 +48,13 @@ export const Social: React.FC<SocialProps> = ({ friends, onAddFriend, onRemoveFr
         addButton: language === 'fr' ? 'Ajouter' : 'Add',
         empty: language === 'fr' ? 'Aucun ami pour le moment.' : 'No friends yet.',
         live: language === 'fr' ? 'EN DIRECT' : 'LIVE',
-        removeConfirm: language === 'fr' ? 'Supprimer cet ami ?' : 'Remove this friend?',
+        requests: language === 'fr' ? 'Demandes en attente' : 'Pending Requests',
+        accept: language === 'fr' ? 'Accepter' : 'Accept',
+        decline: language === 'fr' ? 'Refuser' : 'Decline',
     };
 
     return (
-        <div className="flex-1 flex flex-col p-6 pb-32 overflow-y-auto no-scrollbar animate-fade-in">
+        <div className="flex-1 flex flex-col p-6 pb-40 overflow-y-auto no-scrollbar animate-fade-in">
             <h2 className="text-3xl font-extrabold mb-2 tracking-tight flex items-center gap-3">
                 <Beer className="text-amber-400" /> {t.title}
             </h2>
@@ -89,6 +94,40 @@ export const Social: React.FC<SocialProps> = ({ friends, onAddFriend, onRemoveFr
                     </div>
                 )}
             </form>
+
+            {/* --- PENDING REQUESTS --- */}
+            {requests.length > 0 && (
+                <div className="mb-10 animate-fade-in-up">
+                    <h3 className="text-sm font-black text-white/40 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Bell size={14} /> {t.requests}
+                    </h3>
+                    <div className="space-y-3">
+                        {requests.map((req) => (
+                            <div key={req.id} className="glass-panel-3d p-4 rounded-3xl flex items-center gap-4 bg-blue-500/5 border-blue-500/20">
+                                <img src={req.fromPhoto || 'https://via.placeholder.com/150'} className="w-12 h-12 rounded-full border-2 border-white/10 object-cover" />
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="font-bold truncate">@{req.fromName}</h4>
+                                    <p className="text-[10px] text-white/30 uppercase font-black">Want to be friends</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => onRespondRequest(req.id, false)}
+                                        className="p-2 bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 rounded-xl transition-all"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                    <button
+                                        onClick={() => onRespondRequest(req.id, true)}
+                                        className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all"
+                                    >
+                                        <Check size={20} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* --- FRIENDS LIST --- */}
             <div className="space-y-4">

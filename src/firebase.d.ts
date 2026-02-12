@@ -39,4 +39,13 @@ declare module 'firebase/firestore' {
     export function arrayRemove(...elements: any[]): any;
     export function onSnapshot(reference: any, observer: (snapshot: any) => void, error?: (error: any) => void): any;
     export function deleteDoc(reference: any): Promise<void>;
+    export function addDoc(reference: any, data: any): Promise<any>;
 }
+
+declare module 'firebase/storage' {
+    export function getStorage(app?: any): any;
+    export function ref(storage: any, path: string): any;
+    export function uploadString(reference: any, data: string, format: string): Promise<any>;
+    export function getDownloadURL(reference: any): Promise<string>;
+}
+

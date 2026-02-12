@@ -5,8 +5,10 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signO
 import {
   getFirestore, doc, setDoc, getDoc, collection,
   query, where, getDocs, updateDoc, arrayUnion,
-  onSnapshot, deleteDoc, arrayRemove
+  onSnapshot, deleteDoc, arrayRemove, addDoc
 } from "firebase/firestore";
+import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyBGkKn2DBlD0HLmI3Smc10lJF143Co2_Ew",
@@ -22,12 +24,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
+
 // Force account selection to refresh session handling
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export {
-  auth, db, googleProvider, signInWithPopup, signInWithRedirect, signOut,
+  auth, db, storage, googleProvider, signInWithPopup, signInWithRedirect, signOut,
   doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc,
-  arrayUnion, onSnapshot, deleteDoc, arrayRemove
+  arrayUnion, onSnapshot, deleteDoc, arrayRemove, addDoc,
+  ref, uploadString, getDownloadURL
 };
+

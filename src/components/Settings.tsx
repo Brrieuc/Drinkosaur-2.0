@@ -1,17 +1,19 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { UserProfile } from '../types';
-import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft } from 'lucide-react';
+import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { ImageCropper } from './ImageCropper';
 
 interface SettingsProps {
   user: UserProfile;
   onSave: (user: UserProfile) => void;
+  onUploadAvatar: (base64: string) => Promise<string>;
 }
 
 type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn';
 
-export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
+export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar }) => {
   const [showAdvanced, setShowAdvanced] = useState(!user.isSetup);
   const [weight, setWeight] = useState(user.weightKg || 70);
   const [gender, setGender] = useState<'male' | 'female'>(user.gender);
@@ -19,6 +21,11 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
   const [drinkingSpeed, setDrinkingSpeed] = useState<'slow' | 'average' | 'fast'>(user.drinkingSpeed || 'average');
   const [username, setUsername] = useState(user.username || '');
   const [customPhotoURL, setCustomPhotoURL] = useState(user.customPhotoURL || '');
+
+  // Image Selection & Cropping
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auth Hook
   const { user: authUser, loading: authLoading, signIn, logout } = useAuth();
@@ -52,11 +59,39 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
     setIsSyncing(false);
   };
 
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const reader = new FileReader();
+      reader.addEventListener('load', () => setSelectedImage(reader.result as string));
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  const handleCropComplete = async (croppedBase64: string) => {
+    setSelectedImage(null);
+    setIsUploading(true);
+    try {
+      const url = await onUploadAvatar(croppedBase64);
+      setCustomPhotoURL(url);
+      // Auto save the new photo URL if we are already in profile view
+      if (!showAdvanced) {
+        onSave({
+          ...user,
+          customPhotoURL: url
+        });
+      }
+    } catch (e) {
+      console.error("Upload failed", e);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const t: Record<TranslationKey, string> = {
     en: {
       profileTitle: "My Profile",
       settingsTitle: "Calculations Settings",
-      desc: "Customize your Drinkosaur experience and sync your data.",
+      desc: "Customize your Drinkosaur experience.",
       advancedDesc: "These details are used to calibrate your BAC estimation correctly.",
       weight: "Weight (kg)",
       sex: "Biological Sex",
@@ -84,7 +119,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
     fr: {
       profileTitle: "Mon Profil",
       settingsTitle: "Réglages de Calcul",
-      desc: "Personnalisez votre expérience Drinkosaur et synchronisez vos données.",
+      desc: "Personnalisez votre expérience Drinkosaur.",
       advancedDesc: "Ces détails permettent de calibrer le calcul de votre alcoolémie.",
       weight: "Poids (kg)",
       sex: "Sexe Biologique",
@@ -115,7 +150,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
     if (authLoading) {
       return (
         <div className="flex items-center justify-center p-6 bg-black/20 rounded-xl">
-          <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+          <Loader2 className="w-6 h-6 text-white animate-spin" />
         </div>
       );
     }
@@ -169,16 +204,38 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
   if (!showAdvanced) {
     return (
       <div className="w-full h-full flex flex-col p-6 pb-40 overflow-y-auto no-scrollbar animate-fade-in">
+        {selectedImage && (
+          <ImageCropper
+            image={selectedImage}
+            onCropComplete={handleCropComplete}
+            onClose={() => setSelectedImage(null)}
+          />
+        )}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={onFileChange}
+          accept="image/*"
+          className="hidden"
+        />
+
         <div className="flex flex-col items-center mt-8 mb-8">
           <div className="relative mb-6">
             <div className="w-40 h-40 rounded-[48px] overflow-hidden border-4 border-white/5 shadow-2xl relative group">
+              {isUploading ? (
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+                  <Loader2 className="w-10 h-10 text-blue-400 animate-spin mb-2" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">Uploading</span>
+                </div>
+              ) : null}
               <img
                 src={customPhotoURL || authUser?.photoURL || 'https://via.placeholder.com/150'}
                 alt="Avatar"
-                className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                className={`w-full h-full object-cover transition-transform group-hover:scale-110 ${isUploading ? 'opacity-30' : ''}`}
               />
               <button
-                onClick={() => setShowAdvanced(true)}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
                 className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Camera className="w-10 h-10 text-white" />
@@ -195,7 +252,6 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
         </div>
 
         <div className="space-y-4">
-          {/* Main sections */}
           <div className="glass-panel-3d p-6 rounded-[32px] space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold flex items-center gap-2">
@@ -228,6 +284,21 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
   // --- Detailed Settings View ---
   return (
     <div className="w-full h-full flex flex-col p-6 pb-40 overflow-y-auto no-scrollbar animate-fade-in-up">
+      {selectedImage && (
+        <ImageCropper
+          image={selectedImage}
+          onCropComplete={handleCropComplete}
+          onClose={() => setSelectedImage(null)}
+        />
+      )}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={onFileChange}
+        accept="image/*"
+        className="hidden"
+      />
+
       <div className="flex items-center gap-4 mb-8">
         <button
           onClick={() => setShowAdvanced(false)}
@@ -240,7 +311,6 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
 
       <div className="glass-panel-3d p-8 rounded-[40px] space-y-8 mb-8 border-t-white/30">
         <div className="space-y-6">
-          {/* Identity Section */}
           <div className="space-y-5">
             <div className="space-y-2">
               <label className="text-sm font-bold text-white/60 ml-2 flex items-center gap-2 uppercase tracking-widest text-[10px]">
@@ -256,18 +326,6 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
                   className="w-full bg-black/40 border border-white/10 rounded-2xl pl-10 pr-5 py-4 text-md font-bold text-white focus:border-blue-500/50 outline-none transition-all shadow-inner"
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-white/60 ml-2 flex items-center gap-2 uppercase tracking-widest text-[10px]">
-                <Camera size={12} /> {t.photo}
-              </label>
-              <input
-                type="url"
-                value={customPhotoURL}
-                onChange={(e) => setCustomPhotoURL(e.target.value)}
-                placeholder="https://..."
-                className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-xs font-mono text-white/40 focus:border-blue-500/50 outline-none transition-all shadow-inner"
-              />
             </div>
           </div>
 

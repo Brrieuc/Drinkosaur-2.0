@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { useAuth } from './useAuth';
-import { doc, getDoc, setDoc, db, collection, query, where, getDocs } from '../firebase';
+import { doc, getDoc, setDoc, db, collection, query, where, getDocs, storage, ref, uploadString, getDownloadURL } from '../firebase';
 
 export const useUser = () => {
     const defaultProfile: UserProfile = {
@@ -14,7 +14,6 @@ export const useUser = () => {
         drinkingSpeed: 'average'
     };
 
-    // Local state
     const [userProfile, setUserProfile] = useState<UserProfile>(() => {
         try {
             const item = window.localStorage.getItem('drinkosaur_user');
@@ -27,7 +26,6 @@ export const useUser = () => {
 
     const { user: authUser } = useAuth();
 
-    // Sync with Firestore when auth user changes
     useEffect(() => {
         const fetchUserProfile = async () => {
             if (authUser) {
@@ -46,7 +44,6 @@ export const useUser = () => {
                         setUserProfile(updatedProfile);
                         window.localStorage.setItem('drinkosaur_user', JSON.stringify(updatedProfile));
                     } else {
-                        // Init new user
                         const newProfile = {
                             ...userProfile,
                             displayName: authUser.displayName || '',
@@ -64,9 +61,19 @@ export const useUser = () => {
         fetchUserProfile();
     }, [authUser]);
 
-    // Save profile with username availability check
+    const uploadAvatar = async (base64Image: string): Promise<string> => {
+        if (!authUser) throw new Error("Not logged in");
+
+        const storageRef = ref(storage, `avatars/${authUser.uid}_${Date.now()}.jpg`);
+        // Remove data:image/jpeg;base64, prefix
+        const base64Data = base64Image.split(',')[1];
+        await uploadString(storageRef, base64Data, 'base64');
+        const downloadURL = await getDownloadURL(storageRef);
+        return downloadURL;
+    };
+
     const saveUserProfile = async (newProfile: UserProfile): Promise<{ success: boolean, error?: string }> => {
-        // 1. If username changed, check availability
+        // 1. Username changed check
         if (newProfile.username && newProfile.username !== userProfile.username) {
             const cleanUsername = newProfile.username.trim().toLowerCase();
             if (cleanUsername.length < 3) return { success: false, error: "Username too short" };
@@ -81,13 +88,11 @@ export const useUser = () => {
             newProfile.username = cleanUsername;
         }
 
-        // 2. Update State
+        // 2. Update State & Local Storage
         setUserProfile(newProfile);
-
-        // 3. Update Local Storage
         window.localStorage.setItem('drinkosaur_user', JSON.stringify(newProfile));
 
-        // 4. Update Firestore if auth
+        // 3. Update Firestore if auth
         if (authUser) {
             try {
                 await setDoc(doc(db, "users", authUser.uid), {
@@ -103,5 +108,5 @@ export const useUser = () => {
         return { success: true };
     };
 
-    return [userProfile, saveUserProfile] as const;
+    return [userProfile, saveUserProfile, uploadAvatar] as const;
 };
