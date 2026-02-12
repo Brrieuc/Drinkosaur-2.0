@@ -106,8 +106,15 @@ const App: React.FC = () => {
   );
 
   return (
-    <div className="relative w-full h-screen text-white overflow-hidden flex flex-col font-sans selection:bg-fuchsia-500/30">
+    <div
+      className="relative w-full h-screen text-white overflow-hidden flex flex-col font-sans selection:bg-fuchsia-500/30"
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)'
+      }}
+    >
       <Background />
+
 
       {/* TOAST NOTIFICATION */}
       {toast && <Toast message={toast.msg} type={toast.type} />}
