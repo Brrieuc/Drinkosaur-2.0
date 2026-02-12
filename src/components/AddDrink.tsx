@@ -30,7 +30,8 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
 
     // Volume States
     const [alcoholVolume, setAlcoholVolume] = useState<number>(0);
-    const [mixerVolume] = useState<number>(0);
+    const [mixerVolume, setMixerVolume] = useState<number>(0);
+
 
     // Consumption Style & Time
     const [isChug, setIsChug] = useState(false);
@@ -183,39 +184,90 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
         setStep('type');
     };
 
-    // GlassView Component (Abbreviated, assume standard props/rendering)
-    const GlassView = ({ glassId, fillPercent1, color1, fillPercent2 = 0, color2 = 'transparent', interactive = false, onInteract = () => { } }: any) => {
-        // Simplified for brevity in this change block - logic is preserved from previous file
+    // GlassView Component for manual filling
+    const GlassView = ({ glassId, alcoholVol, mixerVol = 0, color1, color2 = 'transparent', interactive = false, onInteract = () => { } }: any) => {
         const glass = GLASS_SHAPES.find(g => g.id === glassId) || GLASS_SHAPES[0];
         const containerRef = useRef<HTMLDivElement>(null);
 
-        const getPhysicallyAccurateHeight = useCallback((volPercent: number) => {
+        // Calculate height percentage based on volume (Inverse of physics)
+        const getVisualHeightFromVol = useCallback((volPercent: number) => {
             const p = Math.max(0, Math.min(1, volPercent / 100));
-            let result = p;
-            // Simple mapping for this specific snippet to save space, assuming previous logic
-            if (glass.fillType === 'cone') result = Math.pow(p, 1 / 3);
-            return result * 100;
+            let h = p;
+            if (glass.fillType === 'cone') h = Math.pow(p, 1 / 3);
+            if (glass.fillType === 'bowl') h = Math.pow(p, 1 / 2); // Simpler bowl approx
+            return h * (glass.liquidBottom - glass.liquidTop);
         }, [glass]);
 
-        const handleTouch = (e: any) => {
+        const handleInteraction = (e: any) => {
             if (!interactive || !containerRef.current) return;
             const rect = containerRef.current.getBoundingClientRect();
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const relY = Math.max(0, Math.min(100, ((rect.bottom - clientY) / rect.height) * 100));
-            // Simplified volume calc
-            onInteract(relY);
+
+            // Calculate height percent from 0 (bottom) to 1 (top)
+            const heightPx = rect.bottom - clientY;
+            const heightPercent = Math.max(0, Math.min(1, heightPx / rect.height));
+
+            // Convert visual height to physical volume %
+            let volPercent = heightPercent;
+            if (glass.fillType === 'cone') volPercent = Math.pow(heightPercent, 3);
+            if (glass.fillType === 'bowl') volPercent = Math.pow(heightPercent, 2);
+
+            const finalVol = (volPercent * glass.capacity);
+            onInteract(finalVol);
         };
 
+        const alcH = getVisualHeightFromVol((alcoholVol / glass.capacity) * 100);
+        const mixH = getVisualHeightFromVol(((alcoholVol + mixerVol) / glass.capacity) * 100) - alcH;
+
         return (
-            <div ref={containerRef} className="relative w-48 h-72 mx-auto cursor-pointer" onMouseDown={handleTouch} onMouseMove={(e) => e.buttons === 1 && handleTouch(e)} onTouchMove={handleTouch}>
-                <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl">
-                    <path d={glass.path} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.2)" />
-                    <path d={glass.path} fill={color1} style={{ clipPath: `inset(${100 - fillPercent1}% 0 0 0)` }} opacity={0.8} />
-                    {fillPercent2 > 0 && <path d={glass.path} fill={color2} style={{ clipPath: `inset(${100 - (fillPercent1 + fillPercent2)}% 0 ${fillPercent1}% 0)` }} opacity={0.8} />}
-                </svg>
+            <div
+                ref={containerRef}
+                className="relative w-64 h-80 mx-auto cursor-ns-resize touch-none select-none"
+                onMouseDown={handleInteraction}
+                onMouseMove={(e) => e.buttons === 1 && handleInteraction(e)}
+                onTouchMove={handleInteraction}
+            >
+                <div className="absolute inset-0 flex items-center justify-center p-4">
+                    <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                        <defs>
+                            <clipPath id={`glass-mask-${glassId}`}>
+                                <path d={glass.mask || glass.path} />
+                            </clipPath>
+                        </defs>
+
+                        {/* Glass Body */}
+                        <path d={glass.path} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+
+                        {/* Liquid Layer 1: Alcohol */}
+                        <rect
+                            x="0"
+                            y={glass.liquidBottom - alcH}
+                            width="100"
+                            height={alcH}
+                            fill={color1}
+                            clipPath={`url(#glass-mask-${glassId})`}
+                            className="transition-all duration-75"
+                        />
+
+                        {/* Liquid Layer 2: Mixer */}
+                        <rect
+                            x="0"
+                            y={glass.liquidBottom - (alcH + mixH)}
+                            width="100"
+                            height={mixH}
+                            fill={color2}
+                            clipPath={`url(#glass-mask-${glassId})`}
+                            className="transition-all duration-75"
+                        />
+
+                        {/* Reflections/Highlights */}
+                        <path d={glass.path} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+                    </svg>
+                </div>
             </div>
         );
     };
+
 
     return (
         <div className="flex flex-col h-full bg-[#050508] text-white animate-fade-in overflow-hidden relative">
@@ -443,36 +495,77 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
                     )}
 
                     {(drinkType === 'wine' || drinkType === 'cocktail') && (
-                        <div className="flex-1 flex flex-col min-h-[400px]">
-                            {/* Reuse simplified rendering logic for the glass interaction */}
-                            {/* ... (Omitted full GlassView logic again for brevity as it's maintained) ... */}
-                            {/* Just adding a placeholder for where GlassView would be */}
-                            <div className="flex-1 relative flex items-center justify-center my-4 min-h-[300px]">
-                                <div className="absolute top-0 right-0 text-right z-10">
-                                    <div className="text-4xl font-bold font-mono">{Math.round(alcoholVolume)}<span className="text-sm text-white/50">ml</span></div>
+                        <div className="flex-1 flex flex-col items-center">
+                            <div className="w-full mb-4 flex justify-between items-end bg-black/40 p-4 rounded-[24px] border border-white/5">
+                                <div className="text-left">
+                                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-1">{t.alcohol}</div>
+                                    <div className="text-3xl font-black font-mono leading-none">{Math.round(alcoholVolume)}<span className="text-xs ml-1 opacity-30">ML</span></div>
                                 </div>
-                                {/* Insert GlassView component here in real implementation */}
-                                <div className="w-48 h-72 border border-white/10 rounded-xl flex items-center justify-center bg-white/5">
-                                    <span className="text-xs text-white/30">Interactive Glass</span>
-                                </div>
-                                {drinkType === 'cocktail' && !selectedMixer && (
-                                    <div className="flex-shrink-0 h-32 mt-4 overflow-y-auto bg-black/20 rounded-2xl p-2 grid grid-cols-2 gap-2 w-full absolute bottom-0 z-20">
-                                        {MIXERS.map(m => (
-                                            <button key={m.name} onClick={() => setSelectedMixer(m)} className="p-2 rounded-lg bg-white/5 text-sm hover:bg-white/10 text-left flex items-center gap-2">
-                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: m.color }} /> {m.name}
-                                            </button>
-                                        ))}
+                                {drinkType === 'cocktail' && selectedMixer && (
+                                    <div className="text-right">
+                                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-1">{t.mixer}</div>
+                                        <div className="text-3xl font-black font-mono leading-none text-white/60">{Math.round(mixerVolume)}<span className="text-xs ml-1 opacity-30">ML</span></div>
                                     </div>
                                 )}
                             </div>
 
+                            <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em] mb-4">
+                                {drinkType === 'cocktail' && !selectedMixer ? t.dragAdjust : (drinkType === 'cocktail' ? t.dragMixer : t.dragAdjust)}
+                            </p>
+
+                            <GlassView
+                                glassId={selectedGlassId}
+                                alcoholVol={alcoholVolume}
+                                mixerVol={mixerVolume}
+                                color1={selectedItem.color}
+                                color2={selectedMixer?.color || 'transparent'}
+                                interactive={true}
+                                onInteract={(val: number) => {
+                                    if (drinkType === 'cocktail' && selectedMixer) {
+                                        setMixerVolume(Math.max(0, val - alcoholVolume));
+                                    } else {
+                                        setAlcoholVolume(val);
+                                    }
+                                }}
+                            />
+
+                            {drinkType === 'cocktail' && !selectedMixer && (
+                                <div className="w-full mt-6 space-y-3">
+                                    <div className="text-center">
+                                        <button
+                                            onClick={() => finalizeDrink()}
+                                            className="text-white/40 hover:text-white text-xs font-bold uppercase tracking-widest border border-white/10 px-4 py-2 rounded-lg transition-colors"
+                                        >
+                                            {t.skipNeat}
+                                        </button>
+                                    </div>
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-white/30 px-2">{t.addMixer}</div>
+                                    <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto no-scrollbar pb-10">
+                                        {MIXERS.map(m => (
+                                            <button
+                                                key={m.name}
+                                                onClick={() => setSelectedMixer(m)}
+                                                className="p-3 rounded-xl bg-white/5 border border-white/5 text-sm font-bold flex items-center gap-2 hover:bg-white/10 transition-colors"
+                                            >
+                                                <div className="w-3 h-3 rounded-full border border-white/20" style={{ backgroundColor: m.color }} />
+                                                <span className="truncate">{m.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {(drinkType === 'wine' || selectedMixer) && (
-                                <button onClick={() => finalizeDrink()} className="w-full py-4 mt-6 rounded-[24px] bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xl shadow-[0_0_30px_rgba(37,99,235,0.3)] active:scale-95 transition-transform flex-shrink-0">
-                                    {t.logDrink}
+                                <button
+                                    onClick={() => finalizeDrink()}
+                                    className="w-full py-6 mt-8 rounded-[32px] bg-gradient-to-br from-blue-500 to-indigo-700 text-white font-black text-2xl shadow-2xl shadow-blue-900/40 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                >
+                                    <Check size={28} /> {t.logDrink}
                                 </button>
                             )}
                         </div>
                     )}
+
                 </div>
             )}
         </div>
