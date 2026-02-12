@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { auth, googleProvider, signInWithPopup, signInAnonymously, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from '../firebase';
-import { User, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
+import { User, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence, EmailAuthProvider, linkWithCredential } from 'firebase/auth';
 
 export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -108,5 +108,24 @@ export const useAuth = () => {
         }
     };
 
-    return { user, loading, error, signIn, signInAnonymous, signInWithEmail, signUpWithEmail, logout };
+    const linkEmailToAccount = async (email: string, pass: string): Promise<{ success: boolean; message: string }> => {
+        if (!user) return { success: false, message: "Vous devez être connecté pour lier un email." };
+        try {
+            const credential = EmailAuthProvider.credential(email, pass);
+            await linkWithCredential(user, credential);
+            return { success: true, message: "Email lié avec succès ! Vous pouvez maintenant vous connecter avec cet email." };
+        } catch (err: any) {
+            console.error("Link Email Error:", err);
+            if (err.code === 'auth/email-already-in-use') {
+                return { success: false, message: "Cet email est déjà associé à un autre compte." };
+            } else if (err.code === 'auth/weak-password') {
+                return { success: false, message: "Le mot de passe doit faire au moins 6 caractères." };
+            } else if (err.code === 'auth/provider-already-linked') {
+                return { success: false, message: "Un email est déjà associé à ce compte." };
+            }
+            return { success: false, message: err.message };
+        }
+    };
+
+    return { user, loading, error, signIn, signInAnonymous, signInWithEmail, signUpWithEmail, linkEmailToAccount, logout };
 };

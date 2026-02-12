@@ -30,8 +30,13 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auth Hook
-  const { user: authUser, loading: authLoading, signIn, logout } = useAuth();
+  const { user: authUser, loading: authLoading, signIn, linkEmailToAccount, logout } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showLinkEmail, setShowLinkEmail] = useState(false);
+  const [linkEmail, setLinkEmail] = useState('');
+  const [linkPassword, setLinkPassword] = useState('');
+  const [linkMessage, setLinkMessage] = useState<{ text: string; success: boolean } | null>(null);
+  const [isLinking, setIsLinking] = useState(false);
   const [stayConnected, setStayConnected] = useState(() => {
     return window.localStorage.getItem('drinkosaur_stay_connected') !== 'false';
   });
@@ -202,25 +207,89 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
     return (
       <div className="space-y-4">
         {authUser ? (
-          <div className="flex items-center justify-between bg-black/20 p-3 rounded-xl border border-white/5 shadow-inner">
-            <div className="flex items-center gap-3 overflow-hidden">
-              <img
-                src={customPhotoURL || authUser.photoURL || 'https://via.placeholder.com/150'}
-                alt="Profile"
-                className="w-10 h-10 rounded-full border border-white/20 object-cover"
-              />
-              <div className="flex flex-col min-w-0 text-left">
-                <span className="text-[10px] text-white/40 uppercase tracking-wider font-bold">{t.loggedIn}</span>
-                <span className="text-xs font-medium truncate text-white/90">{authUser.email}</span>
+          <>
+            <div className="flex items-center justify-between bg-black/20 p-3 rounded-xl border border-white/5 shadow-inner">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <img
+                  src={customPhotoURL || authUser.photoURL || 'https://via.placeholder.com/150'}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full border border-white/20 object-cover"
+                />
+                <div className="flex flex-col min-w-0 text-left">
+                  <span className="text-[10px] text-white/40 uppercase tracking-wider font-bold">{t.loggedIn}</span>
+                  <span className="text-xs font-medium truncate text-white/90">{authUser.email}</span>
+                </div>
               </div>
+              <button
+                onClick={logout}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/40 hover:text-red-400"
+              >
+                <LogOut size={16} />
+              </button>
             </div>
-            <button
-              onClick={logout}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/40 hover:text-red-400"
-            >
-              <LogOut size={16} />
-            </button>
-          </div>
+
+            {/* Account Linking: Add email/password to existing Google account */}
+            {showLinkEmail ? (
+              <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-3 animate-fade-in mt-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-white/60">Ajouter un accès Email</span>
+                  <button onClick={() => { setShowLinkEmail(false); setLinkMessage(null); }} className="text-white/30 hover:text-white text-xs">✕</button>
+                </div>
+                <p className="text-[10px] text-white/30 leading-relaxed">
+                  Ajoutez un email et mot de passe pour vous connecter depuis n'importe quel appareil, même sur mobile.
+                </p>
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  setIsLinking(true);
+                  setLinkMessage(null);
+                  const result = await linkEmailToAccount(linkEmail, linkPassword);
+                  setLinkMessage({ text: result.message, success: result.success });
+                  setIsLinking(false);
+                  if (result.success) {
+                    setLinkEmail('');
+                    setLinkPassword('');
+                  }
+                }} className="space-y-2">
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={linkEmail}
+                    onChange={(e) => setLinkEmail(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white font-bold outline-none focus:border-blue-500 transition-all placeholder:text-white/20"
+                    required
+                  />
+                  <input
+                    type="password"
+                    placeholder="Mot de passe (min. 6 car.)"
+                    value={linkPassword}
+                    onChange={(e) => setLinkPassword(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white font-bold outline-none focus:border-blue-500 transition-all placeholder:text-white/20"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLinking}
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    {isLinking ? "..." : "Lier cet email"}
+                  </button>
+                </form>
+                {linkMessage && (
+                  <div className={`text-[10px] font-bold p-2 rounded-lg ${linkMessage.success ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'}`}>
+                    {linkMessage.text}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowLinkEmail(true)}
+                className="w-full py-2 text-[10px] text-white/30 font-bold uppercase tracking-widest hover:text-white/50 transition-colors mt-2"
+              >
+                + Ajouter un accès Email / Mot de passe
+              </button>
+            )}
+          </>
         ) : (
           <button
             onClick={handleGoogleLogin}

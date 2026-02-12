@@ -16,6 +16,10 @@ declare module 'firebase/auth' {
     export function getRedirectResult(auth: any): Promise<any>;
     export function onAuthStateChanged(auth: any, next: (user: any) => void, error?: (error: any) => void): any;
     export function signOut(auth: any): Promise<void>;
+    export function linkWithCredential(user: any, credential: any): Promise<any>;
+    export class EmailAuthProvider {
+        static credential(email: string, password: string): any;
+    }
     export function setPersistence(auth: any, persistence: any): Promise<void>;
     export const browserLocalPersistence: any;
     export const browserSessionPersistence: any;
@@ -24,6 +28,7 @@ declare module 'firebase/auth' {
         email: string | null;
         displayName: string | null;
         photoURL: string | null;
+        isAnonymous: boolean;
     }
 }
 
