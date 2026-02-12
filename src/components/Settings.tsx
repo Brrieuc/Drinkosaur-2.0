@@ -16,7 +16,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
   const [drinkingSpeed, setDrinkingSpeed] = useState<'slow' | 'average' | 'fast'>(user.drinkingSpeed || 'average');
 
   // Auth Hook
-  const { user: authUser, loading: authLoading, signIn, logout } = useAuth();
+  const { user: authUser, loading: authLoading, error: authError, signIn, logout } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
 
   const handleSave = () => {
@@ -87,50 +87,57 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
       );
     }
 
-    if (authUser) {
-      return (
-        <div className="flex items-center justify-between bg-black/20 p-3 rounded-xl">
-          <div className="flex items-center gap-3 overflow-hidden">
-            {authUser.photoURL ? (
-              <img src={authUser.photoURL} alt="Profile" className="w-8 h-8 rounded-full border border-white/20" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold">
-                {authUser.displayName ? authUser.displayName[0] : 'U'}
-              </div>
-            )}
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs text-white/40">{t.loggedIn}</span>
-              <span className="text-sm font-medium truncate text-white/90">{authUser.email}</span>
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-red-400"
-            title={t.signOut}
-          >
-            <LogOut size={18} />
-          </button>
-        </div>
-      );
-    }
-
     return (
-      <button
-        onClick={handleGoogleLogin}
-        disabled={isSyncing}
-        className="w-full py-3 bg-white text-black hover:bg-gray-100 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-70 disabled:pointer-events-none"
-      >
-        {isSyncing ? (
-          <span className="animate-pulse">Connecting...</span>
+      <div className="space-y-3">
+        {authUser ? (
+          <div className="flex items-center justify-between bg-black/20 p-3 rounded-xl">
+            <div className="flex items-center gap-3 overflow-hidden">
+              {authUser.photoURL ? (
+                <img src={authUser.photoURL} alt="Profile" className="w-8 h-8 rounded-full border border-white/20" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold">
+                  {authUser.displayName ? authUser.displayName[0] : 'U'}
+                </div>
+              )}
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs text-white/40">{t.loggedIn}</span>
+                <span className="text-sm font-medium truncate text-white/90">{authUser.email}</span>
+              </div>
+            </div>
+            <button
+              onClick={logout}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-red-400"
+              title={t.signOut}
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
         ) : (
-          <>
-            <svg className="w-4 h-4" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
-            {t.signIn}
-          </>
+          <button
+            onClick={handleGoogleLogin}
+            disabled={isSyncing}
+            className="w-full py-3 bg-white text-black hover:bg-gray-100 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-70 disabled:pointer-events-none"
+          >
+            {isSyncing ? (
+              <span className="animate-pulse">Connecting...</span>
+            ) : (
+              <>
+                <svg className="w-4 h-4" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
+                {t.signIn}
+              </>
+            )}
+          </button>
         )}
-      </button>
+
+        {authError && (
+          <p className="text-[11px] text-red-400 text-center font-medium leading-tight animate-shake bg-red-400/5 p-2 rounded-lg border border-red-400/10">
+            {authError}
+          </p>
+        )}
+      </div>
     );
   }
+
 
   return (
     <div className="w-full h-full flex flex-col justify-center px-6 animate-fade-in-up pb-32 overflow-y-auto no-scrollbar">

@@ -1,3 +1,4 @@
+/// <reference path="../firebase.d.ts" />
 
 import { useState, useEffect } from 'react';
 import { UserProfile } from '../types';

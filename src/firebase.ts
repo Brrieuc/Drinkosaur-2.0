@@ -1,3 +1,4 @@
+/// <reference path="./firebase.d.ts" />
 
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut } from "firebase/auth";

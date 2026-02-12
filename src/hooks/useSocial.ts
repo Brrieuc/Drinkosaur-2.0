@@ -1,3 +1,4 @@
+/// <reference path="../firebase.d.ts" />
 
 import { useState, useEffect } from 'react';
 import { db, doc, updateDoc, arrayUnion, query, where, collection, getDocs, onSnapshot, arrayRemove, setDoc } from '../firebase';
