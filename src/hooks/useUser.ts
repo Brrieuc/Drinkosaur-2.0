@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { useAuth } from './useAuth';
-import { doc, getDoc, setDoc, db } from '../firebase';
+import { doc, getDoc, setDoc, db, collection, query, where, getDocs } from '../firebase';
 
 export const useUser = () => {
     const defaultProfile: UserProfile = {
@@ -37,7 +37,6 @@ export const useUser = () => {
 
                     if (docSnap.exists()) {
                         const remoteData = docSnap.data() as UserProfile;
-                        // Always keep displayName and photoURL fresh from Google if available
                         const updatedProfile = {
                             ...defaultProfile,
                             ...remoteData,
@@ -47,7 +46,7 @@ export const useUser = () => {
                         setUserProfile(updatedProfile);
                         window.localStorage.setItem('drinkosaur_user', JSON.stringify(updatedProfile));
                     } else {
-                        // Init new user with Google info
+                        // Init new user
                         const newProfile = {
                             ...userProfile,
                             displayName: authUser.displayName || '',
@@ -65,25 +64,43 @@ export const useUser = () => {
         fetchUserProfile();
     }, [authUser]);
 
-    // Save function that updates both LocalStorage and Firestore (if logged in)
-    const saveUserProfile = async (newProfile: UserProfile) => {
-        // 1. Update State
+    // Save profile with username availability check
+    const saveUserProfile = async (newProfile: UserProfile): Promise<{ success: boolean, error?: string }> => {
+        // 1. If username changed, check availability
+        if (newProfile.username && newProfile.username !== userProfile.username) {
+            const cleanUsername = newProfile.username.trim().toLowerCase();
+            if (cleanUsername.length < 3) return { success: false, error: "Username too short" };
+
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("username", "==", cleanUsername));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                return { success: false, error: "Username already taken" };
+            }
+            newProfile.username = cleanUsername;
+        }
+
+        // 2. Update State
         setUserProfile(newProfile);
 
-        // 2. Update Local Storage
+        // 3. Update Local Storage
         window.localStorage.setItem('drinkosaur_user', JSON.stringify(newProfile));
 
-        // 3. Update Firestore if auth
+        // 4. Update Firestore if auth
         if (authUser) {
             try {
                 await setDoc(doc(db, "users", authUser.uid), {
                     ...newProfile,
                     email: authUser.email?.toLowerCase()
-                });
+                }, { merge: true });
+                return { success: true };
             } catch (e) {
-                console.error("Error saving profile to firestore:", e);
+                console.error("Error saving profile:", e);
+                return { success: false, error: "Failed to save profile" };
             }
         }
+        return { success: true };
     };
 
     return [userProfile, saveUserProfile] as const;

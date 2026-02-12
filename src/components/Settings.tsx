@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
-import { Save, User, Globe, Zap, LogOut } from 'lucide-react';
+import { Save, User, Globe, Zap, LogOut, Camera } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 interface SettingsProps {
@@ -14,6 +14,8 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
   const [gender, setGender] = useState<'male' | 'female'>(user.gender);
   const [language, setLanguage] = useState<'en' | 'fr'>(user.language || 'en');
   const [drinkingSpeed, setDrinkingSpeed] = useState<'slow' | 'average' | 'fast'>(user.drinkingSpeed || 'average');
+  const [username, setUsername] = useState(user.username || '');
+  const [customPhotoURL, setCustomPhotoURL] = useState(user.customPhotoURL || '');
 
   // Auth Hook
   const { user: authUser, loading: authLoading, error: authError, signIn, logout } = useAuth();
@@ -34,6 +36,8 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
       language,
       drinkingSpeed,
       stayConnected,
+      username: username.trim().toLowerCase(),
+      customPhotoURL,
       isSetup: true
     });
   };
@@ -47,7 +51,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
   const t = {
     en: {
       title: "Profile",
-      desc: "To accurately estimate your alcohol level (BAC), Drinkosaur needs a few details. This data stays on your device unless you sync.",
+      desc: "To accurately estimate your alcohol level (BAC), Drinkosaur needs a few details.",
       weight: "Weight (kg)",
       sex: "Biological Sex",
       male: "Male",
@@ -64,11 +68,15 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
       signIn: "Sign in with Google",
       signOut: "Sign Out",
       loggedIn: "Signed in as",
-      stayConnected: "Stay connected"
+      stayConnected: "Stay connected",
+      username: "Username",
+      usernameDesc: "Others can add you with @username",
+      photo: "Custom Avatar URL",
+      photoDesc: "Paste a link to your profile picture"
     },
     fr: {
       title: "Profil",
-      desc: "Pour estimer votre alcoolémie (BAC), Drinkosaur a besoin de quelques détails. Vos données restent sur votre appareil sauf si vous synchronisez.",
+      desc: "Pour estimer précisément votre alcoolémie (BAC), Drinkosaur a besoin de quelques détails.",
       weight: "Poids (kg)",
       sex: "Sexe Biologique",
       male: "Homme",
@@ -85,7 +93,11 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
       signIn: "Se connecter avec Google",
       signOut: "Se déconnecter",
       loggedIn: "Connecté en tant que",
-      stayConnected: "Rester connecté"
+      stayConnected: "Rester connecté",
+      username: "Pseudo",
+      usernameDesc: "Les autres peuvent vous ajouter avec @pseudo",
+      photo: "Lien de Photo de Profil",
+      photoDesc: "Collez un lien vers votre image de profil"
     }
   }[language];
 
@@ -103,15 +115,20 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
         {authUser ? (
           <div className="flex items-center justify-between bg-black/20 p-3 rounded-xl">
             <div className="flex items-center gap-3 overflow-hidden">
-              {authUser.photoURL ? (
-                <img src={authUser.photoURL} alt="Profile" className="w-8 h-8 rounded-full border border-white/20" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold">
-                  {authUser.displayName ? authUser.displayName[0] : 'U'}
-                </div>
-              )}
+              <div className="relative">
+                <img
+                  src={customPhotoURL || authUser.photoURL || 'https://via.placeholder.com/150'}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full border border-white/20 object-cover"
+                />
+                {customPhotoURL && (
+                  <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-0.5 border border-white/20">
+                    <Save size={10} />
+                  </div>
+                )}
+              </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-xs text-white/40">{t.loggedIn}</span>
+                <span className="text-[10px] text-white/40 uppercase tracking-wider font-bold">{t.loggedIn}</span>
                 <span className="text-sm font-medium truncate text-white/90">{authUser.email}</span>
               </div>
             </div>
@@ -159,8 +176,6 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
     );
   }
 
-
-
   return (
     <div className="w-full h-full flex flex-col justify-center px-6 animate-fade-in-up pb-32 overflow-y-auto no-scrollbar">
       <div className="glass-panel p-8 rounded-[40px] text-white my-8">
@@ -176,17 +191,51 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
         </p>
 
         {/* --- Google Auth Section --- */}
-        <div className="mb-8 p-4 bg-white/5 rounded-2xl border border-white/10">
-          <h3 className="font-semibold text-white/90 mb-1 flex items-center gap-2">
-            <Globe size={16} className="text-blue-400" /> {t.sync}
+        <div className="mb-8 p-5 bg-white/5 rounded-3xl border border-white/10 shadow-inner">
+          <h3 className="font-semibold text-white/90 mb-1 flex items-center gap-2 text-sm">
+            <Globe size={14} className="text-blue-400" /> {t.sync}
           </h3>
-          <p className="text-xs text-white/50 mb-4">{t.syncDesc}</p>
-
+          <p className="text-[11px] text-white/40 mb-4">{t.syncDesc}</p>
           {renderAuthSection()}
         </div>
 
-
         <div className="space-y-6">
+          {/* Identity Section (Cloud Only) */}
+          {authUser && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80 ml-2 flex items-center gap-2">
+                  <User size={14} /> {t.username}
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 font-bold">@</span>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="pseudo"
+                    className="w-full bg-black/20 border border-white/10 rounded-2xl pl-10 pr-4 py-4 text-md font-medium text-white focus:outline-none focus:border-blue-500/50 transition-all"
+                  />
+                </div>
+                <p className="text-[10px] text-white/40 ml-2">{t.usernameDesc}</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80 ml-2 flex items-center gap-2">
+                  <Camera size={14} /> {t.photo}
+                </label>
+                <input
+                  type="url"
+                  value={customPhotoURL}
+                  onChange={(e) => setCustomPhotoURL(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full bg-black/20 border border-white/10 rounded-2xl px-5 py-4 text-xs font-mono text-white/80 focus:outline-none focus:border-blue-500/50 transition-all"
+                />
+                <p className="text-[10px] text-white/40 ml-2">{t.photoDesc}</p>
+              </div>
+              <div className="w-full h-[1px] bg-white/5 my-2" />
+            </div>
+          )}
 
           {/* Language Selector */}
           <div className="space-y-2">
@@ -214,8 +263,6 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
               </button>
             </div>
           </div>
-
-          <div className="w-full h-[1px] bg-white/10 my-4" />
 
           {/* Weight */}
           <div className="space-y-2">
@@ -293,7 +340,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave }) => {
 
           <button
             onClick={handleSave}
-            className="w-full mt-8 bg-gradient-to-r from-pink-500 to-violet-600 hover:from-pink-400 hover:to-violet-500 text-white py-4 rounded-2xl text-lg font-bold shadow-lg shadow-purple-500/30 active:scale-95 transition-all flex items-center justify-center gap-2"
+            className="w-full mt-8 bg-gradient-to-r from-pink-500 to-violet-600 hover:from-pink-400 hover:to-violet-500 text-white py-5 rounded-3xl text-lg font-bold shadow-lg shadow-purple-500/30 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <Save className="w-5 h-5" />
             {t.save}

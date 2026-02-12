@@ -26,12 +26,12 @@ const App: React.FC = () => {
   const [toast, setToast] = useState<{ msg: string, type: 'success' | 'warning' } | null>(null);
 
   // Custom Hooks
-  const [user, setUser] = useUser();
+  const [user, saveUser] = useUser();
   const [drinks, setDrinks] = useDrinks();
   const { bacStatus, statusChangeToast } = useBacCalculator(drinks, user as UserProfile);
 
   // Social Hook
-  const { friends, addFriendByEmail, removeFriend, loading: socialLoading } = useSocial(bacStatus, user as UserProfile);
+  const { friends, addFriendByUsername, removeFriend, loading: socialLoading } = useSocial(bacStatus, user as UserProfile);
 
   // Handle toast from BAC changes
   useEffect(() => {
@@ -115,7 +115,26 @@ const App: React.FC = () => {
       {/* Main Content Area */}
       <main className="flex-1 relative overflow-hidden flex flex-col">
         {view === AppView.SETTINGS && (
-          <Settings user={user as UserProfile} onSave={setUser} />
+          <Settings
+            user={user as UserProfile}
+            onSave={async (newProfile) => {
+              const result = await saveUser(newProfile);
+              if (!result.success) {
+                setToast({ msg: result.error || 'Error', type: 'warning' });
+                setTimeout(() => setToast(null), 3000);
+              }
+            }}
+          />
+        )}
+
+        {view === AppView.SOCIAL && (
+          <Social
+            friends={friends}
+            onAddFriend={addFriendByUsername}
+            onRemoveFriend={removeFriend}
+            loading={socialLoading}
+            language={user.language}
+          />
         )}
 
         {view === AppView.DASHBOARD && (
@@ -135,16 +154,6 @@ const App: React.FC = () => {
         {view === AppView.HISTORY && (
           <DrinkList drinks={drinks} onRemove={handleRemoveDrink} language={user.language} />
         )}
-
-        {view === AppView.SOCIAL && (
-          <Social
-            friends={friends}
-            onAddFriend={addFriendByEmail}
-            onRemoveFriend={removeFriend}
-            loading={socialLoading}
-            language={user.language}
-          />
-        )}
       </main>
 
       {/* Floating Bottom Navigation */}
@@ -152,7 +161,7 @@ const App: React.FC = () => {
         <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
           <div className="glass-panel-3d rounded-[32px] p-2 flex items-center gap-1 shadow-2xl backdrop-blur-xl pointer-events-auto">
             <NavButton target={AppView.HISTORY} icon={History} label={navText.history} />
-            <NavButton target={AppView.SOCIAL} icon={Users} label={navText.social} />
+            <NavButton target={AppView.DASHBOARD} icon={LayoutDashboard} label={navText.monitor} />
 
             <div className="mx-1">
               <button
@@ -164,7 +173,7 @@ const App: React.FC = () => {
               </button>
             </div>
 
-            <NavButton target={AppView.DASHBOARD} icon={LayoutDashboard} label={navText.monitor} />
+            <NavButton target={AppView.SOCIAL} icon={Users} label={navText.social} />
             <NavButton target={AppView.SETTINGS} icon={User} label={navText.settings} />
           </div>
         </div>

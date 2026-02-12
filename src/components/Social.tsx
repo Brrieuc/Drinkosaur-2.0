@@ -5,30 +5,31 @@ import { UserPlus, Search, Loader2, Beer, AlertTriangle, Trash2 } from 'lucide-r
 
 interface SocialProps {
     friends: FriendStatus[];
-    onAddFriend: (email: string) => Promise<any>;
+    onAddFriend: (username: string) => Promise<any>;
     onRemoveFriend: (uid: string) => Promise<void>;
     loading: boolean;
     language: 'en' | 'fr';
 }
 
 export const Social: React.FC<SocialProps> = ({ friends, onAddFriend, onRemoveFriend, loading, language }) => {
-    const [searchEmail, setSearchEmail] = useState('');
+    const [searchUsername, setSearchUsername] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!searchEmail) return;
+        const trimmed = searchUsername.trim();
+        if (!trimmed) return;
 
         setIsAdding(true);
         setError(null);
         setSuccess(null);
 
         try {
-            await onAddFriend(searchEmail);
+            await onAddFriend(trimmed);
             setSuccess(language === 'fr' ? 'Ami ajouté !' : 'Friend added!');
-            setSearchEmail('');
+            setSearchUsername('');
             setTimeout(() => setSuccess(null), 3000);
         } catch (err: any) {
             setError(err.message || 'Error adding friend');
@@ -39,8 +40,8 @@ export const Social: React.FC<SocialProps> = ({ friends, onAddFriend, onRemoveFr
 
     const t = {
         title: language === 'fr' ? 'Mes Amis' : 'Friends',
-        addDesc: language === 'fr' ? 'Ajoutez un ami par son adresse email Google.' : 'Add a friend by their Google email address.',
-        addPlaceholder: language === 'fr' ? 'ami@gmail.com' : 'friend@gmail.com',
+        addDesc: language === 'fr' ? 'Ajoutez un ami par son pseudo.' : 'Add a friend by their username.',
+        addPlaceholder: language === 'fr' ? 'pseudo' : 'username',
         addButton: language === 'fr' ? 'Ajouter' : 'Add',
         empty: language === 'fr' ? 'Aucun ami pour le moment.' : 'No friends yet.',
         live: language === 'fr' ? 'EN DIRECT' : 'LIVE',
@@ -58,18 +59,18 @@ export const Social: React.FC<SocialProps> = ({ friends, onAddFriend, onRemoveFr
             <form onSubmit={handleAdd} className="relative mb-10">
                 <div className="flex gap-2">
                     <div className="relative flex-1">
-                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/30" size={18} />
+                        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/30 font-bold">@</span>
                         <input
-                            type="email"
-                            value={searchEmail}
-                            onChange={(e) => setSearchEmail(e.target.value)}
+                            type="text"
+                            value={searchUsername}
+                            onChange={(e) => setSearchUsername(e.target.value)}
                             placeholder={t.addPlaceholder}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:border-blue-500/50 transition-all"
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-4 text-white focus:outline-none focus:border-blue-500/50 transition-all font-medium"
                         />
                     </div>
                     <button
                         type="submit"
-                        disabled={isAdding || !searchEmail}
+                        disabled={isAdding || !searchUsername.trim()}
                         className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-6 rounded-2xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-blue-900/20"
                     >
                         {isAdding ? <Loader2 className="animate-spin" size={20} /> : <UserPlus size={20} />}
@@ -109,7 +110,7 @@ export const Social: React.FC<SocialProps> = ({ friends, onAddFriend, onRemoveFr
                                     style={{ backgroundColor: friend.color }}
                                 />
                                 {friend.photoURL ? (
-                                    <img src={friend.photoURL} alt={friend.displayName} className="w-14 h-14 rounded-full border-2 relative z-10 shadow-lg" style={{ borderColor: friend.color }} />
+                                    <img src={friend.photoURL} alt={friend.displayName} className="w-14 h-14 rounded-full border-2 relative z-10 shadow-lg object-cover" style={{ borderColor: friend.color }} />
                                 ) : (
                                     <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-xl font-bold relative z-10 border-2" style={{ borderColor: friend.color }}>
                                         {friend.displayName[0]}
@@ -119,7 +120,7 @@ export const Social: React.FC<SocialProps> = ({ friends, onAddFriend, onRemoveFr
 
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <h3 className="font-bold truncate">{friend.displayName}</h3>
+                                    <h3 className="font-bold truncate">@{friend.displayName}</h3>
                                     <span className="text-[10px] font-black bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded leading-none shrink-0 border border-emerald-500/30">
                                         {t.live}
                                     </span>

@@ -39,8 +39,6 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
             return;
         }
 
-        // Firestore 'in' query is limited to 10-30 items depending on version, 
-        // but for a small app it's fine for now.
         const statusQuery = query(
             collection(db, "live_status"),
             where("__name__", "in", friendIds)
@@ -51,7 +49,6 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
             querySnapshot.forEach((doc: any) => {
                 statuses.push({ uid: doc.id, ...doc.data() } as FriendStatus);
             });
-            // Sort by BAC (highest first)
             setFriends(statuses.sort((a, b) => b.currentBac - a.currentBac));
             setLoading(false);
         });
@@ -66,8 +63,8 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
         const updateMyStatus = async () => {
             const statusRef = doc(db, "live_status", authUser.uid);
             await setDoc(statusRef, {
-                displayName: myProfile.displayName || authUser.displayName || 'Anonymous',
-                photoURL: myProfile.photoURL || authUser.photoURL || '',
+                displayName: myProfile.username || myProfile.displayName || authUser.displayName || 'Anonymous',
+                photoURL: myProfile.customPhotoURL || myProfile.photoURL || authUser.photoURL || '',
                 currentBac: myBacStatus.currentBac,
                 statusMessage: myBacStatus.statusMessage,
                 color: myBacStatus.color,
@@ -79,14 +76,20 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
         return () => clearTimeout(timeout);
     }, [authUser, myBacStatus, myProfile]);
 
-    // 4. Action: Add friend by email
-    const addFriendByEmail = async (email: string) => {
+    // 4. Action: Add friend by username
+    const addFriendByUsername = async (username: string) => {
         if (!authUser) throw new Error("Not logged in");
-        if (email.toLowerCase() === authUser.email?.toLowerCase()) throw new Error("You cannot add yourself");
+        if (!username) throw new Error("Username required");
 
-        // Find user by email
+        const cleanUsername = username.trim().toLowerCase().replace(/^@/, '');
+
+        if (myProfile?.username?.toLowerCase() === cleanUsername) {
+            throw new Error("You cannot add yourself");
+        }
+
+        // Find user by username
         const usersRef = collection(db, "users");
-        const q = query(usersRef, where("email", "==", email.toLowerCase()));
+        const q = query(usersRef, where("username", "==", cleanUsername));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
@@ -113,5 +116,5 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
         });
     };
 
-    return { friends, addFriendByEmail, removeFriend, loading };
+    return { friends, addFriendByUsername, removeFriend, loading };
 };
