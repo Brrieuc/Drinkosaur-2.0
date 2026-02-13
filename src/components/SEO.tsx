@@ -7,6 +7,7 @@ interface SEOProps {
     image?: string;
     url?: string;
     type?: string;
+    canonical?: string;
 }
 
 export const SEO: React.FC<SEOProps> = ({
@@ -14,7 +15,8 @@ export const SEO: React.FC<SEOProps> = ({
     description,
     image,
     url,
-    type = 'website'
+    type = 'website',
+    canonical
 }) => {
     const siteTitle = 'Drinkosaur';
     const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle;
@@ -22,13 +24,14 @@ export const SEO: React.FC<SEOProps> = ({
     const metaDescription = description || defaultDescription;
     const defaultImage = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj3GwalK-_8qkiqtJ9wxjVPg7C3VGn-slPe3XK-DNhm4iSq2f0VBeOEjanUW_uoncmzZu74szYMJhs_o8xYV0RU3g-HZTflVBgh9Tj8wSy43r1MiQrgyrp8HIQJyP6wBQu5bT5tFCrLhskSvzeL8flCHnZ6T-7kheSEkcwm6fQuSGZE-LKrBq6KbB_pg4k/s16000/drinkosaur.png";
     const metaImage = image || defaultImage;
-    const metaUrl = url || 'https://drinkosaur.web.app/';
+    const metaUrl = url || 'https://mydrinkosaur.web.app/';
 
     return (
         <Helmet>
             {/* Basic */}
             <title>{fullTitle}</title>
             <meta name="description" content={metaDescription} />
+            {canonical && <link rel="canonical" href={canonical} />}
 
             {/* Open Graph */}
             <meta property="og:type" content={type} />
