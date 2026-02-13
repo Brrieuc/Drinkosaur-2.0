@@ -6,6 +6,8 @@ import { useAuth } from '../hooks/useAuth';
 import { ImageCropper } from './ImageCropper';
 import { TrophyHall } from './TrophyHall';
 import heic2any from 'heic2any';
+import { DrinkosaurPass } from './DrinkosaurPass';
+import { Drink } from '../types';
 
 interface SettingsProps {
   user: UserProfile;
@@ -14,11 +16,12 @@ interface SettingsProps {
   wonAwards?: WonAward[];
   selectedBadges?: string[];
   onUpdateBadges?: (badges: string[]) => void;
+  drinks?: Drink[];
 }
 
 type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn' | 'errorWeight' | 'errorUsername' | 'birthDate' | 'birthDateDesc' | 'underageTitle' | 'underageMsg' | 'errorBirthDate' | 'privacy' | 'photoVisible' | 'photoVisibleDesc';
 
-export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar, wonAwards = [], selectedBadges = [], onUpdateBadges }) => {
+export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar, wonAwards = [], selectedBadges = [], onUpdateBadges, drinks = [] }) => {
   const [showAdvanced, setShowAdvanced] = useState(!user.isSetup);
   const [showTrophyHall, setShowTrophyHall] = useState(false);
   const [weight, setWeight] = useState(user.weightKg || 70);
@@ -33,6 +36,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   const [badgesPublic, setBadgesPublic] = useState(user.badgesPublic !== false);
   const [groupListVisibility, setGroupListVisibility] = useState<GroupListVisibility>(user.groupListVisibility || 'visible');
   const [isPrivacyExpanded, setIsPrivacyExpanded] = useState(false);
+  const [showPass, setShowPass] = useState(false);
 
   // Pivot: Sync local state when user profile updates (e.g. initial load)
   React.useEffect(() => {
@@ -571,6 +575,41 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
             </div>
             {renderAuthSection()}
           </div>
+
+          {/* Drinkosaur Pass Button */}
+          <button
+            onClick={() => setShowPass(true)}
+            className="w-full relative h-48 rounded-[32px] overflow-hidden group shadow-2xl active:scale-95 transition-all"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-900 to-indigo-900 z-0">
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30 mix-blend-overlay"></div>
+            </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-6 text-center">
+              <h3 className="text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-[0_4px_0_rgba(0,0,0,0.5)] mb-2" style={{ fontFamily: 'Impact, sans-serif' }}>
+                DRINKOSAUR PASS
+              </h3>
+              <p className="text-white/60 text-xs font-bold uppercase tracking-widest bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10 group-hover:bg-white/20 transition-colors">
+                {language === 'fr' ? 'Afficher ma carte joueur' : 'View Player Card'}
+              </p>
+            </div>
+            {/* Holographic effect */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent translate-y-full group-hover:translate-y-[-100%] transition-transform duration-1000 z-20 pointer-events-none"></div>
+          </button>
+
+          {/* Render Drinkosaur Pass Modal */}
+          {showPass && (
+            <DrinkosaurPass
+              user={user}
+              wonAwards={wonAwards}
+              drinks={drinks}
+              onSave={(updates) => {
+                onSave(updates);
+                // Don't close automatically on save, let user enjoy layout
+              }}
+              onClose={() => setShowPass(false)}
+              language={language}
+            />
+          )}
 
           {/* Trophy Hall Button */}
           <button

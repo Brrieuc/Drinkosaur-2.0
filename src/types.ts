@@ -39,6 +39,29 @@ export interface UserProfile {
   leaderboardVisibility?: LeaderboardVisibility; // How user appears in global rankings (default: 'friends_only')
   badgesPublic?: boolean;            // Whether badges are visible to non-friends (default: true)
   groupListVisibility?: GroupListVisibility; // How user appears in public group member lists (default: 'visible')
+  drinkosaurPassConfig?: DrinkosaurPassConfig;
+  bestRanking?: number;
+}
+
+export type PassStatType =
+  | 'bestRanking'
+  | 'totalPureAlcohol'
+  | 'totalVolumeByAlcohol'
+  | 'longestStreak'
+  | 'longestIntoxicated'
+  | 'favoriteDrink'
+  | 'totalChugs'
+  | 'totalShots';
+
+export interface PassStat {
+  type: PassStatType;
+  alcoholType?: 'beer' | 'wine' | 'cocktail' | 'spirit';
+}
+
+export interface DrinkosaurPassConfig {
+  selectedBadges: string[]; // Up to 3 award IDs
+  backgroundColor: string;
+  stats: PassStat[]; // Exactly 4
 }
 
 export interface WonAward {

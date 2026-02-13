@@ -433,6 +433,7 @@ const App: React.FC = () => {
               onUploadAvatar={uploadAvatar}
               wonAwards={user.wonAwards || []}
               selectedBadges={user.selectedBadges || []}
+              drinks={drinks}
               onUpdateBadges={async (badges) => {
                 const result = await saveUser({ selectedBadges: badges });
                 if (result.success) {
