@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { BacStatus, Drink, UserProfile } from '../types';
-import { Clock, Zap, AlertTriangle, TrendingUp, BarChart3 } from 'lucide-react';
+import { BacStatus, Drink, UserProfile, FriendGroup } from '../types';
+import { Clock, Zap, AlertTriangle, TrendingUp, BarChart3, Inbox, Bell } from 'lucide-react';
 import { BacChartModal } from './BacChartModal';
 import { StatsModal } from './StatsModal';
+import { NotificationsModal } from './NotificationsModal';
+import { FriendRequest } from '../hooks/useSocial';
 
 
 interface DashboardProps {
@@ -10,6 +12,11 @@ interface DashboardProps {
   language?: 'en' | 'fr';
   drinks?: Drink[];
   user?: UserProfile;
+  incomingRequests?: FriendRequest[];
+  groupInvites?: FriendGroup[];
+  onRespondRequest?: (requestId: string, accept: boolean) => void;
+  onAcceptGroup?: (groupId: string) => void;
+  onDeclineGroup?: (groupId: string) => void;
 }
 
 // NOTE: Dashboard now needs full drinks/user props for the modal chart, 
@@ -18,10 +25,23 @@ interface DashboardProps {
 // However, App.tsx should ideally pass these. We will update App.tsx in a real scenario,
 // but for this specific "change", we assume App.tsx passes them or we don't show chart if missing.
 
-export const Dashboard: React.FC<DashboardProps> = ({ status, language = 'en', drinks = [], user }) => {
+export const Dashboard: React.FC<DashboardProps> = ({
+  status,
+  language = 'en',
+  drinks = [],
+  user,
+  incomingRequests = [],
+  groupInvites = [],
+  onRespondRequest,
+  onAcceptGroup,
+  onDeclineGroup
+}) => {
   const [showChartModal, setShowChartModal] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const isFrench = language === 'fr';
+
+  const notificationCount = incomingRequests.length + groupInvites.length;
 
   const t = {
     bacLevel: isFrench ? 'Taux Alcool' : 'BAC Level',
@@ -114,21 +134,66 @@ export const Dashboard: React.FC<DashboardProps> = ({ status, language = 'en', d
         <StatsModal drinks={drinks} user={user} onClose={() => setShowStats(false)} />
       )}
 
+      {/* Stats Modal */}
+      {showStats && user && (
+        <StatsModal drinks={drinks} user={user} onClose={() => setShowStats(false)} />
+      )}
+
+      {/* Notifications Modal */}
+      {showNotifications && (
+        <NotificationsModal
+          requests={incomingRequests}
+          invites={groupInvites}
+          onClose={() => setShowNotifications(false)}
+          onRespondRequest={(id, accept) => onRespondRequest?.(id, accept)}
+          onAcceptGroup={(id) => onAcceptGroup?.(id)}
+          onDeclineGroup={(id) => onDeclineGroup?.(id)}
+          language={language}
+        />
+      )}
+
       {/* Header */}
-      <div className="flex justify-between items-center mb-4 z-10 pt-2">
-        <div className="flex items-center gap-3">
-          <img
-            src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj3GwalK-_8qkiqtJ9wxjVPg7C3VGn-slPe3XK-DNhm4iSq2f0VBeOEjanUW_uoncmzZu74szYMJhs_o8xYV0RU3g-HZTflVBgh9Tj8wSy43r1MiQrgyrp8HIQJyP6wBQu5bT5tFCrLhskSvzeL8flCHnZ6T-7kheSEkcwm6fQuSGZE-LKrBq6KbB_pg4k/s16000/drinkosaur.png"
-            alt="Logo"
-            className="w-10 h-10 rounded-xl shadow-lg border border-white/10"
-          />
-          <h1 className="text-3xl font-extrabold tracking-tight text-white drop-shadow-lg">
-            Drinkosaur
-          </h1>
+      <div className="flex flex-col gap-4 mb-4 z-10 pt-2">
+        {/* Top Row: Logo & Status */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <img
+              src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj3GwalK-_8qkiqtJ9wxjVPg7C3VGn-slPe3XK-DNhm4iSq2f0VBeOEjanUW_uoncmzZu74szYMJhs_o8xYV0RU3g-HZTflVBgh9Tj8wSy43r1MiQrgyrp8HIQJyP6wBQu5bT5tFCrLhskSvzeL8flCHnZ6T-7kheSEkcwm6fQuSGZE-LKrBq6KbB_pg4k/s16000/drinkosaur.png"
+              alt="Logo"
+              className="w-10 h-10 rounded-xl shadow-lg border border-white/10"
+            />
+            <h1 className="text-3xl font-extrabold tracking-tight text-white drop-shadow-lg">
+              Drinkosaur
+            </h1>
+          </div>
+          <div className={`px-4 py-2 rounded-2xl glass-panel-3d flex items-center gap-2 border border-white/10 relative overflow-hidden group`}>
+            <div className={`w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] ${status.color.split(' ')[1].replace('to-', 'text-')} animate-pulse`} />
+            <span className="text-white font-semibold text-xs uppercase tracking-widest">{status.statusMessage}</span>
+          </div>
         </div>
-        <div className={`px-4 py-2 rounded-2xl glass-panel-3d flex items-center gap-2 border border-white/10 relative overflow-hidden group`}>
-          <div className={`w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] ${status.color.split(' ')[1].replace('to-', 'text-')} animate-pulse`} />
-          <span className="text-white font-semibold text-xs uppercase tracking-widest">{status.statusMessage}</span>
+
+        {/* Action Row: Stats (Left) & Inbox (Right) */}
+        <div className="flex justify-between items-center px-1">
+          <button
+            onClick={() => setShowStats(true)}
+            className="w-12 h-12 rounded-full glass-panel-3d flex items-center justify-center text-purple-300 hover:text-white hover:bg-white/10 transition-all active:scale-95 shadow-lg relative group"
+            aria-label="Statistics"
+          >
+            <BarChart3 size={20} className="group-hover:scale-110 transition-transform" />
+          </button>
+
+          <button
+            onClick={() => setShowNotifications(true)}
+            className="w-12 h-12 rounded-full glass-panel-3d flex items-center justify-center text-blue-300 hover:text-white hover:bg-white/10 transition-all active:scale-95 shadow-lg relative group"
+            aria-label="Notifications"
+          >
+            <Inbox size={20} className="group-hover:scale-110 transition-transform" />
+            {notificationCount > 0 && (
+              <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-[9px] font-bold text-white rounded-full flex items-center justify-center border-2 border-[#1a1a2e]">
+                {notificationCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -219,7 +284,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ status, language = 'en', d
         </div>
 
         {/* Data Pills */}
-        <div className="grid grid-cols-3 gap-3 w-full max-w-sm mt-10">
+        <div className="grid grid-cols-2 gap-4 w-full max-w-xs mt-10">
           <div className="glass-panel-3d p-4 rounded-[24px] flex flex-col items-center justify-center group hover:bg-white/5 transition-colors">
             <div className="text-blue-300 mb-2 p-2 bg-blue-500/20 rounded-full"><Clock size={16} /></div>
             <div className="text-white font-bold text-lg">{soberTimeStr || '--:--'}</div>
@@ -230,14 +295,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ status, language = 'en', d
             <div className="text-white font-bold text-lg">{Math.round(liquidHeight)}%</div>
             <div className="text-[10px] text-pink-200/60 uppercase tracking-wider font-semibold">{t.limitLoad}</div>
           </div>
-          <button
-            onClick={() => setShowStats(true)}
-            className="glass-panel-3d p-4 rounded-[24px] flex flex-col items-center justify-center group hover:bg-white/5 transition-colors active:scale-95"
-          >
-            <div className="text-purple-300 mb-2 p-2 bg-purple-500/20 rounded-full group-hover:bg-purple-500/30 transition-colors"><BarChart3 size={16} /></div>
-            <div className="text-white font-bold text-lg">📊</div>
-            <div className="text-[10px] text-purple-200/60 uppercase tracking-wider font-semibold">{t.stats}</div>
-          </button>
         </div>
       </div>
     </div>

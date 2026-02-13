@@ -436,6 +436,11 @@ const App: React.FC = () => {
             language={user.language}
             drinks={drinks}
             user={user as UserProfile}
+            incomingRequests={incomingRequests}
+            groupInvites={groupInvites}
+            onRespondRequest={respondToRequest}
+            onAcceptGroup={acceptGroupInvite}
+            onDeclineGroup={declineGroupInvite}
           />
         )}
 
