@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { auth, googleProvider, signInWithPopup, signInAnonymously, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from '../firebase';
-import { User, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence, EmailAuthProvider, linkWithCredential } from 'firebase/auth';
+import { User, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence, EmailAuthProvider, linkWithCredential, updatePassword, reauthenticateWithCredential } from 'firebase/auth';
 
 export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -127,5 +127,27 @@ export const useAuth = () => {
         }
     };
 
-    return { user, loading, error, signIn, signInAnonymous, signInWithEmail, signUpWithEmail, linkEmailToAccount, logout };
+    const changePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
+        if (!user || !user.email) return { success: false, message: "Vous devez être connecté avec un email." };
+        try {
+            // Re-authenticate first (required by Firebase for sensitive operations)
+            const credential = EmailAuthProvider.credential(user.email, currentPassword);
+            await reauthenticateWithCredential(user, credential);
+            // Now update password
+            await updatePassword(user, newPassword);
+            return { success: true, message: "Mot de passe modifié avec succès !" };
+        } catch (err: any) {
+            console.error("Change Password Error:", err);
+            if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+                return { success: false, message: "Mot de passe actuel incorrect." };
+            } else if (err.code === 'auth/weak-password') {
+                return { success: false, message: "Le nouveau mot de passe doit faire au moins 6 caractères." };
+            } else if (err.code === 'auth/too-many-requests') {
+                return { success: false, message: "Trop d'essais. Réessayez plus tard." };
+            }
+            return { success: false, message: err.message };
+        }
+    };
+
+    return { user, loading, error, signIn, signInAnonymous, signInWithEmail, signUpWithEmail, linkEmailToAccount, changePassword, logout };
 };

@@ -37,7 +37,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auth Hook
-  const { user: authUser, loading: authLoading, signIn, linkEmailToAccount, logout } = useAuth();
+  const { user: authUser, loading: authLoading, signIn, linkEmailToAccount, changePassword, logout } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
   const [showLinkEmail, setShowLinkEmail] = useState(false);
   const [linkEmail, setLinkEmail] = useState('');
@@ -258,6 +258,11 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       );
     }
 
+    // Detect linked providers
+    const providers = authUser?.providerData?.map((p: any) => p.providerId) || [];
+    const hasGoogle = providers.includes('google.com');
+    const hasPassword = providers.includes('password');
+
     return (
       <div className="space-y-4">
         {authUser ? (
@@ -282,66 +287,178 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
               </button>
             </div>
 
-            {/* Account Linking: Add email/password to existing Google account */}
-            {showLinkEmail ? (
-              <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-3 animate-fade-in mt-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-white/60">Ajouter un accès Email</span>
-                  <button onClick={() => { setShowLinkEmail(false); setLinkMessage(null); }} className="text-white/30 hover:text-white text-xs">✕</button>
-                </div>
-                <p className="text-[10px] text-white/30 leading-relaxed">
-                  Ajoutez un email et mot de passe pour vous connecter depuis n'importe quel appareil, même sur mobile.
-                </p>
-                <form onSubmit={async (e) => {
-                  e.preventDefault();
-                  setIsLinking(true);
-                  setLinkMessage(null);
-                  const result = await linkEmailToAccount(linkEmail, linkPassword);
-                  setLinkMessage({ text: result.message, success: result.success });
-                  setIsLinking(false);
-                  if (result.success) {
-                    setLinkEmail('');
-                    setLinkPassword('');
-                  }
-                }} className="space-y-2">
-                  <input
-                    type="email"
-                    placeholder="Email"
-                    value={linkEmail}
-                    onChange={(e) => setLinkEmail(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white font-bold outline-none focus:border-blue-500 transition-all placeholder:text-white/20"
-                    required
-                  />
-                  <input
-                    type="password"
-                    placeholder="Mot de passe (min. 6 car.)"
-                    value={linkPassword}
-                    onChange={(e) => setLinkPassword(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white font-bold outline-none focus:border-blue-500 transition-all placeholder:text-white/20"
-                    required
-                    minLength={6}
-                  />
-                  <button
-                    type="submit"
-                    disabled={isLinking}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all disabled:opacity-50"
-                  >
-                    {isLinking ? "..." : "Lier cet email"}
-                  </button>
-                </form>
-                {linkMessage && (
-                  <div className={`text-[10px] font-bold p-2 rounded-lg ${linkMessage.success ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'}`}>
-                    {linkMessage.text}
+            {/* Connected Methods */}
+            <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-3">
+              <span className="text-[10px] text-white/40 uppercase tracking-wider font-bold">
+                {language === 'fr' ? 'Méthodes de connexion' : 'Sign-in methods'}
+              </span>
+              <div className="space-y-2">
+                {hasGoogle && (
+                  <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl">
+                    <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    </svg>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-white">Google</p>
+                      <p className="text-[10px] text-white/30 truncate">{authUser.email}</p>
+                    </div>
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                  </div>
+                )}
+                {hasPassword && (
+                  <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl">
+                    <div className="w-5 h-5 shrink-0 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-white">{language === 'fr' ? 'Email / Mot de passe' : 'Email / Password'}</p>
+                      <p className="text-[10px] text-white/30 truncate">{authUser.email}</p>
+                    </div>
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
                   </div>
                 )}
               </div>
-            ) : (
-              <button
-                onClick={() => setShowLinkEmail(true)}
-                className="w-full py-2 text-[10px] text-white/30 font-bold uppercase tracking-widest hover:text-white/50 transition-colors mt-2"
-              >
-                + Ajouter un accès Email / Mot de passe
-              </button>
+            </div>
+
+            {/* Password Change (only if email/password is linked) */}
+            {hasPassword && (
+              <>
+                {showLinkEmail ? (
+                  <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-3 animate-fade-in">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-white/60">
+                        {language === 'fr' ? 'Changer le mot de passe' : 'Change password'}
+                      </span>
+                      <button onClick={() => { setShowLinkEmail(false); setLinkMessage(null); }} className="text-white/30 hover:text-white text-xs">✕</button>
+                    </div>
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      setIsLinking(true);
+                      setLinkMessage(null);
+                      const result = await changePassword(linkEmail, linkPassword);
+                      setLinkMessage({ text: result.message, success: result.success });
+                      setIsLinking(false);
+                      if (result.success) {
+                        setLinkEmail('');
+                        setLinkPassword('');
+                        setTimeout(() => { setShowLinkEmail(false); setLinkMessage(null); }, 2000);
+                      }
+                    }} className="space-y-2">
+                      <input
+                        type="password"
+                        placeholder={language === 'fr' ? 'Mot de passe actuel' : 'Current password'}
+                        value={linkEmail}
+                        onChange={(e) => setLinkEmail(e.target.value)}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white font-bold outline-none focus:border-blue-500 transition-all placeholder:text-white/20"
+                        required
+                      />
+                      <input
+                        type="password"
+                        placeholder={language === 'fr' ? 'Nouveau mot de passe (min. 6 car.)' : 'New password (min. 6 chars)'}
+                        value={linkPassword}
+                        onChange={(e) => setLinkPassword(e.target.value)}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white font-bold outline-none focus:border-blue-500 transition-all placeholder:text-white/20"
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isLinking}
+                        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all disabled:opacity-50"
+                      >
+                        {isLinking ? "..." : (language === 'fr' ? 'Modifier' : 'Update')}
+                      </button>
+                    </form>
+                    {linkMessage && (
+                      <div className={`text-[10px] font-bold p-2 rounded-lg ${linkMessage.success ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'}`}>
+                        {linkMessage.text}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowLinkEmail(true)}
+                    className="w-full py-2 text-[10px] text-white/30 font-bold uppercase tracking-widest hover:text-white/50 transition-colors mt-2"
+                  >
+                    {language === 'fr' ? '🔑 Changer le mot de passe' : '🔑 Change password'}
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* Link Email (only if NOT already linked) */}
+            {!hasPassword && (
+              <>
+                {showLinkEmail ? (
+                  <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-3 animate-fade-in mt-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-white/60">
+                        {language === 'fr' ? 'Ajouter un accès Email' : 'Add Email access'}
+                      </span>
+                      <button onClick={() => { setShowLinkEmail(false); setLinkMessage(null); }} className="text-white/30 hover:text-white text-xs">✕</button>
+                    </div>
+                    <p className="text-[10px] text-white/30 leading-relaxed">
+                      {language === 'fr'
+                        ? "Ajoutez un email et mot de passe pour vous connecter depuis n'importe quel appareil, même sur mobile."
+                        : 'Add an email and password to sign in from any device, including mobile.'}
+                    </p>
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      setIsLinking(true);
+                      setLinkMessage(null);
+                      const result = await linkEmailToAccount(linkEmail, linkPassword);
+                      setLinkMessage({ text: result.message, success: result.success });
+                      setIsLinking(false);
+                      if (result.success) {
+                        setLinkEmail('');
+                        setLinkPassword('');
+                      }
+                    }} className="space-y-2">
+                      <input
+                        type="email"
+                        placeholder="Email"
+                        value={linkEmail}
+                        onChange={(e) => setLinkEmail(e.target.value)}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white font-bold outline-none focus:border-blue-500 transition-all placeholder:text-white/20"
+                        required
+                      />
+                      <input
+                        type="password"
+                        placeholder={language === 'fr' ? 'Mot de passe (min. 6 car.)' : 'Password (min. 6 chars)'}
+                        value={linkPassword}
+                        onChange={(e) => setLinkPassword(e.target.value)}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white font-bold outline-none focus:border-blue-500 transition-all placeholder:text-white/20"
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isLinking}
+                        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all disabled:opacity-50"
+                      >
+                        {isLinking ? "..." : (language === 'fr' ? 'Lier cet email' : 'Link this email')}
+                      </button>
+                    </form>
+                    {linkMessage && (
+                      <div className={`text-[10px] font-bold p-2 rounded-lg ${linkMessage.success ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'}`}>
+                        {linkMessage.text}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowLinkEmail(true)}
+                    className="w-full py-2 text-[10px] text-white/30 font-bold uppercase tracking-widest hover:text-white/50 transition-colors mt-2"
+                  >
+                    {language === 'fr' ? '+ Ajouter un accès Email / Mot de passe' : '+ Add Email / Password access'}
+                  </button>
+                )}
+              </>
             )}
           </>
         ) : (

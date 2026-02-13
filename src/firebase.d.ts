@@ -17,6 +17,8 @@ declare module 'firebase/auth' {
     export function onAuthStateChanged(auth: any, next: (user: any) => void, error?: (error: any) => void): any;
     export function signOut(auth: any): Promise<void>;
     export function linkWithCredential(user: any, credential: any): Promise<any>;
+    export function updatePassword(user: any, newPassword: string): Promise<void>;
+    export function reauthenticateWithCredential(user: any, credential: any): Promise<any>;
     export class EmailAuthProvider {
         static credential(email: string, password: string): any;
     }
@@ -29,6 +31,14 @@ declare module 'firebase/auth' {
         displayName: string | null;
         photoURL: string | null;
         isAnonymous: boolean;
+        providerData: Array<{
+            providerId: string;
+            uid: string;
+            displayName: string | null;
+            email: string | null;
+            phoneNumber: string | null;
+            photoURL: string | null;
+        }>;
     }
 }
 
