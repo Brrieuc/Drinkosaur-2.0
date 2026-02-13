@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { X, Clock, Zap, History } from 'lucide-react';
 import { Drink, UserProfile, WonAward } from '../types';
 import { BacChartModal } from './BacChartModal';
@@ -41,7 +41,13 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
 
     // We rely on fullStatus (calculated locally from fresh drinks data) for everything
     // to ensure the number matches the liquid height and color.
-    const fullStatus = useMemo(() => calculateBac(friendDrinks, friendProfile), [friendDrinks, friendProfile]);
+    const [tick, setTick] = useState(0);
+    useEffect(() => {
+        const i = setInterval(() => setTick(t => t + 1), 60000);
+        return () => clearInterval(i);
+    }, []);
+
+    const fullStatus = useMemo(() => calculateBac(friendDrinks, friendProfile), [friendDrinks, friendProfile, tick]);
 
     const t = {
         title: isFrench ? "Profil de l'ami" : "Friend Profile",

@@ -86,7 +86,7 @@ export const generateBacTrend = (drinks: Drink[], user: UserProfile, centerTime:
   // 14 hours total window: 7h before, 7h after
   const startTime = centerTime - (7 * 60 * 60 * 1000);
   const endTime = centerTime + (7 * 60 * 60 * 1000);
-  return simulateBac(drinks, user, startTime, endTime, 5 * 60 * 1000);
+  return simulateBac(drinks, user, startTime, endTime, 60000);
 };
 
 export const calculateBac = (drinks: Drink[], user: UserProfile): BacStatus => {
