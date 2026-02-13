@@ -20,6 +20,7 @@ import useBacCalculator from './hooks/useBacCalculator';
 import { useAwards } from './hooks/useAwards';
 import { useAwardNotifications } from './hooks/useAwardNotifications';
 import { useGlobalStats } from './hooks/useGlobalStats';
+import { HelmetProvider } from 'react-helmet-async';
 
 const Toast = ({ message, type = 'success' }: { message: string, type?: 'success' | 'warning' }) => (
   <div className={`fixed top-6 left-1/2 transform -translate-x-1/2 z-[200] px-6 py-4 rounded-2xl backdrop-blur-xl border shadow-2xl animate-bounce-in flex items-center gap-3 ${type === 'warning' ? 'bg-red-500/20 border-red-500/30 text-red-100' : 'bg-emerald-500/20 border-emerald-500/30 text-emerald-100'
@@ -382,188 +383,190 @@ const App: React.FC = () => {
 
 
   return (
-    <div
-      className="relative w-full h-screen text-white overflow-hidden flex flex-col font-sans selection:bg-fuchsia-500/30"
-      style={{
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingBottom: 'env(safe-area-inset-bottom)'
-      }}
-    >
-      <Background />
+    <HelmetProvider>
+      <div
+        className="relative w-full h-screen text-white overflow-hidden flex flex-col font-sans selection:bg-fuchsia-500/30"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)'
+        }}
+      >
+        <Background />
 
-      {/* ONBOARDING TOUR */}
-      {/* PWA INSTALL GUIDE */}
-      {user.isSetup && !user.hasSeenPwaInstallGuide && (
-        <InstallPwaGuide
-          language={user.language}
-          onComplete={() => {
-            saveUser({ ...user, hasSeenPwaInstallGuide: true });
-          }}
-        />
-      )}
-
-      {/* ONBOARDING TOUR */}
-      {user.isSetup && user.hasSeenPwaInstallGuide && !user.hasSeenTour && (
-        <OnboardingTour
-          language={user.language}
-          onComplete={() => {
-            saveUser({ ...user, hasSeenTour: true });
-          }}
-        />
-      )}
-
-      {/* TOAST NOTIFICATION */}
-      {toast && <Toast message={toast.msg} type={toast.type} />}
-
-      {/* Main Content Area */}
-      <main className="flex-1 relative overflow-hidden flex flex-col">
-        {view === AppView.SETTINGS && (
-          <Settings
-            user={user as UserProfile}
-            onSave={async (newProfile) => {
-              const result = await saveUser(newProfile);
-              if (!result.success) {
-                setToast({ msg: result.error || 'Error', type: 'warning' });
-                setTimeout(() => setToast(null), 3000);
-              }
-            }}
-            onUploadAvatar={uploadAvatar}
-            wonAwards={user.wonAwards || []}
-            selectedBadges={user.selectedBadges || []}
-            onUpdateBadges={async (badges) => {
-              const result = await saveUser({ selectedBadges: badges });
-              if (result.success) {
-                setToast({ msg: user.language === 'fr' ? 'Badges mis à jour !' : 'Badges updated!', type: 'success' });
-              } else {
-                setToast({ msg: result.error || 'Error', type: 'warning' });
-              }
-              setTimeout(() => setToast(null), 3000);
+        {/* ONBOARDING TOUR */}
+        {/* PWA INSTALL GUIDE */}
+        {user.isSetup && !user.hasSeenPwaInstallGuide && (
+          <InstallPwaGuide
+            language={user.language}
+            onComplete={() => {
+              saveUser({ ...user, hasSeenPwaInstallGuide: true });
             }}
           />
         )}
 
-        {view === AppView.SOCIAL && (
-          <>
-            <Social
-              friends={friends}
-              requests={incomingRequests}
-              myProfile={user as UserProfile}
-              myBac={bacStatus}
-              myUid={authUser?.uid || ''}
-              isAnonymous={(authUser as any)?.isAnonymous}
-              onAddFriend={addFriendByUsername}
-              onAddFriendByUid={addFriendByUid}
-              onRespondRequest={respondToRequest}
-              onRemoveFriend={removeFriend}
-              onRefresh={refreshSocial}
-              onSelectFriend={handleSelectFriend}
-              suggestions={suggestions}
-              onFetchSuggestions={getSuggestions}
-              loading={socialLoading}
+        {/* ONBOARDING TOUR */}
+        {user.isSetup && user.hasSeenPwaInstallGuide && !user.hasSeenTour && (
+          <OnboardingTour
+            language={user.language}
+            onComplete={() => {
+              saveUser({ ...user, hasSeenTour: true });
+            }}
+          />
+        )}
+
+        {/* TOAST NOTIFICATION */}
+        {toast && <Toast message={toast.msg} type={toast.type} />}
+
+        {/* Main Content Area */}
+        <main className="flex-1 relative overflow-hidden flex flex-col">
+          {view === AppView.SETTINGS && (
+            <Settings
+              user={user as UserProfile}
+              onSave={async (newProfile) => {
+                const result = await saveUser(newProfile);
+                if (!result.success) {
+                  setToast({ msg: result.error || 'Error', type: 'warning' });
+                  setTimeout(() => setToast(null), 3000);
+                }
+              }}
+              onUploadAvatar={uploadAvatar}
+              wonAwards={user.wonAwards || []}
+              selectedBadges={user.selectedBadges || []}
+              onUpdateBadges={async (badges) => {
+                const result = await saveUser({ selectedBadges: badges });
+                if (result.success) {
+                  setToast({ msg: user.language === 'fr' ? 'Badges mis à jour !' : 'Badges updated!', type: 'success' });
+                } else {
+                  setToast({ msg: result.error || 'Error', type: 'warning' });
+                }
+                setTimeout(() => setToast(null), 3000);
+              }}
+            />
+          )}
+
+          {view === AppView.SOCIAL && (
+            <>
+              <Social
+                friends={friends}
+                requests={incomingRequests}
+                myProfile={user as UserProfile}
+                myBac={bacStatus}
+                myUid={authUser?.uid || ''}
+                isAnonymous={(authUser as any)?.isAnonymous}
+                onAddFriend={addFriendByUsername}
+                onAddFriendByUid={addFriendByUid}
+                onRespondRequest={respondToRequest}
+                onRemoveFriend={removeFriend}
+                onRefresh={refreshSocial}
+                onSelectFriend={handleSelectFriend}
+                suggestions={suggestions}
+                onFetchSuggestions={getSuggestions}
+                loading={socialLoading}
+                language={user.language}
+                groups={groups}
+                groupInvites={groupInvites}
+                onCreateGroup={createGroup}
+                onAcceptGroupInvite={acceptGroupInvite}
+                onDeclineGroupInvite={declineGroupInvite}
+                onLeaveGroup={leaveGroup}
+                onFetchGroupStatus={fetchGroupMembersStatus}
+                onInviteToGroup={inviteMemberToGroup}
+                onUpdateGroupIcon={updateGroupIcon}
+                onUpdateGroupSettings={updateGroupSettings}
+                awards={awards}
+                awardsLoading={awardsLoading}
+                awardsMonth={awardsMonth}
+                onFetchGroupAwards={(groupId: string, month: number, year: number) => fetchGroupAwards(groupId, month, year, user.language)}
+              />
+              {selectedFriend && (
+                <FriendProfileModal
+                  friend={selectedFriend.status}
+                  friendDrinks={selectedFriend.drinks}
+                  friendProfile={selectedFriend.profile}
+                  onClose={() => setSelectedFriend(null)}
+                  language={user.language}
+                />
+              )}
+            </>
+          )}
+
+          {view === AppView.DASHBOARD && (
+            <Dashboard
+              status={bacStatus}
               language={user.language}
-              groups={groups}
+              drinks={drinks}
+              user={user as UserProfile}
+              incomingRequests={incomingRequests}
               groupInvites={groupInvites}
-              onCreateGroup={createGroup}
-              onAcceptGroupInvite={acceptGroupInvite}
-              onDeclineGroupInvite={declineGroupInvite}
-              onLeaveGroup={leaveGroup}
-              onFetchGroupStatus={fetchGroupMembersStatus}
-              onInviteToGroup={inviteMemberToGroup}
-              onUpdateGroupIcon={updateGroupIcon}
-              onUpdateGroupSettings={updateGroupSettings}
+              onRespondRequest={respondToRequest}
+              onAcceptGroup={acceptGroupInvite}
+              onDeclineGroup={declineGroupInvite}
+              awardNotifications={awardNotifications}
+              onMarkAwardRead={markAwardAsRead}
+              unreadAwardCount={unreadAwardCount}
               awards={awards}
               awardsLoading={awardsLoading}
               awardsMonth={awardsMonth}
               onFetchGroupAwards={(groupId: string, month: number, year: number) => fetchGroupAwards(groupId, month, year, user.language)}
+              myUid={authUser?.uid || ''}
             />
-            {selectedFriend && (
-              <FriendProfileModal
-                friend={selectedFriend.status}
-                friendDrinks={selectedFriend.drinks}
-                friendProfile={selectedFriend.profile}
-                onClose={() => setSelectedFriend(null)}
-                language={user.language}
-              />
-            )}
-          </>
-        )}
+          )}
 
-        {view === AppView.DASHBOARD && (
-          <Dashboard
-            status={bacStatus}
-            language={user.language}
-            drinks={drinks}
-            user={user as UserProfile}
-            incomingRequests={incomingRequests}
-            groupInvites={groupInvites}
-            onRespondRequest={respondToRequest}
-            onAcceptGroup={acceptGroupInvite}
-            onDeclineGroup={declineGroupInvite}
-            awardNotifications={awardNotifications}
-            onMarkAwardRead={markAwardAsRead}
-            unreadAwardCount={unreadAwardCount}
-            awards={awards}
-            awardsLoading={awardsLoading}
-            awardsMonth={awardsMonth}
-            onFetchGroupAwards={(groupId: string, month: number, year: number) => fetchGroupAwards(groupId, month, year, user.language)}
-            myUid={authUser?.uid || ''}
-          />
-        )}
+          {view === AppView.GLOBE && (
+            <GlobalDashboard
+              liveStats={liveStats}
+              monthlyStats={monthlyStats}
+              loadingLive={loadingLive}
+              loadingMonthly={loadingMonthly}
+              onFetchLive={() => fetchLiveStats(authUser?.uid || '')}
+              onFetchMonthly={() => fetchMonthlyStats(authUser?.uid || '')}
+              language={user.language}
+              myUid={authUser?.uid || ''}
+            />
+          )}
 
-        {view === AppView.GLOBE && (
-          <GlobalDashboard
-            liveStats={liveStats}
-            monthlyStats={monthlyStats}
-            loadingLive={loadingLive}
-            loadingMonthly={loadingMonthly}
-            onFetchLive={() => fetchLiveStats(authUser?.uid || '')}
-            onFetchMonthly={() => fetchMonthlyStats(authUser?.uid || '')}
-            language={user.language}
-            myUid={authUser?.uid || ''}
-          />
-        )}
+          {view === AppView.ADD_DRINK && (
+            <AddDrink onAdd={handleAddDrink} onClose={() => setView(AppView.DASHBOARD)} language={user.language} />
+          )}
 
-        {view === AppView.ADD_DRINK && (
-          <AddDrink onAdd={handleAddDrink} onClose={() => setView(AppView.DASHBOARD)} language={user.language} />
-        )}
+          {view === AppView.HISTORY && (
+            <DrinkList drinks={drinks} onRemove={handleRemoveDrink} language={user.language} />
+          )}
+        </main>
 
-        {view === AppView.HISTORY && (
-          <DrinkList drinks={drinks} onRemove={handleRemoveDrink} language={user.language} />
-        )}
-      </main>
+        {/* Gradient Overlay for Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#000000] via-[#000000]/80 to-transparent pointer-events-none z-40" />
 
-      {/* Gradient Overlay for Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#000000] via-[#000000]/80 to-transparent pointer-events-none z-40" />
+        {/* Floating Bottom Navigation */}
+        {
+          user.isSetup && (
+            <div
+              className="fixed left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
+              style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+            >
+              <div className="glass-panel-3d rounded-[32px] p-2 flex items-center gap-1 shadow-2xl backdrop-blur-xl pointer-events-auto border-white/20">
+                <NavButton target={AppView.HISTORY} icon={History} label={navText.history} hasBadge={hasHistoryNotification} />
+                <NavButton target={AppView.DASHBOARD} icon={LayoutDashboard} label={navText.monitor} hasBadge={hasDashboardNotification} />
 
-      {/* Floating Bottom Navigation */}
-      {
-        user.isSetup && (
-          <div
-            className="fixed left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
-            style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
-          >
-            <div className="glass-panel-3d rounded-[32px] p-2 flex items-center gap-1 shadow-2xl backdrop-blur-xl pointer-events-auto border-white/20">
-              <NavButton target={AppView.HISTORY} icon={History} label={navText.history} hasBadge={hasHistoryNotification} />
-              <NavButton target={AppView.DASHBOARD} icon={LayoutDashboard} label={navText.monitor} hasBadge={hasDashboardNotification} />
+                <div className="mx-1">
+                  <button
+                    onClick={() => setView(AppView.ADD_DRINK)}
+                    aria-label={navText.add}
+                    className="w-14 h-14 rounded-[20px] bg-gradient-to-br from-white to-gray-200 text-black flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.4)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10"
+                  >
+                    <PlusCircle size={28} className="text-black/80" strokeWidth={2.5} />
+                  </button>
+                </div>
 
-              <div className="mx-1">
-                <button
-                  onClick={() => setView(AppView.ADD_DRINK)}
-                  aria-label={navText.add}
-                  className="w-14 h-14 rounded-[20px] bg-gradient-to-br from-white to-gray-200 text-black flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.4)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10"
-                >
-                  <PlusCircle size={28} className="text-black/80" strokeWidth={2.5} />
-                </button>
+                <NavButton target={AppView.SOCIAL} icon={Users} label={navText.social} hasBadge={hasSocialNotification} />
+                <NavButton target={AppView.GLOBE} icon={Globe} label={navText.globe} />
+                <NavButton target={AppView.SETTINGS} icon={User} label={navText.settings} hasBadge={hasSettingsNotification} />
               </div>
-
-              <NavButton target={AppView.SOCIAL} icon={Users} label={navText.social} hasBadge={hasSocialNotification} />
-              <NavButton target={AppView.GLOBE} icon={Globe} label={navText.globe} />
-              <NavButton target={AppView.SETTINGS} icon={User} label={navText.settings} hasBadge={hasSettingsNotification} />
             </div>
-          </div>
-        )
-      }
-    </div >
+          )
+        }
+      </div >
+    </HelmetProvider>
   );
 };
 
