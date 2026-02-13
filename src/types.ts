@@ -28,6 +28,8 @@ export interface UserProfile {
   hasSeenPwaInstallGuide?: boolean;
   friends?: string[];
   groups?: string[];
+  birthDate?: string; // ISO date string (YYYY-MM-DD)
+  photoVisibleToFriends?: boolean; // Privacy: show photo to friends
 }
 
 

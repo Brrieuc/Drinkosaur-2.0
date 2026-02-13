@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { UserProfile } from '../types';
-import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2 } from 'lucide-react';
+import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Eye, EyeOff, Calendar } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { ImageCropper } from './ImageCropper';
 import heic2any from 'heic2any';
@@ -12,7 +12,7 @@ interface SettingsProps {
   onUploadAvatar: (base64: string) => Promise<string>;
 }
 
-type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn' | 'errorWeight' | 'errorUsername';
+type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn' | 'errorWeight' | 'errorUsername' | 'birthDate' | 'birthDateDesc' | 'underageTitle' | 'underageMsg' | 'errorBirthDate' | 'privacy' | 'photoVisible' | 'photoVisibleDesc';
 
 export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar }) => {
   const [showAdvanced, setShowAdvanced] = useState(!user.isSetup);
@@ -22,6 +22,8 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   const [drinkingSpeed, setDrinkingSpeed] = useState<'slow' | 'average' | 'fast'>(user.drinkingSpeed || 'average');
   const [username, setUsername] = useState(user.username || '');
   const [customPhotoURL, setCustomPhotoURL] = useState(user.customPhotoURL || '');
+  const [birthDate, setBirthDate] = useState(user.birthDate || '');
+  const [photoVisibleToFriends, setPhotoVisibleToFriends] = useState(user.photoVisibleToFriends !== false); // default true
 
   // Pivot: Sync local state when user profile updates (e.g. initial load)
   React.useEffect(() => {
@@ -51,6 +53,18 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
     window.localStorage.setItem('drinkosaur_stay_connected', val.toString());
   };
 
+  const getAge = (dateStr: string): number => {
+    if (!dateStr) return -1;
+    const birth = new Date(dateStr);
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const monthDiff = now.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   const handleSave = () => {
     // Robust validation
     const cleanUsername = username.trim().toLowerCase();
@@ -65,6 +79,19 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       return;
     }
 
+    // Date of birth validation
+    if (!birthDate) {
+      alert(t.errorBirthDate);
+      return;
+    }
+
+    const age = getAge(birthDate);
+    if (age < 18) {
+      // Don't block, just show warning — they can fix the date
+      alert(t.underageMsg);
+      return;
+    }
+
     onSave({
       weightKg: weight,
       gender,
@@ -73,6 +100,8 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       stayConnected,
       username: cleanUsername,
       customPhotoURL,
+      birthDate,
+      photoVisibleToFriends,
       isSetup: true
     });
     if (user.isSetup) setShowAdvanced(false);
@@ -170,7 +199,15 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       advancedBtn: "Advanced Settings",
       backBtn: "Back to Profile",
       errorWeight: "Please enter a valid weight (30-250kg)",
-      errorUsername: "Username must be at least 3 characters"
+      errorUsername: "Username must be at least 3 characters",
+      birthDate: "Date of birth",
+      birthDateDesc: "Required to verify you are of legal drinking age",
+      underageTitle: "Age Restriction",
+      underageMsg: "You must be at least 18 years old to use Drinkosaur. Please come back when you reach the legal age!",
+      errorBirthDate: "Please enter your date of birth",
+      privacy: "Privacy",
+      photoVisible: "Photo visible to friends",
+      photoVisibleDesc: "Your friends can see your profile photo"
     },
     fr: {
       profileTitle: "Mon Profil",
@@ -200,7 +237,15 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       advancedBtn: "Réglages de calcul",
       backBtn: "Retour au profil",
       errorWeight: "Veuillez entrer un poids valide (30-250kg)",
-      errorUsername: "Le pseudo doit faire au moins 3 caractères"
+      errorUsername: "Le pseudo doit faire au moins 3 caractères",
+      birthDate: "Date de naissance",
+      birthDateDesc: "Nécessaire pour vérifier que vous avez l'âge légal",
+      underageTitle: "Restriction d'âge",
+      underageMsg: "Vous devez avoir au moins 18 ans pour utiliser Drinkosaur. Revenez quand vous aurez atteint l'âge légal !",
+      errorBirthDate: "Veuillez entrer votre date de naissance",
+      privacy: "Confidentialité",
+      photoVisible: "Photo visible par les amis",
+      photoVisibleDesc: "Vos amis peuvent voir votre photo de profil"
     }
   }[language] as any;
 
@@ -401,6 +446,32 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
             {renderAuthSection()}
           </div>
 
+          {/* Privacy Section */}
+          <div className="glass-panel-3d p-6 rounded-[32px] space-y-5">
+            <h3 className="text-xl font-bold flex items-center gap-2">
+              <Shield size={20} className="text-purple-400" /> {t.privacy}
+            </h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {photoVisibleToFriends ? <Eye size={18} className="text-emerald-400" /> : <EyeOff size={18} className="text-red-400" />}
+                <div>
+                  <p className="text-sm font-bold text-white">{t.photoVisible}</p>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider font-bold mt-0.5">{t.photoVisibleDesc}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const newVal = !photoVisibleToFriends;
+                  setPhotoVisibleToFriends(newVal);
+                  onSave({ photoVisibleToFriends: newVal });
+                }}
+                className={`w-12 h-6 rounded-full transition-colors relative ${photoVisibleToFriends ? 'bg-emerald-500' : 'bg-white/10'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${photoVisibleToFriends ? 'left-7' : 'left-1'}`} />
+              </button>
+            </div>
+          </div>
+
           <button
             onClick={() => setShowAdvanced(true)}
             className="w-full glass-panel-3d p-6 rounded-[32px] flex items-center justify-between active:scale-[0.98] transition-all group hover:bg-white/5"
@@ -474,6 +545,29 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                   className="w-full bg-black/40 border border-white/10 rounded-2xl pl-10 pr-5 py-4 text-md font-bold text-white focus:border-blue-500/50 outline-none transition-all shadow-inner"
                 />
               </div>
+            </div>
+
+            {/* Date of Birth */}
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-white/60 ml-2 flex items-center gap-2 uppercase tracking-widest text-[10px]">
+                <Calendar size={12} /> {t.birthDate}
+              </label>
+              <p className="text-[10px] text-white/30 ml-2 font-medium">{t.birthDateDesc}</p>
+              <input
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-md font-bold text-white focus:border-blue-500/50 outline-none transition-all shadow-inner [color-scheme:dark]"
+              />
+              {birthDate && getAge(birthDate) < 18 && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 mt-2">
+                  <p className="text-red-300 text-sm font-bold flex items-center gap-2">
+                    <Shield size={16} /> {t.underageTitle}
+                  </p>
+                  <p className="text-red-300/70 text-xs mt-1">{t.underageMsg}</p>
+                </div>
+              )}
             </div>
           </div>
 
