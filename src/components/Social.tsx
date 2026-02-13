@@ -7,7 +7,7 @@ import { ComputedAward } from '../constants/awards';
 import { AwardsModal } from './AwardsModal';
 import {
     UserPlus, Loader2, AlertTriangle, Trash2, Check, X, LogOut,
-    Bell, Trophy, Medal, RefreshCw, Sparkles, Share2, Users, Plus, ChevronLeft, Edit2, Shield, Globe, Eye, EyeOff
+    Bell, Trophy, Medal, RefreshCw, Sparkles, Share2, Users, Plus, ChevronLeft, Edit2, Shield, Globe, Eye, EyeOff, Clock
 } from 'lucide-react';
 
 interface SocialProps {
@@ -45,6 +45,7 @@ interface SocialProps {
     awardsLoading: boolean;
     awardsMonth: { month: number; year: number };
     onFetchGroupAwards: (groupId: string, month: number, year: number) => void;
+    onFetchGroupInvites: (groupId: string) => Promise<any[]>;
     onOpenGlobal: () => void;
 }
 
@@ -85,6 +86,7 @@ export const Social: React.FC<SocialProps> = (props) => {
         awardsLoading,
         awardsMonth,
         onFetchGroupAwards,
+        onFetchGroupInvites,
         onOpenGlobal
     } = props;
 
@@ -118,6 +120,9 @@ export const Social: React.FC<SocialProps> = (props) => {
     const [isInvitingToGroup, setIsInvitingToGroup] = useState(false);
     const [showIconPicker, setShowIconPicker] = useState(false);
     const [showAwardsModal, setShowAwardsModal] = useState(false);
+    const [showPendingInvites, setShowPendingInvites] = useState(false);
+    const [pendingInvites, setPendingInvites] = useState<any[]>([]);
+    const [loadingPendingInvites, setLoadingPendingInvites] = useState(false);
 
     const [isSoberExpanded, setIsSoberExpanded] = useState(false);
 
@@ -129,6 +134,18 @@ export const Social: React.FC<SocialProps> = (props) => {
         const i = setInterval(() => setTick(t => t + 1), 60000);
         return () => clearInterval(i);
     }, []);
+
+    useEffect(() => {
+        if (selectedGroupId && onFetchGroupStatus) {
+            setLoadingGroup(true);
+            onFetchGroupStatus(selectedGroupId)
+                .then(members => setGroupRanking(members))
+                .catch(console.error)
+                .finally(() => setLoadingGroup(false));
+        } else {
+            setGroupRanking([]);
+        }
+    }, [selectedGroupId, onFetchGroupStatus]);
 
     const t = useMemo(() => ({
         title: language === 'fr' ? 'Social' : 'Social',
@@ -699,6 +716,26 @@ export const Social: React.FC<SocialProps> = (props) => {
                                         >
                                             <Trophy size={16} />
                                         </button>
+                                        <button
+                                            onClick={async () => {
+                                                if (selectedGroupId) {
+                                                    setLoadingPendingInvites(true);
+                                                    setShowPendingInvites(true);
+                                                    try {
+                                                        const invites = await onFetchGroupInvites(selectedGroupId);
+                                                        setPendingInvites(invites);
+                                                    } catch (e) {
+                                                        console.error(e);
+                                                    } finally {
+                                                        setLoadingPendingInvites(false);
+                                                    }
+                                                }
+                                            }}
+                                            className="p-2 bg-white/5 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                                            title={language === 'fr' ? 'Invitations en attente' : 'Pending Invites'}
+                                        >
+                                            <Clock size={16} />
+                                        </button>
                                         <button onClick={() => setIsInvitingToGroup(true)} className="p-2 bg-blue-600 rounded-xl text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20"><UserPlus size={16} /></button>
                                         <button onClick={() => { onLeaveGroup(selectedGroupId); setSelectedGroupId(null); }} className="p-2 bg-white/5 rounded-xl text-red-400 hover:bg-red-500/20 transition-colors"><LogOut size={16} /></button>
                                     </div>
@@ -802,217 +839,242 @@ export const Social: React.FC<SocialProps> = (props) => {
                                 )}
                             </div>
                         ) : (
-                            <div className="space-y-8">
-                                <button onClick={() => setIsCreatingGroup(true)} className="w-full bg-gradient-to-br from-blue-500 to-indigo-600 p-4 rounded-3xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
-                                    <Plus size={20} /> {t.createGroup}
-                                </button>
-
-                                {groupInvites.length > 0 && (
-                                    <div className="space-y-3">
-                                        <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-2">{t.groupInvites}</h3>
-                                        {groupInvites.map(invite => (
-                                            <div key={invite.id} className="glass-panel-3d p-4 rounded-3xl flex items-center justify-between bg-emerald-500/5 border-emerald-500/20">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-lg">{invite.icon || <Users size={20} className="text-emerald-400" />}</div>
-                                                    <span className="font-black text-white">{invite.name}</span>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => onDeclineGroupInvite(invite.id)} className="p-2 bg-white/5 rounded-xl text-white/40 hover:text-red-400 transition-colors"><X size={20} /></button>
-                                                    <button onClick={() => onAcceptGroupInvite(invite.id)} className="p-2 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/20"><Check size={20} /></button>
-                                                </div>
-                                            </div>
-                                        ))}
+                            <div className="grid grid-cols-2 gap-4">
+                                <button
+                                    onClick={() => setIsCreatingGroup(true)}
+                                    className="col-span-2 p-6 rounded-3xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-900/40 flex items-center justify-center gap-3 active:scale-95 transition-all group"
+                                >
+                                    <div className="bg-white/20 p-2 rounded-xl group-hover:scale-110 transition-transform">
+                                        <Plus size={24} />
                                     </div>
-                                )}
-
-                                <div className="space-y-4">
-                                    <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-2">{language === 'fr' ? 'Mes Groupes' : 'My Groups'}</h3>
-                                    {groups.length === 0 ? (
-                                        <div className="text-center py-10 bg-white/5 rounded-3xl border border-dashed border-white/10 px-6">
-                                            <p className="text-white/30 text-sm italic font-medium">{t.emptyGroups}</p>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-1 gap-3">
-                                            {groups.map(group => (
-                                                <button
-                                                    key={group.id}
-                                                    onClick={async () => {
-                                                        setSelectedGroupId(group.id);
-                                                        setLoadingGroup(true);
-                                                        try {
-                                                            const status = await onFetchGroupStatus(group.id);
-                                                            setGroupRanking(status);
-                                                        } finally {
-                                                            setLoadingGroup(false);
-                                                        }
-                                                    }}
-                                                    className="glass-panel-3d p-6 rounded-[32px] flex items-center justify-between hover:bg-white/5 transition-all text-left"
-                                                >
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-14 h-14 rounded-3xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-2xl">{group.icon || <Users size={28} className="text-blue-400" />}</div>
-                                                        <div>
-                                                            <h4 className="font-black text-lg text-white leading-tight">{group.name}</h4>
-                                                            <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1">{group.memberIds.length} membres</p>
-                                                        </div>
+                                    <span className="font-black text-lg uppercase tracking-widest">{t.createGroup}</span>
+                                </button>
+                                {groups.map(g => (
+                                    <button
+                                        key={g.id}
+                                        onClick={() => setSelectedGroupId(g.id)}
+                                        className="bg-white/5 hover:bg-white/10 p-6 rounded-3xl border border-white/10 flex flex-col items-center gap-3 transition-all active:scale-95 relative overflow-hidden group"
+                                    >
+                                        <div className="text-4xl group-hover:scale-110 transition-transform duration-300 drop-shadow-lg">{g.icon || '👥'}</div>
+                                        <span className="font-bold text-white text-center truncate w-full">{g.name}</span>
+                                        <div className="text-[10px] uppercase font-black tracking-widest text-white/30">{g.memberIds?.length || 0} members</div>
+                                    </button>
+                                ))}
+                                {groupInvites.length > 0 && (
+                                    <div className="col-span-2 mt-8">
+                                        <h3 className="text-sm font-black text-white/40 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <Bell size={14} /> {t.groupInvites}
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {groupInvites.map(g => (
+                                                <div key={g.id} className="bg-blue-500/10 border border-blue-500/30 p-4 rounded-3xl flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-2xl">{g.icon || '👥'}</span>
+                                                        <span className="font-bold text-white">{g.name}</span>
                                                     </div>
-                                                    <ChevronLeft size={20} className="rotate-180 text-white/20" />
-                                                </button>
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => onDeclineGroupInvite(g.id)} className="p-2 bg-white/5 rounded-xl text-white/40 hover:text-red-400 transition-colors"><X size={20} /></button>
+                                                        <button onClick={() => onAcceptGroupInvite(g.id)} className="p-2 bg-blue-600 rounded-xl text-white hover:bg-blue-500 transition-colors"><Check size={20} /></button>
+                                                    </div>
+                                                </div>
                                             ))}
                                         </div>
-                                    )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* PENDING INVITES MODAL */}
+                        {showPendingInvites && (
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+                                <div className="bg-[#1a1a2e] w-full max-w-md rounded-[32px] overflow-hidden border border-white/10 shadow-2xl relative animate-scale-up">
+                                    <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
+                                        <h3 className="font-black text-xl italic text-white flex items-center gap-2">
+                                            <Clock size={20} className="text-white/40" />
+                                            {language === 'fr' ? 'Invitations en attente' : 'Pending Invites'}
+                                        </h3>
+                                        <button onClick={() => setShowPendingInvites(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/40 hover:text-white">
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                    <div className="p-6 max-h-[60vh] overflow-y-auto no-scrollbar">
+                                        {loadingPendingInvites ? (
+                                            <div className="flex justify-center py-10">
+                                                <Loader2 className="text-blue-400 animate-spin" size={32} />
+                                            </div>
+                                        ) : pendingInvites.length === 0 ? (
+                                            <div className="text-center py-10 text-white/30 font-medium">
+                                                {language === 'fr' ? 'Aucune invitation en attente.' : 'No pending invites.'}
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {pendingInvites.map(user => (
+                                                    <div key={user.uid} className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/5">
+                                                        <img src={user.customPhotoURL || user.photoURL || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-full object-cover border border-white/10" />
+                                                        <div className="flex-1">
+                                                            <div className="font-bold text-white">@{user.username || user.displayName}</div>
+                                                            <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                                                                {language === 'fr' ? 'Invité' : 'Invited'}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
+                        )}
+
+                        {/* --- CREATE GROUP MODAL --- */}
+                        {isCreatingGroup && (
+                            <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end animate-fade-in">
+                                <div className="w-full bg-[#0a0a0a] rounded-t-[40px] p-8 border-t border-white/10 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto no-scrollbar">
+                                    <div className="flex justify-between items-center mb-8">
+                                        <h3 className="text-2xl font-black text-white">{t.createGroup}</h3>
+                                        <button onClick={() => setIsCreatingGroup(false)} className="p-2 bg-white/5 rounded-full text-white/40"><X size={24} /></button>
+                                    </div>
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 text-left block">{t.groupName}</label>
+                                            <input
+                                                type="text"
+                                                value={newGroupName}
+                                                onChange={(e) => setNewGroupName(e.target.value)}
+                                                placeholder="Ex: Soirée Loft #202"
+                                                className="w-full bg-white/5 border border-white/10 p-5 rounded-3xl text-white font-bold outline-none focus:border-blue-500 transition-all shadow-inner"
+                                            />
+                                        </div>
+
+                                        {/* Icon Picker */}
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 text-left block">Icône</label>
+                                            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                                                {GROUP_ICONS.map(icon => (
+                                                    <button
+                                                        key={icon}
+                                                        onClick={() => setNewGroupIcon(icon)}
+                                                        className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all flex-shrink-0 ${newGroupIcon === icon ? 'bg-white text-black scale-110 shadow-lg' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+                                                    >
+                                                        {icon}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4 text-left">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 block">{t.selectFriends}</label>
+                                            <div className="space-y-2">
+                                                {friends.length === 0 ? <p className="text-white/20 text-xs italic p-4 text-center">{t.empty}</p> : (
+                                                    friends.map(friend => {
+                                                        const isSelected = selectedFriendIds.includes(friend.uid);
+                                                        return (
+                                                            <button
+                                                                key={friend.uid}
+                                                                onClick={() => setSelectedFriendIds(prev => isSelected ? prev.filter(id => id !== friend.uid) : [...prev, friend.uid])}
+                                                                className={`w-full p-4 rounded-2xl flex items-center gap-3 transition-all border ${isSelected ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                                                            >
+                                                                <img src={friend.photoURL || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-full border border-white/10 object-cover" />
+                                                                <span className="flex-1 text-left font-bold truncate text-white italic">@{friend.displayName}</span>
+                                                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isSelected ? 'bg-blue-500' : 'bg-white/10'}`}>{isSelected && <Check size={16} className="text-white" />}</div>
+                                                            </button>
+                                                        );
+                                                    })
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4 pt-4 pb-10">
+                                            <button onClick={() => setIsCreatingGroup(false)} className="flex-1 py-5 rounded-3xl font-black text-white/40 uppercase tracking-widest active:scale-95 transition-all">{t.cancel}</button>
+                                            <button
+                                                disabled={!newGroupName.trim() || selectedFriendIds.length === 0}
+                                                onClick={async () => {
+                                                    await onCreateGroup(newGroupName, selectedFriendIds, newGroupIcon);
+                                                    setIsCreatingGroup(false);
+                                                    setNewGroupName('');
+                                                    setSelectedFriendIds([]);
+                                                    setNewGroupIcon('🥂');
+                                                    setActiveTab(SocialTab.GROUPS);
+                                                }}
+                                                className="flex-[2] bg-white text-black py-5 rounded-3xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl disabled:opacity-20"
+                                            >
+                                                {t.create}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- INVITE TO GROUP MODAL --- */}
+                        {isInvitingToGroup && selectedGroupId && (
+                            <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end animate-fade-in">
+                                <div className="w-full bg-[#0a0a0a] rounded-t-[40px] p-8 border-t border-white/10 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto no-scrollbar">
+                                    <div className="flex justify-between items-center mb-8">
+                                        <h3 className="text-2xl font-black text-white">{t.addMembers}</h3>
+                                        <button onClick={() => { setIsInvitingToGroup(false); setSelectedFriendIds([]); }} className="p-2 bg-white/5 rounded-full text-white/40"><X size={24} /></button>
+                                    </div>
+                                    <div className="space-y-6">
+                                        <div className="space-y-4 text-left">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 block">{t.selectFriends}</label>
+                                            <div className="space-y-2">
+                                                {friends.filter(f => !groupRanking.some(member => member.uid === f.uid)).length === 0 ? (
+                                                    <p className="text-white/20 text-xs italic p-4 text-center">{t.empty}</p>
+                                                ) : (
+                                                    friends
+                                                        .filter(f => !groupRanking.some(member => member.uid === f.uid))
+                                                        .map(friend => {
+                                                            const isSelected = selectedFriendIds.includes(friend.uid);
+                                                            return (
+                                                                <button
+                                                                    key={friend.uid}
+                                                                    onClick={() => setSelectedFriendIds(prev => isSelected ? prev.filter(id => id !== friend.uid) : [...prev, friend.uid])}
+                                                                    className={`w-full p-4 rounded-2xl flex items-center gap-3 transition-all border ${isSelected ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                                                                >
+                                                                    <img src={friend.photoURL || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-full border border-white/10 object-cover" />
+                                                                    <span className="flex-1 text-left font-bold truncate text-white italic">@{friend.displayName}</span>
+                                                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isSelected ? 'bg-blue-500' : 'bg-white/10'}`}>{isSelected && <Check size={16} className="text-white" />}</div>
+                                                                </button>
+                                                            );
+                                                        })
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4 pt-4 pb-10">
+                                            <button onClick={() => { setIsInvitingToGroup(false); setSelectedFriendIds([]); }} className="flex-1 py-5 rounded-3xl font-black text-white/40 uppercase tracking-widest active:scale-95 transition-all">{t.cancel}</button>
+                                            <button
+                                                disabled={selectedFriendIds.length === 0}
+                                                onClick={async () => {
+                                                    await onInviteToGroup(selectedGroupId, selectedFriendIds);
+                                                    setIsInvitingToGroup(false);
+                                                    setSelectedFriendIds([]);
+                                                }}
+                                                className="flex-[2] bg-white text-black py-5 rounded-3xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl disabled:opacity-20"
+                                            >
+                                                {t.invite}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- AWARDS MODAL --- */}
+                        {showAwardsModal && selectedGroupId && (
+                            <AwardsModal
+                                groupId={selectedGroupId}
+                                groupName={groups.find(g => g.id === selectedGroupId)?.name || ''}
+                                awards={awards}
+                                loading={awardsLoading}
+                                selectedMonth={awardsMonth}
+                                onFetchAwards={onFetchGroupAwards}
+                                onClose={() => setShowAwardsModal(false)}
+                                language={language}
+                                myUid={myUid}
+                            />
                         )}
                     </div>
                 )}
             </div>
-
-            {/* --- CREATE GROUP MODAL --- */}
-            {isCreatingGroup && (
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end animate-fade-in">
-                    <div className="w-full bg-[#0a0a0a] rounded-t-[40px] p-8 border-t border-white/10 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto no-scrollbar">
-                        <div className="flex justify-between items-center mb-8">
-                            <h3 className="text-2xl font-black text-white">{t.createGroup}</h3>
-                            <button onClick={() => setIsCreatingGroup(false)} className="p-2 bg-white/5 rounded-full text-white/40"><X size={24} /></button>
-                        </div>
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 text-left block">{t.groupName}</label>
-                                <input
-                                    type="text"
-                                    value={newGroupName}
-                                    onChange={(e) => setNewGroupName(e.target.value)}
-                                    placeholder="Ex: Soirée Loft #202"
-                                    className="w-full bg-white/5 border border-white/10 p-5 rounded-3xl text-white font-bold outline-none focus:border-blue-500 transition-all shadow-inner"
-                                />
-                            </div>
-
-                            {/* Icon Picker */}
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 text-left block">Icône</label>
-                                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                                    {GROUP_ICONS.map(icon => (
-                                        <button
-                                            key={icon}
-                                            onClick={() => setNewGroupIcon(icon)}
-                                            className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all flex-shrink-0 ${newGroupIcon === icon ? 'bg-white text-black scale-110 shadow-lg' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
-                                        >
-                                            {icon}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="space-y-4 text-left">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 block">{t.selectFriends}</label>
-                                <div className="space-y-2">
-                                    {friends.length === 0 ? <p className="text-white/20 text-xs italic p-4 text-center">{t.empty}</p> : (
-                                        friends.map(friend => {
-                                            const isSelected = selectedFriendIds.includes(friend.uid);
-                                            return (
-                                                <button
-                                                    key={friend.uid}
-                                                    onClick={() => setSelectedFriendIds(prev => isSelected ? prev.filter(id => id !== friend.uid) : [...prev, friend.uid])}
-                                                    className={`w-full p-4 rounded-2xl flex items-center gap-3 transition-all border ${isSelected ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
-                                                >
-                                                    <img src={friend.photoURL || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-full border border-white/10 object-cover" />
-                                                    <span className="flex-1 text-left font-bold truncate text-white italic">@{friend.displayName}</span>
-                                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isSelected ? 'bg-blue-500' : 'bg-white/10'}`}>{isSelected && <Check size={16} className="text-white" />}</div>
-                                                </button>
-                                            );
-                                        })
-                                    )}
-                                </div>
-                            </div>
-                            <div className="flex gap-4 pt-4 pb-10">
-                                <button onClick={() => setIsCreatingGroup(false)} className="flex-1 py-5 rounded-3xl font-black text-white/40 uppercase tracking-widest active:scale-95 transition-all">{t.cancel}</button>
-                                <button
-                                    disabled={!newGroupName.trim() || selectedFriendIds.length === 0}
-                                    onClick={async () => {
-                                        await onCreateGroup(newGroupName, selectedFriendIds, newGroupIcon);
-                                        setIsCreatingGroup(false);
-                                        setNewGroupName('');
-                                        setSelectedFriendIds([]);
-                                        setNewGroupIcon('🥂');
-                                        setActiveTab(SocialTab.GROUPS);
-                                    }}
-                                    className="flex-[2] bg-white text-black py-5 rounded-3xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl disabled:opacity-20"
-                                >
-                                    {t.create}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* --- INVITE TO GROUP MODAL --- */}
-            {isInvitingToGroup && selectedGroupId && (
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end animate-fade-in">
-                    <div className="w-full bg-[#0a0a0a] rounded-t-[40px] p-8 border-t border-white/10 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto no-scrollbar">
-                        <div className="flex justify-between items-center mb-8">
-                            <h3 className="text-2xl font-black text-white">{t.addMembers}</h3>
-                            <button onClick={() => { setIsInvitingToGroup(false); setSelectedFriendIds([]); }} className="p-2 bg-white/5 rounded-full text-white/40"><X size={24} /></button>
-                        </div>
-                        <div className="space-y-6">
-                            <div className="space-y-4 text-left">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 block">{t.selectFriends}</label>
-                                <div className="space-y-2">
-                                    {friends.filter(f => !groupRanking.some(member => member.uid === f.uid)).length === 0 ? (
-                                        <p className="text-white/20 text-xs italic p-4 text-center">{t.empty}</p>
-                                    ) : (
-                                        friends
-                                            .filter(f => !groupRanking.some(member => member.uid === f.uid))
-                                            .map(friend => {
-                                                const isSelected = selectedFriendIds.includes(friend.uid);
-                                                return (
-                                                    <button
-                                                        key={friend.uid}
-                                                        onClick={() => setSelectedFriendIds(prev => isSelected ? prev.filter(id => id !== friend.uid) : [...prev, friend.uid])}
-                                                        className={`w-full p-4 rounded-2xl flex items-center gap-3 transition-all border ${isSelected ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
-                                                    >
-                                                        <img src={friend.photoURL || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-full border border-white/10 object-cover" />
-                                                        <span className="flex-1 text-left font-bold truncate text-white italic">@{friend.displayName}</span>
-                                                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isSelected ? 'bg-blue-500' : 'bg-white/10'}`}>{isSelected && <Check size={16} className="text-white" />}</div>
-                                                    </button>
-                                                );
-                                            })
-                                    )}
-                                </div>
-                            </div>
-                            <div className="flex gap-4 pt-4 pb-10">
-                                <button onClick={() => { setIsInvitingToGroup(false); setSelectedFriendIds([]); }} className="flex-1 py-5 rounded-3xl font-black text-white/40 uppercase tracking-widest active:scale-95 transition-all">{t.cancel}</button>
-                                <button
-                                    disabled={selectedFriendIds.length === 0}
-                                    onClick={async () => {
-                                        await onInviteToGroup(selectedGroupId, selectedFriendIds);
-                                        setIsInvitingToGroup(false);
-                                        setSelectedFriendIds([]);
-                                    }}
-                                    className="flex-[2] bg-white text-black py-5 rounded-3xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl disabled:opacity-20"
-                                >
-                                    {t.invite}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* --- AWARDS MODAL --- */}
-            {showAwardsModal && selectedGroupId && (
-                <AwardsModal
-                    groupId={selectedGroupId}
-                    groupName={groups.find(g => g.id === selectedGroupId)?.name || ''}
-                    awards={awards}
-                    loading={awardsLoading}
-                    selectedMonth={awardsMonth}
-                    onFetchAwards={onFetchGroupAwards}
-                    onClose={() => setShowAwardsModal(false)}
-                    language={language}
-                    myUid={myUid}
-                />
-            )}
         </div>
     );
 };

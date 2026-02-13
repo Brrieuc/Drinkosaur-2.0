@@ -72,7 +72,8 @@ const App: React.FC = () => {
     fetchGroupMembersStatus,
     inviteMemberToGroup,
     updateGroupIcon,
-    updateGroupSettings
+    updateGroupSettings,
+    fetchGroupPendingInvites
   } = useGroups();
 
   const {
@@ -473,6 +474,7 @@ const App: React.FC = () => {
                 onInviteToGroup={inviteMemberToGroup}
                 onUpdateGroupIcon={updateGroupIcon}
                 onUpdateGroupSettings={updateGroupSettings}
+                onFetchGroupInvites={fetchGroupPendingInvites}
                 awards={awards}
                 awardsLoading={awardsLoading}
                 awardsMonth={awardsMonth}

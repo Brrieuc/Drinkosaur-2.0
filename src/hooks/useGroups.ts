@@ -148,6 +148,21 @@ export const useGroups = () => {
         inviteMemberToGroup,
         fetchGroupMembersStatus,
         updateGroupIcon,
-        updateGroupSettings
+        updateGroupSettings,
+        fetchGroupPendingInvites: async (groupId: string): Promise<any[]> => {
+            const groupSnap = await getDoc(doc(db, "groups", groupId));
+            if (!groupSnap.exists()) return [];
+
+            const pendingIds = groupSnap.data().pendingInviteIds as string[];
+            if (!pendingIds || pendingIds.length === 0) return [];
+
+            const q = query(collection(db, "users"), where("__name__", "in", pendingIds.slice(0, 30)));
+            const snapshot = await getDocs(q);
+            const users: any[] = [];
+            snapshot.forEach((doc: any) => {
+                users.push({ uid: doc.id, ...doc.data() });
+            });
+            return users;
+        }
     };
 };
