@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { useAuth } from './useAuth';
-import { doc, getDoc, setDoc, db, collection, query, where, getDocs, storage, ref, uploadString, getDownloadURL } from '../firebase';
+import { doc, getDoc, setDoc, db, collection, query, where, getDocs } from '../firebase';
 
 export const useUser = () => {
     const defaultProfile: UserProfile = {
@@ -78,27 +78,14 @@ export const useUser = () => {
         fetchUserProfile();
     }, [authUser]);
 
-    // Upload avatar to Firebase Storage
+    // Store avatar as base64 data URL directly in Firestore (no Firebase Storage needed)
+    // The image is already compressed to 320x320 JPEG quality 0.6 (~20-40KB)
+    // which is well within Firestore's 1MB document size limit
     const uploadAvatar = async (base64Image: string): Promise<string> => {
         if (!authUser) throw new Error("Not logged in");
-        console.log("[uploadAvatar] Uploading to Firebase Storage...");
-
-        try {
-            // Create a unique filename based on UID and timestamp
-            const timestamp = Date.now();
-            const storageRef = ref(storage, `avatars/${authUser.uid}_${timestamp}.jpg`);
-
-            // Upload the base64 string (data_url format)
-            await uploadString(storageRef, base64Image, 'data_url');
-
-            // Get the download URL
-            const downloadURL = await getDownloadURL(storageRef);
-            console.log("[uploadAvatar] Upload success, URL:", downloadURL);
-            return downloadURL;
-        } catch (error) {
-            console.error("[uploadAvatar] Upload failed:", error);
-            throw error;
-        }
+        console.log("[uploadAvatar] Using base64 data URL, length:", base64Image.length);
+        // Simply return the data URL — it will be saved to Firestore via saveUserProfile
+        return base64Image;
     };
 
     const saveUserProfile = async (newProfile: Partial<UserProfile>): Promise<{ success: boolean, error?: string }> => {
