@@ -709,7 +709,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
               <p className="text-[10px] text-white/40 uppercase tracking-wider font-bold ml-6">
                 {language === 'fr' ? 'Comment vous apparaissez dans les listes de membres publiques' : 'How you appear in public group member lists'}
               </p>
-              <div className="flex gap-2 ml-6">
+              <div className="grid grid-cols-3 gap-2">
                 {[
                   { value: 'visible' as GroupListVisibility, label: language === 'fr' ? 'Visible' : 'Visible', icon: <Eye size={14} /> },
                   { value: 'anonymous' as GroupListVisibility, label: language === 'fr' ? 'Anonyme' : 'Anonymous', icon: <EyeOff size={14} /> },
@@ -721,7 +721,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                       setGroupListVisibility(opt.value);
                       onSave({ groupListVisibility: opt.value });
                     }}
-                    className={`flex-1 p-3 rounded-2xl border text-center transition-all ${groupListVisibility === opt.value
+                    className={`p-2 rounded-2xl border text-center transition-all flex flex-col items-center justify-center min-w-0 ${groupListVisibility === opt.value
                       ? 'bg-blue-500/15 border-blue-500/40 shadow-lg shadow-blue-500/10'
                       : 'bg-white/5 border-white/10 hover:bg-white/10'
                       }`}
