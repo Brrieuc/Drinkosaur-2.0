@@ -453,32 +453,37 @@ const App: React.FC = () => {
         )}
       </main>
 
+      {/* Gradient Overlay for Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#000000] via-[#000000]/80 to-transparent pointer-events-none z-40" />
+
       {/* Floating Bottom Navigation */}
-      {user.isSetup && (
-        <div
-          className="fixed left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
-          style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
-        >
-          <div className="glass-panel-3d rounded-[32px] p-2 flex items-center gap-1 shadow-2xl backdrop-blur-xl pointer-events-auto border-white/20">
-            <NavButton target={AppView.HISTORY} icon={History} label={navText.history} />
-            <NavButton target={AppView.DASHBOARD} icon={LayoutDashboard} label={navText.monitor} />
+      {
+        user.isSetup && (
+          <div
+            className="fixed left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
+            style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+          >
+            <div className="glass-panel-3d rounded-[32px] p-2 flex items-center gap-1 shadow-2xl backdrop-blur-xl pointer-events-auto border-white/20">
+              <NavButton target={AppView.HISTORY} icon={History} label={navText.history} />
+              <NavButton target={AppView.DASHBOARD} icon={LayoutDashboard} label={navText.monitor} />
 
-            <div className="mx-1">
-              <button
-                onClick={() => setView(AppView.ADD_DRINK)}
-                aria-label={navText.add}
-                className="w-14 h-14 rounded-[20px] bg-gradient-to-br from-white to-gray-200 text-black flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.4)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10"
-              >
-                <PlusCircle size={28} className="text-black/80" strokeWidth={2.5} />
-              </button>
+              <div className="mx-1">
+                <button
+                  onClick={() => setView(AppView.ADD_DRINK)}
+                  aria-label={navText.add}
+                  className="w-14 h-14 rounded-[20px] bg-gradient-to-br from-white to-gray-200 text-black flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.4)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10"
+                >
+                  <PlusCircle size={28} className="text-black/80" strokeWidth={2.5} />
+                </button>
+              </div>
+
+              <NavButton target={AppView.SOCIAL} icon={Users} label={navText.social} />
+              <NavButton target={AppView.SETTINGS} icon={User} label={navText.settings} />
             </div>
-
-            <NavButton target={AppView.SOCIAL} icon={Users} label={navText.social} />
-            <NavButton target={AppView.SETTINGS} icon={User} label={navText.settings} />
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

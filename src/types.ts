@@ -61,6 +61,7 @@ export interface FriendGroup {
   memberIds: string[];
   pendingInviteIds: string[];
   createdAt: number;
+  icon?: string;
 }
 
 export enum AppView {

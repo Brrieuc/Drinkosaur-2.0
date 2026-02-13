@@ -122,7 +122,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, [drinks, status.currentBac]);
 
   return (
-    <div className="w-full h-full flex flex-col p-6 animate-fade-in relative overflow-hidden">
+    <div className="w-full h-full flex flex-col p-6 animate-fade-in relative overflow-y-auto overflow-x-hidden scroll-smooth pb-32 no-scrollbar">
 
       {/* Chart Modal */}
       {showChartModal && user && (

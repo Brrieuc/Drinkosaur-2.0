@@ -27,7 +27,7 @@ interface SocialProps {
     // Group Props
     groups: FriendGroup[];
     groupInvites: FriendGroup[];
-    onCreateGroup: (name: string, friendIds: string[]) => Promise<any>;
+    onCreateGroup: (name: string, friendIds: string[], icon?: string) => Promise<any>;
     onAcceptGroupInvite: (groupId: string) => Promise<void>;
     onDeclineGroupInvite: (groupId: string) => Promise<void>;
     onLeaveGroup: (groupId: string) => Promise<void>;
@@ -90,6 +90,9 @@ export const Social: React.FC<SocialProps> = (props) => {
     const [isCreatingGroup, setIsCreatingGroup] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
     const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
+    const [newGroupIcon, setNewGroupIcon] = useState('🥂');
+
+    const GROUP_ICONS = ['🥂', '🍻', '🍷', '🥃', '🍸', '🍹', '🍾', '🦖', '🦕', '🔥', '⚡️', '🎱', '🎲', '🎮', '⚽️', '🏠', '🏖', '🏔'];
 
     // Invite to Group State
     const [isInvitingToGroup, setIsInvitingToGroup] = useState(false);
@@ -274,7 +277,7 @@ export const Social: React.FC<SocialProps> = (props) => {
     return (
         <div
             ref={scrollRef}
-            className="flex-1 flex flex-col p-6 pb-40 overflow-y-auto no-scrollbar animate-fade-in touch-pan-y"
+            className="flex-1 flex flex-col p-6 pb-40 overflow-y-auto no-scrollbar animate-fade-in touch-pan-y scroll-smooth"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -530,7 +533,7 @@ export const Social: React.FC<SocialProps> = (props) => {
                                         {groupInvites.map(invite => (
                                             <div key={invite.id} className="glass-panel-3d p-4 rounded-3xl flex items-center justify-between bg-emerald-500/5 border-emerald-500/20">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 flex items-center justify-center"><Users size={20} className="text-emerald-400" /></div>
+                                                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-lg">{invite.icon || <Users size={20} className="text-emerald-400" />}</div>
                                                     <span className="font-black text-white">{invite.name}</span>
                                                 </div>
                                                 <div className="flex gap-2">
@@ -566,7 +569,7 @@ export const Social: React.FC<SocialProps> = (props) => {
                                                     className="glass-panel-3d p-6 rounded-[32px] flex items-center justify-between hover:bg-white/5 transition-all text-left"
                                                 >
                                                     <div className="flex items-center gap-4">
-                                                        <div className="w-14 h-14 rounded-3xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-400"><Users size={28} /></div>
+                                                        <div className="w-14 h-14 rounded-3xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-2xl">{group.icon || <Users size={28} className="text-blue-400" />}</div>
                                                         <div>
                                                             <h4 className="font-black text-lg text-white leading-tight">{group.name}</h4>
                                                             <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1">{group.memberIds.length} membres</p>
@@ -603,6 +606,23 @@ export const Social: React.FC<SocialProps> = (props) => {
                                     className="w-full bg-white/5 border border-white/10 p-5 rounded-3xl text-white font-bold outline-none focus:border-blue-500 transition-all shadow-inner"
                                 />
                             </div>
+
+                            {/* Icon Picker */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 text-left block">Icône</label>
+                                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                                    {GROUP_ICONS.map(icon => (
+                                        <button
+                                            key={icon}
+                                            onClick={() => setNewGroupIcon(icon)}
+                                            className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all flex-shrink-0 ${newGroupIcon === icon ? 'bg-white text-black scale-110 shadow-lg' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+                                        >
+                                            {icon}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div className="space-y-4 text-left">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 block">{t.selectFriends}</label>
                                 <div className="space-y-2">
@@ -629,10 +649,11 @@ export const Social: React.FC<SocialProps> = (props) => {
                                 <button
                                     disabled={!newGroupName.trim() || selectedFriendIds.length === 0}
                                     onClick={async () => {
-                                        await onCreateGroup(newGroupName, selectedFriendIds);
+                                        await onCreateGroup(newGroupName, selectedFriendIds, newGroupIcon);
                                         setIsCreatingGroup(false);
                                         setNewGroupName('');
                                         setSelectedFriendIds([]);
+                                        setNewGroupIcon('🥂');
                                         setActiveTab(SocialTab.GROUPS);
                                     }}
                                     className="flex-[2] bg-white text-black py-5 rounded-3xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl disabled:opacity-20"

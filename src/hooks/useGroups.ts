@@ -52,12 +52,13 @@ export const useGroups = () => {
         };
     }, [authUser]);
 
-    const createGroup = async (name: string, friendIds: string[]) => {
+    const createGroup = async (name: string, friendIds: string[], icon?: string) => {
         if (!authUser) throw new Error("Not logged in");
         if (!name.trim()) throw new Error("Group name required");
 
         const groupData = {
             name: name.trim(),
+            icon: icon || null,
             creatorId: authUser.uid,
             memberIds: [authUser.uid], // Creator is always the first member
             pendingInviteIds: friendIds.filter(id => id !== authUser.uid),
