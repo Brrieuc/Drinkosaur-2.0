@@ -7,6 +7,7 @@ import { NotificationsModal } from './NotificationsModal';
 import { FriendRequest } from '../hooks/useSocial';
 import { AwardNotification } from '../hooks/useAwardNotifications';
 import { ComputedAward } from '../constants/awards';
+import { useDeviceMotion } from '../hooks/useDeviceMotion';
 
 
 interface DashboardProps {
@@ -66,6 +67,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     at: isFrench ? 'à' : '@',
     stats: isFrench ? 'Stats' : 'Stats'
   };
+
+  // Gyroscope pour mouvement du liquide
+  const { tilt } = useDeviceMotion();
 
   // Logic for display value and unit
   // EN: Uses % (g/100ml). FR: Uses g/L.
@@ -246,10 +250,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="absolute top-[10%] left-[10%] w-[40%] h-[25%] bg-gradient-to-b from-white/40 to-transparent rounded-[100%] rotate-[-45deg] blur-[2px] z-20 pointer-events-none" />
 
           {/* Liquid Container */}
-          <div className="absolute bottom-0 left-0 right-0 z-0 transition-all duration-1000 ease-in-out w-full" style={{ height: `${liquidHeight}%`, maxHeight: '100%' }}>
-            {/* The Liquid Surface (Wave) */}
-            <div className="absolute -top-4 left-0 w-[200%] h-8 bg-white/30 rounded-[100%] animate-[liquid-wave_6s_linear_infinite]" />
-            <div className="absolute -top-4 left-[-10%] w-[200%] h-8 bg-white/20 rounded-[100%] animate-[liquid-wave_9s_linear_infinite_reverse]" />
+          <div
+            className="absolute bottom-0 left-0 right-0 z-0 transition-all duration-300 ease-out w-full"
+            style={{
+              height: `${liquidHeight}%`,
+              maxHeight: '100%',
+              transform: `perspective(400px) rotateX(${tilt.y * 8}deg) rotateY(${tilt.x * 8}deg)`,
+              transformOrigin: 'bottom center'
+            }}
+          >
+            {/* The Liquid Surface (Wave) - avec inclinaison */}
+            <div
+              className="absolute -top-4 left-0 w-[200%] h-8 bg-white/30 rounded-[100%] animate-[liquid-wave_6s_linear_infinite]"
+              style={{
+                transform: `translateX(${tilt.x * -15}px) translateY(${tilt.y * -8}px)`,
+                transition: 'transform 0.3s ease-out'
+              }}
+            />
+            <div
+              className="absolute -top-4 left-[-10%] w-[200%] h-8 bg-white/20 rounded-[100%] animate-[liquid-wave_9s_linear_infinite_reverse]"
+              style={{
+                transform: `translateX(${tilt.x * -20}px) translateY(${tilt.y * -10}px)`,
+                transition: 'transform 0.3s ease-out'
+              }}
+            />
 
             {/* The Liquid Body */}
             <div
@@ -257,11 +281,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
               style={gradientStyle}
             ></div>
 
-            {/* Bubbles */}
+            {/* Bubbles - bougent avec l'inclinaison */}
             <div className="absolute bottom-0 w-full h-full overflow-hidden">
-              <div className="absolute bottom-[-10px] left-[20%] w-2 h-2 bg-white/40 rounded-full animate-[float_4s_infinite]" />
-              <div className="absolute bottom-[-10px] left-[50%] w-3 h-3 bg-white/30 rounded-full animate-[float_6s_infinite_0.5s]" />
-              <div className="absolute bottom-[-10px] left-[80%] w-1 h-1 bg-white/50 rounded-full animate-[float_3s_infinite_1s]" />
+              <div
+                className="absolute bottom-[-10px] w-2 h-2 bg-white/40 rounded-full animate-[float_4s_infinite]"
+                style={{
+                  left: `calc(20% + ${tilt.x * 30}px)`,
+                  transition: 'left 0.3s ease-out'
+                }}
+              />
+              <div
+                className="absolute bottom-[-10px] w-3 h-3 bg-white/30 rounded-full animate-[float_6s_infinite_0.5s]"
+                style={{
+                  left: `calc(50% + ${tilt.x * 40}px)`,
+                  transition: 'left 0.3s ease-out'
+                }}
+              />
+              <div
+                className="absolute bottom-[-10px] w-1 h-1 bg-white/50 rounded-full animate-[float_3s_infinite_1s]"
+                style={{
+                  left: `calc(80% + ${tilt.x * 25}px)`,
+                  transition: 'left 0.3s ease-out'
+                }}
+              />
             </div>
           </div>
 

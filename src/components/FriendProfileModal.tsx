@@ -4,6 +4,7 @@ import { Drink, UserProfile, WonAward } from '../types';
 import { BacChartModal } from './BacChartModal';
 import { calculateBac } from '../services/bacService';
 import { AWARD_DEFINITIONS } from '../constants/awards';
+import { useDeviceMotion } from '../hooks/useDeviceMotion';
 
 const MONTH_NAMES_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const MONTH_NAMES_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -31,6 +32,9 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
     language
 }) => {
     const [showChart, setShowChart] = useState(false);
+
+    // Gyroscope pour mouvement du liquide
+    const { tilt } = useDeviceMotion();
     const [selectedBadgeDetail, setSelectedBadgeDetail] = useState<WonAward | null>(null);
     const isFrench = language === 'fr';
     const monthNames = isFrench ? MONTH_NAMES_FR : MONTH_NAMES_EN;
@@ -195,8 +199,22 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                             <div className="absolute inset-0 bg-white/5 opacity- group-hover:opacity-100 transition-opacity z-30 pointer-events-none" />
                             <div className="absolute top-[10%] left-[10%] w-[40%] h-[25%] bg-gradient-to-b from-white/40 to-transparent rounded-[100%] rotate-[-45deg] blur-[2px] z-20 pointer-events-none" />
 
-                            <div className="absolute bottom-0 left-0 right-0 z-0 transition-all duration-1000 ease-in-out w-full" style={{ height: `${liquidHeight}%`, maxHeight: '100%' }}>
-                                <div className="absolute -top-3 left-0 w-[200%] h-6 bg-white/30 rounded-[100%] animate-[liquid-wave_6s_linear_infinite]" />
+                            <div
+                                className="absolute bottom-0 left-0 right-0 z-0 transition-all duration-300 ease-out w-full"
+                                style={{
+                                    height: `${liquidHeight}%`,
+                                    maxHeight: '100%',
+                                    transform: `perspective(400px) rotateX(${tilt.y * 8}deg) rotateY(${tilt.x * 8}deg)`,
+                                    transformOrigin: 'bottom center'
+                                }}
+                            >
+                                <div
+                                    className="absolute -top-3 left-0 w-[200%] h-6 bg-white/30 rounded-[100%] animate-[liquid-wave_6s_linear_infinite]"
+                                    style={{
+                                        transform: `translateX(${tilt.x * -15}px) translateY(${tilt.y * -8}px)`,
+                                        transition: 'transform 0.3s ease-out'
+                                    }}
+                                />
                                 <div
                                     className="w-full h-full opacity-90 shadow-[inset_0_0_40px_rgba(0,0,0,0.5)]"
                                     style={gradientStyle}
