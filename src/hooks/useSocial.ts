@@ -112,7 +112,7 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
 
         const timeout = setTimeout(updateMyStatus, 1000); // Debounce
         return () => clearTimeout(timeout);
-    }, [authUser, myBacStatus, myProfile]);
+    }, [authUser, myBacStatus, myProfile, myDrinks]);
 
     // 4. Action: SEND friend request
     const addFriendByUsername = async (username: string) => {

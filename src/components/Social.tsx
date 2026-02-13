@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { calculateBac } from '../services/bacService';
+import { METABOLISM_RATE, THEME_COLORS } from '../constants';
 import { FriendStatus, UserProfile, BacStatus, FriendGroup } from '../types';
 import { FriendRequest } from '../hooks/useSocial';
 import { ComputedAward } from '../constants/awards';
@@ -232,22 +233,41 @@ export const Social: React.FC<SocialProps> = (props) => {
     // --- LEADERBOARD LOGIC ---
     const ranking = useMemo(() => {
         const liveFriends = friends.map(f => {
-            // Recalculate friend's status locally for perfect consistency and real-time sobriety
-            if (f.drinks && f.weightKg) {
+            let currentBac = f.currentBac;
+            let statusMessage = f.statusMessage;
+            let color = f.color;
+
+            // 1. Recalculation complète si on a les données (Précision maximale)
+            if (f.drinks && f.drinks.length > 0 && f.weightKg) {
                 const live = calculateBac(f.drinks, {
                     weightKg: f.weightKg,
                     gender: f.gender,
-                    drinkingSpeed: f.drinkingSpeed,
+                    drinkingSpeed: f.drinkingSpeed || 'average',
                     language: language
                 } as UserProfile);
-                return {
-                    ...f,
-                    currentBac: live.currentBac,
-                    statusMessage: live.statusMessage,
-                    color: live.color
-                };
+                currentBac = live.currentBac;
+                statusMessage = live.statusMessage;
+                color = live.color;
             }
-            return f;
+            // 2. Décroissance linéaire si données manquantes ou obsolètes (Données asynchrones)
+            else if (f.lastUpdate && f.currentBac > 0) {
+                const hoursPassed = (Date.now() - f.lastUpdate) / (1000 * 60 * 60);
+                const reduction = hoursPassed * METABOLISM_RATE;
+                currentBac = Math.max(0, f.currentBac - reduction);
+
+                // Si l'utilisateur est devenu sobre par le temps
+                if (currentBac === 0) {
+                    statusMessage = language === 'fr' ? 'Sobre' : 'Sober';
+                    color = THEME_COLORS.safe;
+                }
+            }
+
+            return {
+                ...f,
+                currentBac,
+                statusMessage,
+                color
+            };
         });
 
         const me: FriendStatus = {
@@ -258,7 +278,7 @@ export const Social: React.FC<SocialProps> = (props) => {
             color: myBac.color,
             statusMessage: myBac.statusMessage,
             lastUpdate: Date.now(),
-            drinks: [], // Local user doesn't need to share with self via this object
+            drinks: [],
             weightKg: myProfile.weightKg,
             gender: myProfile.gender,
             drinkingSpeed: myProfile.drinkingSpeed
