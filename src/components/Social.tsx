@@ -125,6 +125,7 @@ export const Social: React.FC<SocialProps> = (props) => {
     const [loadingPendingInvites, setLoadingPendingInvites] = useState(false);
 
     const [isSoberExpanded, setIsSoberExpanded] = useState(false);
+    const [isGroupPrivacyExpanded, setIsGroupPrivacyExpanded] = useState(false);
 
 
 
@@ -746,58 +747,69 @@ export const Social: React.FC<SocialProps> = (props) => {
                                 {/* Group Privacy Settings — only visible to creator */}
                                 {groups.find(g => g.id === selectedGroupId)?.creatorId === myUid && (
                                     <div className="glass-panel-3d rounded-2xl p-4 space-y-3">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Shield size={14} className="text-purple-400" />
-                                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                                                {language === 'fr' ? 'Confidentialité du groupe' : 'Group Privacy'}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center justify-between">
+                                        <button
+                                            onClick={() => setIsGroupPrivacyExpanded(!isGroupPrivacyExpanded)}
+                                            className="w-full flex items-center justify-between group"
+                                        >
                                             <div className="flex items-center gap-2">
-                                                <Globe size={14} className="text-cyan-400" />
-                                                <div>
-                                                    <p className="text-xs font-bold text-white">
-                                                        {language === 'fr' ? 'Visible dans les classements' : 'Show in global rankings'}
-                                                    </p>
+                                                <Shield size={14} className="text-purple-400" />
+                                                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest group-hover:text-white/60 transition-colors">
+                                                    {language === 'fr' ? 'Confidentialité du groupe' : 'Group Privacy'}
+                                                </span>
+                                            </div>
+                                            <ChevronLeft size={14} className={`text-white/20 transition-transform duration-300 ${isGroupPrivacyExpanded ? '-rotate-90' : 'rotate-180'}`} />
+                                        </button>
+
+                                        {isGroupPrivacyExpanded && (
+                                            <div className="space-y-3 pt-2 animate-fade-in">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <Globe size={14} className="text-cyan-400" />
+                                                        <div>
+                                                            <p className="text-xs font-bold text-white">
+                                                                {language === 'fr' ? 'Visible dans les classements' : 'Show in global rankings'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            const g = groups.find(g => g.id === selectedGroupId);
+                                                            const newVal = !(g?.showInGlobalRanking !== false);
+                                                            onUpdateGroupSettings(selectedGroupId!, { showInGlobalRanking: newVal });
+                                                        }}
+                                                        className={`w-10 h-5 rounded-full transition-colors relative ${(groups.find(g => g.id === selectedGroupId)?.showInGlobalRanking !== false) ? 'bg-emerald-500' : 'bg-white/10'
+                                                            }`}
+                                                    >
+                                                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${(groups.find(g => g.id === selectedGroupId)?.showInGlobalRanking !== false) ? 'left-5' : 'left-0.5'
+                                                            }`} />
+                                                    </button>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        {(groups.find(g => g.id === selectedGroupId)?.memberListPublic)
+                                                            ? <Eye size={14} className="text-emerald-400" />
+                                                            : <EyeOff size={14} className="text-red-400" />}
+                                                        <div>
+                                                            <p className="text-xs font-bold text-white">
+                                                                {language === 'fr' ? 'Liste des membres publique' : 'Public member list'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            const g = groups.find(g => g.id === selectedGroupId);
+                                                            const newVal = !(g?.memberListPublic === true);
+                                                            onUpdateGroupSettings(selectedGroupId!, { memberListPublic: newVal });
+                                                        }}
+                                                        className={`w-10 h-5 rounded-full transition-colors relative ${(groups.find(g => g.id === selectedGroupId)?.memberListPublic === true) ? 'bg-emerald-500' : 'bg-white/10'
+                                                            }`}
+                                                    >
+                                                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${(groups.find(g => g.id === selectedGroupId)?.memberListPublic === true) ? 'left-5' : 'left-0.5'
+                                                            }`} />
+                                                    </button>
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={() => {
-                                                    const g = groups.find(g => g.id === selectedGroupId);
-                                                    const newVal = !(g?.showInGlobalRanking !== false);
-                                                    onUpdateGroupSettings(selectedGroupId!, { showInGlobalRanking: newVal });
-                                                }}
-                                                className={`w-10 h-5 rounded-full transition-colors relative ${(groups.find(g => g.id === selectedGroupId)?.showInGlobalRanking !== false) ? 'bg-emerald-500' : 'bg-white/10'
-                                                    }`}
-                                            >
-                                                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${(groups.find(g => g.id === selectedGroupId)?.showInGlobalRanking !== false) ? 'left-5' : 'left-0.5'
-                                                    }`} />
-                                            </button>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                {(groups.find(g => g.id === selectedGroupId)?.memberListPublic)
-                                                    ? <Eye size={14} className="text-emerald-400" />
-                                                    : <EyeOff size={14} className="text-red-400" />}
-                                                <div>
-                                                    <p className="text-xs font-bold text-white">
-                                                        {language === 'fr' ? 'Liste des membres publique' : 'Public member list'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => {
-                                                    const g = groups.find(g => g.id === selectedGroupId);
-                                                    const newVal = !(g?.memberListPublic === true);
-                                                    onUpdateGroupSettings(selectedGroupId!, { memberListPublic: newVal });
-                                                }}
-                                                className={`w-10 h-5 rounded-full transition-colors relative ${(groups.find(g => g.id === selectedGroupId)?.memberListPublic === true) ? 'bg-emerald-500' : 'bg-white/10'
-                                                    }`}
-                                            >
-                                                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${(groups.find(g => g.id === selectedGroupId)?.memberListPublic === true) ? 'left-5' : 'left-0.5'
-                                                    }`} />
-                                            </button>
-                                        </div>
+                                        )}
                                     </div>
                                 )}
 
