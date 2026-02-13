@@ -31,6 +31,50 @@ const BG_COLORS = [
     '#1a1a1a', '#2e1065', '#451a03', '#064e3b', '#881337', '#1e3a8a', '#312e81', '#111827'
 ];
 
+const FireEffect: React.FC = () => (
+    <div className="absolute inset-0 z-10 pointer-events-none overflow-visible">
+        <div className="fire-container">
+            <div className="fire-core" />
+            {[...Array(12)].map((_, i) => (
+                <div
+                    key={`bg-${i}`}
+                    className="fire-particle"
+                    style={{
+                        left: `${Math.random() * 80 + 10}%`,
+                        animationDelay: `${Math.random() * 1}s`,
+                        animationDuration: `${0.5 + Math.random() * 0.8}s`,
+                        zIndex: 5
+                    }}
+                />
+            ))}
+        </div>
+        {/* Foreground particles */}
+        <div className="absolute inset-0 z-[30] pointer-events-none">
+            {[...Array(6)].map((_, i) => (
+                <div
+                    key={`fg-${i}`}
+                    className="fire-particle"
+                    style={{
+                        left: `${Math.random() * 60 + 20}%`,
+                        animationDelay: `${Math.random() * 1.5}s`,
+                        animationDuration: `${0.8 + Math.random() * 0.5}s`,
+                        opacity: 0.6,
+                        width: '12px',
+                        height: '12px'
+                    }}
+                />
+            ))}
+        </div>
+        <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+            <filter id="fire-filter">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+                <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="fire" />
+                <feComposite in="SourceGraphic" in2="fire" operator="atop" />
+            </filter>
+        </svg>
+    </div>
+);
+
 export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards, drinks, onSave, onClose, language, isReadOnly }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
@@ -308,16 +352,19 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
 
                     {/* Profile Photo */}
                     <div className="flex justify-center">
-                        <div className="w-40 h-40 rounded-full border-8 border-white/10 shadow-2xl overflow-hidden relative bg-black/20">
-                            <img
-                                src={blobUrl || getSecureImgUrl(user.customPhotoURL || user.photoURL)}
-                                alt="Profile"
-                                className="w-full h-full object-cover"
-                                // Only add CORS attributes if we successfully loaded a blob.
-                                // If falling back to remote URL, avoid crossOrigin to prevent broken image icon (display priority).
-                                {...((blobUrl?.startsWith('blob:') || blobUrl?.startsWith('data:')) ? { crossOrigin: "anonymous" } : {})}
-                                referrerPolicy="no-referrer"
-                            />
+                        <div className="w-40 h-40 rounded-full border-8 border-white/10 shadow-2xl overflow-visible relative bg-black/20">
+                            {config.profileEffect === 'fire' && <FireEffect />}
+                            <div className="w-full h-full rounded-full overflow-hidden relative z-20">
+                                <img
+                                    src={blobUrl || getSecureImgUrl(user.customPhotoURL || user.photoURL)}
+                                    alt="Profile"
+                                    className="w-full h-full object-cover"
+                                    // Only add CORS attributes if we successfully loaded a blob.
+                                    // If falling back to remote URL, avoid crossOrigin to prevent broken image icon (display priority).
+                                    {...((blobUrl?.startsWith('blob:') || blobUrl?.startsWith('data:')) ? { crossOrigin: "anonymous" } : {})}
+                                    referrerPolicy="no-referrer"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -462,6 +509,30 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                         style={{ backgroundColor: c }}
                                     />
                                 ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Profile Effects (Edit Mode Only) */}
+                    {isEditing && (
+                        <div className="mt-4 p-4 bg-black/40 rounded-2xl border border-white/10">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Flame size={16} className="text-orange-400" />
+                                <span className="text-xs font-bold text-white/60 uppercase tracking-widest">Effets Photo</span>
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setConfig({ ...config, profileEffect: 'none' })}
+                                    className={`px-4 py-2 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all ${!config.profileEffect || config.profileEffect === 'none' ? 'bg-white/20 border-white text-white' : 'bg-white/5 border-white/10 text-white/40'}`}
+                                >
+                                    Aucun
+                                </button>
+                                <button
+                                    onClick={() => setConfig({ ...config, profileEffect: 'fire' })}
+                                    className={`px-4 py-2 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${config.profileEffect === 'fire' ? 'bg-orange-600/20 border-orange-500 text-orange-400 shadow-[0_0_15px_rgba(234,88,12,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
+                                >
+                                    <Flame size={14} /> Flammes
+                                </button>
                             </div>
                         </div>
                     )}
