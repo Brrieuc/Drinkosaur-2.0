@@ -105,6 +105,12 @@ export const useGroups = () => {
         });
     };
 
+    const updateGroupIcon = async (groupId: string, icon: string) => {
+        if (!authUser) return;
+        const groupRef = doc(db, "groups", groupId);
+        await updateDoc(groupRef, { icon });
+    };
+
     const fetchGroupMembersStatus = async (groupId: string): Promise<FriendStatus[]> => {
         const groupSnap = await getDoc(doc(db, "groups", groupId));
         if (!groupSnap.exists()) return [];
@@ -134,6 +140,7 @@ export const useGroups = () => {
         declineGroupInvite,
         leaveGroup,
         inviteMemberToGroup,
-        fetchGroupMembersStatus
+        fetchGroupMembersStatus,
+        updateGroupIcon
     };
 };

@@ -3,7 +3,7 @@ import { FriendStatus, UserProfile, BacStatus, FriendGroup } from '../types';
 import { FriendRequest } from '../hooks/useSocial';
 import {
     UserPlus, Loader2, AlertTriangle, Trash2, Check, X, LogOut,
-    Bell, Trophy, Medal, RefreshCw, Sparkles, Share2, Users, Plus, ChevronLeft
+    Bell, Trophy, Medal, RefreshCw, Sparkles, Share2, Users, Plus, ChevronLeft, Edit2
 } from 'lucide-react';
 
 interface SocialProps {
@@ -33,6 +33,7 @@ interface SocialProps {
     onLeaveGroup: (groupId: string) => Promise<void>;
     onFetchGroupStatus: (groupId: string) => Promise<FriendStatus[]>;
     onInviteToGroup: (groupId: string, friendIds: string[]) => Promise<void>;
+    onUpdateGroupIcon: (groupId: string, icon: string) => Promise<void>;
 }
 
 enum SocialTab {
@@ -65,7 +66,8 @@ export const Social: React.FC<SocialProps> = (props) => {
         onDeclineGroupInvite,
         onLeaveGroup,
         onFetchGroupStatus,
-        onInviteToGroup
+        onInviteToGroup,
+        onUpdateGroupIcon
     } = props;
 
     const [searchUsername, setSearchUsername] = useState('');
@@ -96,6 +98,8 @@ export const Social: React.FC<SocialProps> = (props) => {
 
     // Invite to Group State
     const [isInvitingToGroup, setIsInvitingToGroup] = useState(false);
+    const [showIconPicker, setShowIconPicker] = useState(false);
+    const [isSoberExpanded, setIsSoberExpanded] = useState(false);
 
     const t = useMemo(() => ({
         title: language === 'fr' ? 'Social' : 'Social',
@@ -429,8 +433,9 @@ export const Social: React.FC<SocialProps> = (props) => {
                             <h3 className="text-sm font-black text-white/40 uppercase tracking-widest mb-6 flex items-center gap-2">
                                 <Trophy size={14} className="text-amber-500" /> {t.leaderboard}
                             </h3>
+
                             <div className="space-y-3">
-                                {ranking.map((player, index) => {
+                                {ranking.filter(p => p.currentBac > 0).map((player, index) => {
                                     const isMe = player.uid === 'me' || player.uid === myUid;
                                     const rank = index + 1;
                                     return (
@@ -459,6 +464,50 @@ export const Social: React.FC<SocialProps> = (props) => {
                                         </div>
                                     );
                                 })}
+
+                                {ranking.filter(p => p.currentBac === 0).length > 0 && (
+                                    <div className="mt-8">
+                                        <button
+                                            onClick={() => setIsSoberExpanded(!isSoberExpanded)}
+                                            className="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all group"
+                                        >
+                                            <span className="text-xs font-black text-white/40 uppercase tracking-widest flex items-center gap-2">
+                                                {language === 'fr' ? 'Amis sobres' : 'Sober friends'} ({ranking.filter(p => p.currentBac === 0).length})
+                                            </span>
+                                            <ChevronLeft size={16} className={`text-white/20 transition-transform duration-300 ${isSoberExpanded ? '-rotate-90' : 'rotate-180'}`} />
+                                        </button>
+
+                                        {isSoberExpanded && (
+                                            <div className="space-y-3 mt-3 animate-fade-in">
+                                                {ranking.filter(p => p.currentBac === 0).map((player) => {
+                                                    const isMe = player.uid === 'me' || player.uid === myUid;
+                                                    return (
+                                                        <div
+                                                            key={player.uid}
+                                                            onClick={() => !isMe && onSelectFriend(player.uid === 'me' ? myUid : player.uid)}
+                                                            className={`glass-panel-3d p-4 rounded-3xl flex items-center gap-4 transition-all relative overflow-hidden opacity-60 hover:opacity-100 ${isMe ? 'bg-blue-500/10 border-blue-500/30 ring-1 ring-blue-500/20' : 'hover:bg-white/5 cursor-pointer'}`}
+                                                        >
+                                                            <div className="w-8 flex justify-center items-center font-black text-lg italic text-white/10">•</div>
+                                                            <div className="relative">
+                                                                <img src={player.photoURL || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-full border-2 border-white/10 relative z-10 grayscale-[0.5]" />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0 text-left">
+                                                                <h3 className={`font-bold truncate text-sm italic ${isMe ? 'text-blue-400' : 'text-white/60'}`}>
+                                                                    @{player.displayName}
+                                                                </h3>
+                                                                <p className="text-[9px] text-white/20 truncate uppercase font-extrabold tracking-widest">{player.statusMessage}</p>
+                                                            </div>
+                                                            <div className="flex flex-col items-end">
+                                                                <div className="text-sm font-black text-white/20">{renderBac(player.currentBac)}</div>
+                                                                {!isMe && <button onClick={(e) => { e.stopPropagation(); onRemoveFriend(player.uid); }} className="mt-1 p-1 text-white/5 hover:text-red-400 transition-colors"><Trash2 size={10} /></button>}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                             {!loading && friends.length === 0 && (
                                 <div className="text-center py-10 bg-white/5 rounded-3xl border border-dashed border-white/10 px-6">
@@ -476,7 +525,37 @@ export const Social: React.FC<SocialProps> = (props) => {
                                     <ChevronLeft size={16} /> {t.groupsTab}
                                 </button>
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-3xl font-black text-white">{groups.find(g => g.id === selectedGroupId)?.name}</h3>
+                                    <div className="flex items-center gap-3">
+                                        <div className="relative">
+                                            <button
+                                                onClick={() => setShowIconPicker(!showIconPicker)}
+                                                className="w-16 h-16 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-3xl transition-all border border-white/10 relative group"
+                                            >
+                                                {groups.find(g => g.id === selectedGroupId)?.icon || '👥'}
+                                                <div className="absolute -bottom-1 -right-1 bg-blue-600 rounded-lg p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Edit2 size={10} className="text-white" />
+                                                </div>
+                                            </button>
+
+                                            {showIconPicker && (
+                                                <div className="absolute top-14 left-0 z-50 bg-[#1a1a2e] border border-white/10 rounded-2xl p-3 shadow-2xl flex flex-wrap gap-2 w-48 animate-fade-in">
+                                                    {GROUP_ICONS.map(icon => (
+                                                        <button
+                                                            key={icon}
+                                                            onClick={async () => {
+                                                                await onUpdateGroupIcon(selectedGroupId!, icon);
+                                                                setShowIconPicker(false);
+                                                            }}
+                                                            className="w-8 h-8 flex items-center justify-center text-lg hover:bg-white/10 rounded-lg transition-colors"
+                                                        >
+                                                            {icon}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <h3 className="text-3xl font-black text-white">{groups.find(g => g.id === selectedGroupId)?.name}</h3>
+                                    </div>
                                     <div className="flex gap-2">
                                         <button onClick={() => setIsInvitingToGroup(true)} className="p-2 bg-blue-600 rounded-xl text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20"><UserPlus size={16} /></button>
                                         <button onClick={() => { onLeaveGroup(selectedGroupId); setSelectedGroupId(null); }} className="p-2 bg-white/5 rounded-xl text-red-400 hover:bg-red-500/20 transition-colors"><LogOut size={16} /></button>

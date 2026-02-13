@@ -65,7 +65,8 @@ const App: React.FC = () => {
     declineGroupInvite,
     leaveGroup,
     fetchGroupMembersStatus,
-    inviteMemberToGroup
+    inviteMemberToGroup,
+    updateGroupIcon
   } = useGroups();
 
   const handleSelectFriend = async (uid: string) => {
@@ -320,7 +321,7 @@ const App: React.FC = () => {
     settings: user.language === 'fr' ? 'Paramètres' : 'Settings'
   };
 
-  const NavButton = ({ target, icon: Icon, label }: { target: AppView, icon: any, label: string }) => (
+  const NavButton = ({ target, icon: Icon, label, hasBadge }: { target: AppView, icon: any, label: string, hasBadge?: boolean }) => (
     <button
       onClick={() => setView(target)}
       aria-label={label}
@@ -334,11 +335,23 @@ const App: React.FC = () => {
         strokeWidth={view === target ? 2.5 : 2}
         className={`transition-transform duration-300 ${view === target ? 'scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]' : ''}`}
       />
+      {hasBadge && (
+        <div className="absolute top-2 right-2 flex w-2 h-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500 border border-[#1a1a2e]"></span>
+        </div>
+      )}
       {view === target && (
         <div className="absolute -bottom-1 w-1 h-1 rounded-full bg-white shadow-[0_0_5px_white]" />
       )}
     </button>
   );
+
+  const hasSocialNotification = incomingRequests.length > 0 || groupInvites.length > 0;
+  const hasSettingsNotification = false; // For future config as requested
+  const hasHistoryNotification = false;
+  const hasDashboardNotification = false; // Already handled in Dashboard header button but adding for Nav too if needed
+
 
   return (
     <div
@@ -417,6 +430,7 @@ const App: React.FC = () => {
               onLeaveGroup={leaveGroup}
               onFetchGroupStatus={fetchGroupMembersStatus}
               onInviteToGroup={inviteMemberToGroup}
+              onUpdateGroupIcon={updateGroupIcon}
             />
             {selectedFriend && (
               <FriendProfileModal
@@ -464,8 +478,8 @@ const App: React.FC = () => {
             style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
           >
             <div className="glass-panel-3d rounded-[32px] p-2 flex items-center gap-1 shadow-2xl backdrop-blur-xl pointer-events-auto border-white/20">
-              <NavButton target={AppView.HISTORY} icon={History} label={navText.history} />
-              <NavButton target={AppView.DASHBOARD} icon={LayoutDashboard} label={navText.monitor} />
+              <NavButton target={AppView.HISTORY} icon={History} label={navText.history} hasBadge={hasHistoryNotification} />
+              <NavButton target={AppView.DASHBOARD} icon={LayoutDashboard} label={navText.monitor} hasBadge={hasDashboardNotification} />
 
               <div className="mx-1">
                 <button
@@ -477,8 +491,8 @@ const App: React.FC = () => {
                 </button>
               </div>
 
-              <NavButton target={AppView.SOCIAL} icon={Users} label={navText.social} />
-              <NavButton target={AppView.SETTINGS} icon={User} label={navText.settings} />
+              <NavButton target={AppView.SOCIAL} icon={Users} label={navText.social} hasBadge={hasSocialNotification} />
+              <NavButton target={AppView.SETTINGS} icon={User} label={navText.settings} hasBadge={hasSettingsNotification} />
             </div>
           </div>
         )
