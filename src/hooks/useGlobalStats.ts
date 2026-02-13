@@ -13,9 +13,15 @@ export interface LiveUser {
     currentBac: number;      // always present for ranking, but UI hides for non-friends
     statusMessage: string;
     color: string;
-    isFriend: boolean;       // whether this user is a friend of the viewer
-    isMe: boolean;           // whether this user is the current viewer
-    visibility: LeaderboardVisibility; // the user's privacy preference
+    isFriend: boolean;
+    isMe: boolean;
+    visibility: LeaderboardVisibility;
+    // Extra data for live recalculation
+    drinks?: Drink[];
+    weightKg?: number;
+    gender?: 'male' | 'female';
+    drinkingSpeed?: 'slow' | 'average' | 'fast';
+    lastUpdate?: number;
 }
 
 export interface LiveGroupRanking {
@@ -158,6 +164,11 @@ export const useGlobalStats = () => {
                     isFriend,
                     isMe,
                     visibility,
+                    drinks: userDrinks,
+                    weightKg: profile.weightKg,
+                    gender: profile.gender,
+                    drinkingSpeed: profile.drinkingSpeed,
+                    lastUpdate: Date.now()
                 });
             }
 

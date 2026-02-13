@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Globe, Zap, Calendar, Loader2, Users, TrendingUp, Beer, Wine, Martini, Trophy, Flame, Lock } from 'lucide-react';
+import { calculateBac } from '../services/bacService';
+import { METABOLISM_RATE, THEME_COLORS } from '../constants';
+import { UserProfile } from '../types';
 import {
     GlobalLiveStats,
     GlobalMonthlyStats,
@@ -35,6 +38,13 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
 }) => {
     const [tab, setTab] = useState<GlobeTab>('live');
     const isFrench = language === 'fr';
+
+    // Live update ticker (every minute)
+    const [tick, setTick] = useState(0);
+    useEffect(() => {
+        const i = setInterval(() => setTick(t => t + 1), 60000);
+        return () => clearInterval(i);
+    }, []);
     const now = new Date();
     const monthNames = isFrench ? MONTH_NAMES_FR : MONTH_NAMES_EN;
 
@@ -67,6 +77,56 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
             onFetchMonthly();
         }
     }, [tab]);
+
+    // --- RECALCULATED STATS (Top Level Hook) ---
+    const reLiveStats = useMemo(() => {
+        if (!liveStats) return null;
+
+        const recalculatedUsers = liveStats.topUsers.map(u => {
+            let currentBac = u.currentBac;
+            let statusMessage = u.statusMessage;
+            let color = u.color;
+
+            // 1. Full recalculation if data is available
+            if (u.drinks && u.drinks.length > 0 && u.weightKg) {
+                const live = calculateBac(u.drinks, {
+                    weightKg: u.weightKg,
+                    gender: u.gender,
+                    drinkingSpeed: u.drinkingSpeed || 'average',
+                    language: language
+                } as UserProfile);
+                currentBac = live.currentBac;
+                statusMessage = live.statusMessage;
+                color = live.color;
+            }
+            // 2. Linear decay if data is missing or stale
+            else if (u.lastUpdate && u.currentBac > 0) {
+                const hoursPassed = (Date.now() - u.lastUpdate) / (1000 * 60 * 60);
+                const reduction = hoursPassed * METABOLISM_RATE;
+                currentBac = Math.max(0, u.currentBac - reduction);
+
+                if (currentBac === 0) {
+                    statusMessage = isFrench ? 'Sobre' : 'Sober';
+                    color = THEME_COLORS.safe;
+                }
+            }
+
+            return { ...u, currentBac, statusMessage, color };
+        });
+
+        // Re-sort in case a user plummeted faster than another
+        const sortedUsers = [...recalculatedUsers].sort((a, b) => b.currentBac - a.currentBac);
+
+        // Recalculate average for top users (approximation of global shift)
+        const newSum = sortedUsers.reduce((acc, u) => acc + u.currentBac, 0);
+        const newAvg = sortedUsers.length > 0 ? newSum / sortedUsers.length : 0;
+
+        return {
+            ...liveStats,
+            avgBacNotSober: newAvg, // Update average to reflect decay
+            topUsers: sortedUsers
+        };
+    }, [liveStats, tick, language, isFrench]);
 
     const formatBac = (bac: number) => {
         const gL = (bac * 10).toFixed(2);
@@ -111,6 +171,8 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
             );
         }
 
+
+
         return (
             <div className="space-y-6 animate-fade-in">
                 {/* Hero Stats */}
@@ -124,7 +186,7 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                                 <span className="text-[9px] text-white/30 font-black uppercase tracking-widest">Live</span>
                             </div>
                             <p className="text-4xl font-black text-emerald-400 leading-none">
-                                {liveStats.totalNotSober}
+                                {reLiveStats?.totalNotSober || 0}
                             </p>
                             <p className="text-[10px] text-white/30 font-bold mt-2 uppercase tracking-wider leading-tight">
                                 {t.notSober}
@@ -137,14 +199,15 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                         <div className="absolute top-0 right-0 w-20 h-20 bg-red-500/10 rounded-full blur-[40px] pointer-events-none" />
                         <div className="relative">
                             <div className="flex items-center gap-2 mb-2">
-                                <TrendingUp size={12} className="text-red-400" />
-                                <span className="text-[9px] text-white/30 font-black uppercase tracking-widest">{t.avgBac}</span>
+                                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+                                    <TrendingUp size={16} className="text-red-400" />
+                                </div>
                             </div>
-                            <p className="text-4xl font-black text-red-400 leading-none">
-                                {formatBac(liveStats.avgBacNotSober)}
+                            <p className="text-4xl font-black text-red-500 leading-none">
+                                {formatBac(reLiveStats?.avgBacNotSober || 0)}
                             </p>
-                            <p className="text-[10px] text-white/30 font-bold mt-2 uppercase tracking-wider">
-                                {isFrench ? 'des non-sobres' : 'of non-sober'}
+                            <p className="text-[10px] text-white/30 font-bold mt-2 uppercase tracking-wider leading-tight">
+                                {t.avgBac}
                             </p>
                         </div>
                     </div>
@@ -157,13 +220,13 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                         <h3 className="text-sm font-black text-white uppercase tracking-wider">{t.topUsers}</h3>
                     </div>
 
-                    {liveStats.topUsers.length === 0 ? (
+                    {!reLiveStats || reLiveStats.topUsers.length === 0 ? (
                         <div className="glass-panel-3d rounded-3xl p-6 text-center">
                             <p className="text-white/30 text-xs font-bold">{t.noData}</p>
                         </div>
                     ) : (
                         <div className="space-y-2">
-                            {liveStats.topUsers.map((user, idx) => {
+                            {reLiveStats.topUsers.map((user, idx) => {
                                 const style = getRankStyle(idx);
                                 const isMe = user.uid === myUid;
                                 const anonymous = isAnonymous(user);
