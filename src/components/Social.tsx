@@ -45,6 +45,7 @@ interface SocialProps {
     awardsLoading: boolean;
     awardsMonth: { month: number; year: number };
     onFetchGroupAwards: (groupId: string, month: number, year: number) => void;
+    onOpenGlobal: () => void;
 }
 
 enum SocialTab {
@@ -83,7 +84,8 @@ export const Social: React.FC<SocialProps> = (props) => {
         awards,
         awardsLoading,
         awardsMonth,
-        onFetchGroupAwards
+        onFetchGroupAwards,
+        onOpenGlobal
     } = props;
 
     const [searchUsername, setSearchUsername] = useState('');
@@ -435,9 +437,18 @@ export const Social: React.FC<SocialProps> = (props) => {
                 className="transition-transform duration-200 ease-out"
                 style={{ transform: `translateY(${pullOffset}px)` }}
             >
-                <h2 className="text-3xl font-extrabold mb-6 tracking-tight flex items-center gap-3 text-white">
-                    <Users className="text-blue-400" /> {t.title}
-                </h2>
+                <div className="flex items-center gap-4 mb-6">
+                    <button
+                        onClick={onOpenGlobal}
+                        className="p-3 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 active:scale-95 transition-all group"
+                        aria-label="Global Dashboard"
+                    >
+                        <Globe size={24} className="text-cyan-400 group-hover:scale-110 transition-transform" />
+                    </button>
+                    <h2 className="text-3xl font-extrabold tracking-tight flex items-center gap-3 text-white">
+                        <Users className="text-blue-400" /> {t.title}
+                    </h2>
+                </div>
 
                 {/* --- TABS --- */}
                 <div className="flex bg-white/5 p-1 rounded-2xl mb-8 border border-white/10">

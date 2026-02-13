@@ -10,7 +10,7 @@ import { InstallPwaGuide } from './components/InstallPwaGuide';
 import { FriendProfileModal } from './components/FriendProfileModal';
 import { GlobalDashboard } from './components/GlobalDashboard';
 import { AppView, Drink, UserProfile } from './types';
-import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users, Loader2, X, Mail, Globe } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users, Loader2, X, Mail } from 'lucide-react';
 import { useUser } from './hooks/useUser';
 import { useDrinks } from './hooks/useDrinks';
 import { useSocial } from './hooks/useSocial';
@@ -477,6 +477,7 @@ const App: React.FC = () => {
                 awardsLoading={awardsLoading}
                 awardsMonth={awardsMonth}
                 onFetchGroupAwards={(groupId: string, month: number, year: number) => fetchGroupAwards(groupId, month, year, user.language)}
+                onOpenGlobal={() => setView(AppView.GLOBE)}
               />
               {selectedFriend && (
                 <FriendProfileModal
@@ -559,7 +560,7 @@ const App: React.FC = () => {
                 </div>
 
                 <NavButton target={AppView.SOCIAL} icon={Users} label={navText.social} hasBadge={hasSocialNotification} />
-                <NavButton target={AppView.GLOBE} icon={Globe} label={navText.globe} />
+                {/* Global button moved to Social tab header */}
                 <NavButton target={AppView.SETTINGS} icon={User} label={navText.settings} hasBadge={hasSettingsNotification} />
               </div>
             </div>
