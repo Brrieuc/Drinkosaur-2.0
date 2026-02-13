@@ -114,7 +114,9 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
                             drinks: d,
                             weightKg: p.weightKg || 70,
                             gender: p.gender || 'male',
-                            drinkingSpeed: p.drinkingSpeed || 'average'
+                            drinkingSpeed: p.drinkingSpeed || 'average',
+                            // Ensure photo is fetched from source of truth
+                            photoURL: p.customPhotoURL || p.photoURL || undefined
                         };
                     }
                 } catch (e) {
