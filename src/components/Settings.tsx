@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
-import { UserProfile, WonAward } from '../types';
-import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Eye, EyeOff, Calendar, Trophy } from 'lucide-react';
+import { UserProfile, WonAward, LeaderboardVisibility, GroupListVisibility } from '../types';
+import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Eye, EyeOff, Calendar, Trophy, Lock, Users } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { ImageCropper } from './ImageCropper';
 import { TrophyHall } from './TrophyHall';
@@ -28,7 +28,10 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   const [username, setUsername] = useState(user.username || '');
   const [customPhotoURL, setCustomPhotoURL] = useState(user.customPhotoURL || '');
   const [birthDate, setBirthDate] = useState(user.birthDate || '');
-  const [photoVisibleToFriends, setPhotoVisibleToFriends] = useState(user.photoVisibleToFriends !== false); // default true
+  const [photoVisibleToFriends, setPhotoVisibleToFriends] = useState(user.photoVisibleToFriends !== false);
+  const [leaderboardVisibility, setLeaderboardVisibility] = useState<LeaderboardVisibility>(user.leaderboardVisibility || 'friends_only');
+  const [badgesPublic, setBadgesPublic] = useState(user.badgesPublic !== false);
+  const [groupListVisibility, setGroupListVisibility] = useState<GroupListVisibility>(user.groupListVisibility || 'visible');
 
   // Pivot: Sync local state when user profile updates (e.g. initial load)
   React.useEffect(() => {
@@ -605,6 +608,8 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
             <h3 className="text-xl font-bold flex items-center gap-2">
               <Shield size={20} className="text-purple-400" /> {t.privacy}
             </h3>
+
+            {/* Photo visible toggle */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {photoVisibleToFriends ? <Eye size={18} className="text-emerald-400" /> : <EyeOff size={18} className="text-red-400" />}
@@ -623,6 +628,111 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
               >
                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${photoVisibleToFriends ? 'left-7' : 'left-1'}`} />
               </button>
+            </div>
+
+            {/* Leaderboard Visibility */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Globe size={16} className="text-cyan-400" />
+                <p className="text-sm font-bold text-white">
+                  {language === 'fr' ? 'Visibilité dans les classements' : 'Leaderboard visibility'}
+                </p>
+              </div>
+              <p className="text-[10px] text-white/40 uppercase tracking-wider font-bold ml-6">
+                {language === 'fr' ? 'Comment vous apparaissez dans le classement global' : 'How you appear in global rankings'}
+              </p>
+              <div className="grid grid-cols-2 gap-2 ml-6">
+                {[
+                  { value: 'hidden' as LeaderboardVisibility, label: language === 'fr' ? 'Caché' : 'Hidden', icon: <EyeOff size={14} />, desc: language === 'fr' ? 'Jamais visible' : 'Never shown' },
+                  { value: 'friends_only' as LeaderboardVisibility, label: language === 'fr' ? 'Amis' : 'Friends', icon: <User size={14} />, desc: language === 'fr' ? 'Anonyme sauf pour vos amis' : 'Anonymous except friends' },
+                  { value: 'friends_of_friends' as LeaderboardVisibility, label: language === 'fr' ? 'Amis d\'amis' : 'Friends of friends', icon: <Users size={14} />, desc: language === 'fr' ? 'Visible pour amis d\'amis' : 'Visible to friends of friends' },
+                  { value: 'public' as LeaderboardVisibility, label: language === 'fr' ? 'Public' : 'Public', icon: <Globe size={14} />, desc: language === 'fr' ? 'Visible par tous' : 'Visible to everyone' },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      setLeaderboardVisibility(opt.value);
+                      onSave({ leaderboardVisibility: opt.value });
+                    }}
+                    className={`p-3 rounded-2xl border text-left transition-all ${leaderboardVisibility === opt.value
+                        ? 'bg-purple-500/15 border-purple-500/40 shadow-lg shadow-purple-500/10'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                      }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={leaderboardVisibility === opt.value ? 'text-purple-400' : 'text-white/30'}>{opt.icon}</span>
+                      <span className={`text-xs font-black ${leaderboardVisibility === opt.value ? 'text-purple-400' : 'text-white/60'}`}>{opt.label}</span>
+                    </div>
+                    <p className="text-[9px] text-white/30 font-bold leading-tight">{opt.desc}</p>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[9px] text-amber-400/60 font-bold ml-6 flex items-center gap-1">
+                <Lock size={10} />
+                {language === 'fr' ? 'Rappel : votre taux d\'alcool n\'est jamais visible par les inconnus' : 'Reminder: your BAC is never visible to non-friends'}
+              </p>
+            </div>
+
+            {/* Badges Public */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Trophy size={18} className={badgesPublic ? 'text-amber-400' : 'text-white/30'} />
+                <div>
+                  <p className="text-sm font-bold text-white">
+                    {language === 'fr' ? 'Badges publics' : 'Public badges'}
+                  </p>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider font-bold mt-0.5">
+                    {language === 'fr' ? 'Vos badges visibles par tous' : 'Your badges visible to everyone'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const newVal = !badgesPublic;
+                  setBadgesPublic(newVal);
+                  onSave({ badgesPublic: newVal });
+                }}
+                className={`w-12 h-6 rounded-full transition-colors relative ${badgesPublic ? 'bg-emerald-500' : 'bg-white/10'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${badgesPublic ? 'left-7' : 'left-1'}`} />
+              </button>
+            </div>
+
+            {/* Group List Visibility */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Users size={16} className="text-blue-400" />
+                <p className="text-sm font-bold text-white">
+                  {language === 'fr' ? 'Apparition dans les listes de groupes' : 'Appearance in group lists'}
+                </p>
+              </div>
+              <p className="text-[10px] text-white/40 uppercase tracking-wider font-bold ml-6">
+                {language === 'fr' ? 'Comment vous apparaissez dans les listes de membres publiques' : 'How you appear in public group member lists'}
+              </p>
+              <div className="flex gap-2 ml-6">
+                {[
+                  { value: 'visible' as GroupListVisibility, label: language === 'fr' ? 'Visible' : 'Visible', icon: <Eye size={14} /> },
+                  { value: 'anonymous' as GroupListVisibility, label: language === 'fr' ? 'Anonyme' : 'Anonymous', icon: <EyeOff size={14} /> },
+                  { value: 'hidden' as GroupListVisibility, label: language === 'fr' ? 'Caché' : 'Hidden', icon: <Lock size={14} /> },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      setGroupListVisibility(opt.value);
+                      onSave({ groupListVisibility: opt.value });
+                    }}
+                    className={`flex-1 p-3 rounded-2xl border text-center transition-all ${groupListVisibility === opt.value
+                        ? 'bg-blue-500/15 border-blue-500/40 shadow-lg shadow-blue-500/10'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                      }`}
+                  >
+                    <div className="flex items-center justify-center gap-1.5 mb-0.5">
+                      <span className={groupListVisibility === opt.value ? 'text-blue-400' : 'text-white/30'}>{opt.icon}</span>
+                      <span className={`text-xs font-black ${groupListVisibility === opt.value ? 'text-blue-400' : 'text-white/60'}`}>{opt.label}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

@@ -70,7 +70,8 @@ const App: React.FC = () => {
     leaveGroup,
     fetchGroupMembersStatus,
     inviteMemberToGroup,
-    updateGroupIcon
+    updateGroupIcon,
+    updateGroupSettings
   } = useGroups();
 
   const {
@@ -469,6 +470,7 @@ const App: React.FC = () => {
               onFetchGroupStatus={fetchGroupMembersStatus}
               onInviteToGroup={inviteMemberToGroup}
               onUpdateGroupIcon={updateGroupIcon}
+              onUpdateGroupSettings={updateGroupSettings}
               awards={awards}
               awardsLoading={awardsLoading}
               awardsMonth={awardsMonth}
@@ -514,8 +516,8 @@ const App: React.FC = () => {
             monthlyStats={monthlyStats}
             loadingLive={loadingLive}
             loadingMonthly={loadingMonthly}
-            onFetchLive={fetchLiveStats}
-            onFetchMonthly={fetchMonthlyStats}
+            onFetchLive={() => fetchLiveStats(authUser?.uid || '')}
+            onFetchMonthly={() => fetchMonthlyStats(authUser?.uid || '')}
             language={user.language}
             myUid={authUser?.uid || ''}
           />

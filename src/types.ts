@@ -12,6 +12,9 @@ export interface Drink {
   isChug?: boolean; // If true, consumption time is 0
 }
 
+export type LeaderboardVisibility = 'hidden' | 'friends_only' | 'friends_of_friends' | 'public';
+export type GroupListVisibility = 'visible' | 'anonymous' | 'hidden';
+
 export interface UserProfile {
   uid?: string;
   weightKg: number;
@@ -32,6 +35,10 @@ export interface UserProfile {
   photoVisibleToFriends?: boolean; // Privacy: show photo to friends
   wonAwards?: WonAward[]; // All awards this user has won
   selectedBadges?: string[]; // Up to 3 award IDs to display as badges
+  // Privacy settings
+  leaderboardVisibility?: LeaderboardVisibility; // How user appears in global rankings (default: 'friends_only')
+  badgesPublic?: boolean;            // Whether badges are visible to non-friends (default: true)
+  groupListVisibility?: GroupListVisibility; // How user appears in public group member lists (default: 'visible')
 }
 
 export interface WonAward {
@@ -74,6 +81,9 @@ export interface FriendGroup {
   pendingInviteIds: string[];
   createdAt: number;
   icon?: string;
+  // Privacy settings (only creator can change)
+  showInGlobalRanking?: boolean;  // Whether group appears in global rankings (default: true)
+  memberListPublic?: boolean;     // Whether the member list is publicly visible (default: false)
 }
 
 export enum AppView {

@@ -111,6 +111,12 @@ export const useGroups = () => {
         await updateDoc(groupRef, { icon });
     };
 
+    const updateGroupSettings = async (groupId: string, settings: { showInGlobalRanking?: boolean; memberListPublic?: boolean }) => {
+        if (!authUser) return;
+        const groupRef = doc(db, "groups", groupId);
+        await updateDoc(groupRef, settings);
+    };
+
     const fetchGroupMembersStatus = async (groupId: string): Promise<FriendStatus[]> => {
         const groupSnap = await getDoc(doc(db, "groups", groupId));
         if (!groupSnap.exists()) return [];
@@ -141,6 +147,7 @@ export const useGroups = () => {
         leaveGroup,
         inviteMemberToGroup,
         fetchGroupMembersStatus,
-        updateGroupIcon
+        updateGroupIcon,
+        updateGroupSettings
     };
 };

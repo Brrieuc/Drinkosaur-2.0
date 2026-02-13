@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Zap, Calendar, Loader2, Users, TrendingUp, Beer, Wine, Martini, Trophy, Flame } from 'lucide-react';
+import { Globe, Zap, Calendar, Loader2, Users, TrendingUp, Beer, Wine, Martini, Trophy, Flame, Lock } from 'lucide-react';
 import {
     GlobalLiveStats,
     GlobalMonthlyStats,
     MonthlyUserStat,
+    LiveUser,
 } from '../hooks/useGlobalStats';
 
 type GlobeTab = 'live' | 'month';
@@ -54,6 +55,8 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
         drinks: isFrench ? 'consos' : 'drinks',
         pureAlcohol: isFrench ? 'ml d\'alcool pur' : 'ml pure alcohol',
         loading: isFrench ? 'Chargement...' : 'Loading...',
+        hiddenBac: isFrench ? 'Amis seulement' : 'Friends only',
+        anonymous: isFrench ? 'Anonyme' : 'Anonymous',
     };
 
     // Fetch data on tab switch
@@ -75,6 +78,17 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
         if (index === 1) return { bg: 'from-gray-400/15 to-gray-500/8', border: 'border-gray-400/30', icon: '🥈', textColor: 'text-gray-300' };
         if (index === 2) return { bg: 'from-orange-700/15 to-orange-800/8', border: 'border-orange-600/30', icon: '🥉', textColor: 'text-orange-400' };
         return { bg: 'from-white/5 to-white/[0.02]', border: 'border-white/10', icon: '', textColor: 'text-white/60' };
+    };
+
+    /** ABSOLUTE RULE: BAC is only visible to friends (and to yourself) */
+    const canSeeBac = (user: LiveUser | MonthlyUserStat): boolean => {
+        if ('isMe' in user && user.isMe) return true;
+        if ('isFriend' in user && user.isFriend) return true;
+        return false;
+    };
+
+    const isAnonymous = (user: LiveUser | MonthlyUserStat): boolean => {
+        return user.username === '???';
     };
 
     // ─── LIVE TAB ────────────────────────────────────────────
@@ -152,6 +166,8 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                             {liveStats.topUsers.map((user, idx) => {
                                 const style = getRankStyle(idx);
                                 const isMe = user.uid === myUid;
+                                const anonymous = isAnonymous(user);
+                                const showBac = canSeeBac(user);
                                 return (
                                     <div
                                         key={user.uid}
@@ -168,28 +184,43 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
 
                                         {/* Avatar */}
                                         <div className="relative shrink-0">
-                                            {user.photoURL ? (
+                                            {anonymous ? (
+                                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
+                                                    <Lock size={16} className="text-white/20" />
+                                                </div>
+                                            ) : user.photoURL ? (
                                                 <img src={user.photoURL} alt="" className="w-10 h-10 rounded-xl object-cover border-2 border-white/10" />
                                             ) : (
                                                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white/40 text-sm font-black border border-white/10">
                                                     {user.username.charAt(0).toUpperCase()}
                                                 </div>
                                             )}
-                                            <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#0a0a15]" style={{ backgroundColor: user.color }} />
+                                            {!anonymous && (
+                                                <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#0a0a15]" style={{ backgroundColor: user.color }} />
+                                            )}
                                         </div>
 
                                         {/* Info */}
                                         <div className="flex-1 min-w-0">
-                                            <p className={`text-sm font-black truncate ${isMe ? 'text-amber-400' : 'text-white'}`}>
-                                                @{user.username}
+                                            <p className={`text-sm font-black truncate ${isMe ? 'text-amber-400' : anonymous ? 'text-white/30 italic' : 'text-white'}`}>
+                                                {anonymous ? t.anonymous : `@${user.username}`}
                                                 {isMe && <span className="ml-1 text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full font-black">{isFrench ? 'VOUS' : 'YOU'}</span>}
                                             </p>
-                                            <p className="text-[10px] text-white/30 font-bold mt-0.5">{user.statusMessage}</p>
+                                            {!anonymous && showBac && (
+                                                <p className="text-[10px] text-white/30 font-bold mt-0.5">{user.statusMessage}</p>
+                                            )}
                                         </div>
 
-                                        {/* BAC */}
+                                        {/* BAC — ONLY for friends and self */}
                                         <div className="text-right shrink-0">
-                                            <p className={`text-lg font-black ${style.textColor}`}>{formatBac(user.currentBac)}</p>
+                                            {showBac ? (
+                                                <p className={`text-lg font-black ${style.textColor}`}>{formatBac(user.currentBac)}</p>
+                                            ) : (
+                                                <div className="flex items-center gap-1 text-white/15">
+                                                    <Lock size={12} />
+                                                    <span className="text-[9px] font-bold uppercase tracking-wider">{t.hiddenBac}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -283,6 +314,7 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                         {users.map((user, idx) => {
                             const style = getRankStyle(idx);
                             const isMe = user.uid === myUid;
+                            const anonymous = isAnonymous(user);
                             return (
                                 <div
                                     key={user.uid}
@@ -295,7 +327,11 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                                             <span className="text-xs font-black text-white/30">#{idx + 1}</span>
                                         )}
                                     </div>
-                                    {user.photoURL ? (
+                                    {anonymous ? (
+                                        <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 shrink-0">
+                                            <Lock size={14} className="text-white/20" />
+                                        </div>
+                                    ) : user.photoURL ? (
                                         <img src={user.photoURL} alt="" className="w-9 h-9 rounded-xl object-cover border border-white/10 shrink-0" />
                                     ) : (
                                         <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white/40 text-xs font-black border border-white/10 shrink-0">
@@ -303,7 +339,9 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                                         </div>
                                     )}
                                     <div className="flex-1 min-w-0">
-                                        <p className={`text-sm font-bold truncate ${isMe ? 'text-amber-400' : 'text-white'}`}>@{user.username}</p>
+                                        <p className={`text-sm font-bold truncate ${isMe ? 'text-amber-400' : anonymous ? 'text-white/30 italic' : 'text-white'}`}>
+                                            {anonymous ? t.anonymous : `@${user.username}`}
+                                        </p>
                                     </div>
                                     <div className="text-right shrink-0">
                                         <p className={`text-base font-black`} style={{ color: accentColor }}>{user.count}</p>

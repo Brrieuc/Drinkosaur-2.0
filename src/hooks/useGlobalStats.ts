@@ -2,17 +2,20 @@
 
 import { useState, useCallback } from 'react';
 import { db, collection, getDocs } from '../firebase';
-import { Drink, UserProfile, FriendGroup } from '../types';
+import { Drink, UserProfile, FriendGroup, LeaderboardVisibility } from '../types';
 import { calculateBac } from '../services/bacService';
 
 // ─── Types ───────────────────────────────────────────────────
 export interface LiveUser {
     uid: string;
-    username: string;
-    photoURL: string;
-    currentBac: number;
+    username: string;        // real or anonymized
+    photoURL: string;        // real or empty
+    currentBac: number;      // always present for ranking, but UI hides for non-friends
     statusMessage: string;
     color: string;
+    isFriend: boolean;       // whether this user is a friend of the viewer
+    isMe: boolean;           // whether this user is the current viewer
+    visibility: LeaderboardVisibility; // the user's privacy preference
 }
 
 export interface LiveGroupRanking {
@@ -27,29 +30,57 @@ export interface MonthlyUserStat {
     uid: string;
     username: string;
     photoURL: string;
-    count: number; // number of drinks of this type
+    count: number;
+    isFriend: boolean;
+    isMe: boolean;
+    visibility: LeaderboardVisibility;
 }
 
 export interface MonthlyGroupStat {
     groupId: string;
     groupName: string;
     groupIcon?: string;
-    totalAlcoholMl: number; // pure alcohol in ml
+    totalAlcoholMl: number;
     memberCount: number;
 }
 
 export interface GlobalLiveStats {
     totalNotSober: number;
     avgBacNotSober: number;
-    topUsers: LiveUser[];         // Top 10 by BAC
-    topGroups: LiveGroupRanking[]; // Top 3 groups by avg BAC
+    topUsers: LiveUser[];
+    topGroups: LiveGroupRanking[];
 }
 
 export interface GlobalMonthlyStats {
-    topBeer: MonthlyUserStat[];     // Top 5
-    topWine: MonthlyUserStat[];     // Top 5
-    topSpirits: MonthlyUserStat[];  // Top 5
-    topGroups: MonthlyGroupStat[];  // Top 3
+    topBeer: MonthlyUserStat[];
+    topWine: MonthlyUserStat[];
+    topSpirits: MonthlyUserStat[];
+    topGroups: MonthlyGroupStat[];
+}
+
+// ─── Helpers ──────────────────────────────────────────────────
+
+/**
+ * Determine if the viewer can see this user's real identity.
+ * - 'hidden' → never shown in rankings at all (filtered before this)
+ * - 'friends_only' → visible to friends, anonymous to others
+ * - 'friends_of_friends' → visible to friends and friends-of-friends
+ * - 'public' → visible to everyone
+ */
+function canSeeIdentity(
+    targetVisibility: LeaderboardVisibility,
+    isFriend: boolean,
+    isFriendOfFriend: boolean,
+    isMe: boolean
+): boolean {
+    if (isMe) return true;
+    switch (targetVisibility) {
+        case 'public': return true;
+        case 'friends_of_friends': return isFriend || isFriendOfFriend;
+        case 'friends_only': return isFriend;
+        case 'hidden': return false;
+        default: return isFriend; // default to friends_only
+    }
 }
 
 // ─── Hook ─────────────────────────────────────────────────────
@@ -60,7 +91,7 @@ export const useGlobalStats = () => {
     const [loadingMonthly, setLoadingMonthly] = useState(false);
 
     // ─── LIVE STATS ────────────────────────────────────────────
-    const fetchLiveStats = useCallback(async () => {
+    const fetchLiveStats = useCallback(async (myUid: string) => {
         setLoadingLive(true);
         try {
             // 1. Fetch ALL users
@@ -73,6 +104,19 @@ export const useGlobalStats = () => {
                 }
             });
 
+            // Build friend sets for privacy
+            const myProfile = allUsers.find(u => u.uid === myUid)?.profile;
+            const myFriends = new Set<string>(myProfile?.friends || []);
+            // Friends-of-friends: collect all friends' friends
+            const friendsOfFriends = new Set<string>();
+            for (const u of allUsers) {
+                if (myFriends.has(u.uid)) {
+                    for (const fof of (u.profile.friends || [])) {
+                        if (fof !== myUid) friendsOfFriends.add(fof);
+                    }
+                }
+            }
+
             // 2. Fetch ALL drinks docs
             const drinksSnap = await getDocs(collection(db, "drinks"));
             const drinksMap: Record<string, Drink[]> = {};
@@ -80,41 +124,58 @@ export const useGlobalStats = () => {
                 drinksMap[d.id] = (d.data()?.list || []) as Drink[];
             });
 
-            // 3. Calculate current BAC for each user
+            // 3. Calculate current BAC for each user + apply visibility
             const liveUsers: LiveUser[] = [];
+            let totalNotSoberCount = 0;
+            let totalBacSum = 0;
+
             for (const { uid, profile } of allUsers) {
                 const userDrinks = drinksMap[uid] || [];
                 if (userDrinks.length === 0) continue;
                 const bac = calculateBac(userDrinks, profile);
-                if (bac.currentBac > 0) {
-                    liveUsers.push({
-                        uid,
-                        username: profile.username || profile.displayName || 'Anon',
-                        photoURL: profile.customPhotoURL || profile.photoURL || '',
-                        currentBac: bac.currentBac,
-                        statusMessage: bac.statusMessage,
-                        color: bac.color,
-                    });
-                }
+                if (bac.currentBac <= 0) continue;
+
+                totalNotSoberCount++;
+                totalBacSum += bac.currentBac;
+
+                const visibility = profile.leaderboardVisibility || 'friends_only';
+
+                // Skip users who chose 'hidden'
+                if (visibility === 'hidden') continue;
+
+                const isMe = uid === myUid;
+                const isFriend = myFriends.has(uid);
+                const isFoF = friendsOfFriends.has(uid);
+                const showIdentity = canSeeIdentity(visibility, isFriend, isFoF, isMe);
+
+                liveUsers.push({
+                    uid,
+                    username: showIdentity ? (profile.username || profile.displayName || 'Anon') : '???',
+                    photoURL: showIdentity ? (profile.customPhotoURL || profile.photoURL || '') : '',
+                    currentBac: bac.currentBac,
+                    statusMessage: bac.statusMessage,
+                    color: bac.color,
+                    isFriend,
+                    isMe,
+                    visibility,
+                });
             }
 
-            // Sort by BAC descending
             liveUsers.sort((a, b) => b.currentBac - a.currentBac);
 
-            const totalNotSober = liveUsers.length;
-            const avgBac = totalNotSober > 0
-                ? liveUsers.reduce((sum, u) => sum + u.currentBac, 0) / totalNotSober
-                : 0;
+            const avgBac = totalNotSoberCount > 0 ? totalBacSum / totalNotSoberCount : 0;
 
-            // 4. Group rankings — fetch all groups
+            // 4. Group rankings — only groups with showInGlobalRanking !== false
             const groupsSnap = await getDocs(collection(db, "groups"));
             const groupRankings: LiveGroupRanking[] = [];
 
             groupsSnap.forEach((gDoc: any) => {
                 const gData = gDoc.data() as FriendGroup;
-                const memberIds: string[] = gData.memberIds || [];
 
-                // Calculate avg from ALL members (sober = 0)
+                // Respect group privacy: skip if explicitly hidden
+                if (gData.showInGlobalRanking === false) return;
+
+                const memberIds: string[] = gData.memberIds || [];
                 const allMemberBacs = memberIds.map(mid => {
                     const found = liveUsers.find(u => u.uid === mid);
                     return found ? found.currentBac : 0;
@@ -137,7 +198,7 @@ export const useGlobalStats = () => {
             groupRankings.sort((a, b) => b.avgBac - a.avgBac);
 
             setLiveStats({
-                totalNotSober,
+                totalNotSober: totalNotSoberCount,
                 avgBacNotSober: parseFloat(avgBac.toFixed(4)),
                 topUsers: liveUsers.slice(0, 10),
                 topGroups: groupRankings.slice(0, 3),
@@ -150,7 +211,7 @@ export const useGlobalStats = () => {
     }, []);
 
     // ─── MONTHLY STATS ─────────────────────────────────────────
-    const fetchMonthlyStats = useCallback(async () => {
+    const fetchMonthlyStats = useCallback(async (myUid: string) => {
         setLoadingMonthly(true);
         try {
             const now = new Date();
@@ -166,6 +227,18 @@ export const useGlobalStats = () => {
                 }
             });
 
+            // Build friend sets
+            const myProfile = profilesMap[myUid];
+            const myFriends = new Set<string>(myProfile?.friends || []);
+            const friendsOfFriends = new Set<string>();
+            for (const [uid, p] of Object.entries(profilesMap)) {
+                if (myFriends.has(uid)) {
+                    for (const fof of (p.friends || [])) {
+                        if (fof !== myUid) friendsOfFriends.add(fof);
+                    }
+                }
+            }
+
             // 2. Fetch ALL drinks
             const drinksSnap = await getDocs(collection(db, "drinks"));
             const allDrinksMap: Record<string, Drink[]> = {};
@@ -173,13 +246,13 @@ export const useGlobalStats = () => {
                 allDrinksMap[d.id] = (d.data()?.list || []) as Drink[];
             });
 
-            // 3. Per-user: count beer/wine/spirits this month + total pure alcohol
+            // 3. Per-user: count beer/wine/spirits this month
             interface UserMonthData {
                 uid: string;
                 beerCount: number;
                 wineCount: number;
                 spiritCount: number;
-                totalAlcoholMl: number; // pure alcohol volume
+                totalAlcoholMl: number;
             }
 
             const userData: Record<string, UserMonthData> = {};
@@ -206,43 +279,61 @@ export const useGlobalStats = () => {
                 userData[uid] = { uid, beerCount, wineCount, spiritCount, totalAlcoholMl };
             }
 
-            const toStatUser = (uid: string, count: number): MonthlyUserStat => {
+            const toStatUser = (uid: string, count: number): MonthlyUserStat | null => {
                 const p = profilesMap[uid];
+                const visibility = p?.leaderboardVisibility || 'friends_only';
+
+                // Skip hidden users
+                if (visibility === 'hidden') return null;
+
+                const isMe = uid === myUid;
+                const isFriend = myFriends.has(uid);
+                const isFoF = friendsOfFriends.has(uid);
+                const showIdentity = canSeeIdentity(visibility, isFriend, isFoF, isMe);
+
                 return {
                     uid,
-                    username: p?.username || p?.displayName || 'Anon',
-                    photoURL: p?.customPhotoURL || p?.photoURL || '',
+                    username: showIdentity ? (p?.username || p?.displayName || 'Anon') : '???',
+                    photoURL: showIdentity ? (p?.customPhotoURL || p?.photoURL || '') : '',
                     count,
+                    isFriend,
+                    isMe,
+                    visibility,
                 };
             };
 
-            // Top 5 for each type
             const allUserData = Object.values(userData);
 
             const topBeer = allUserData
                 .filter(u => u.beerCount > 0)
                 .sort((a, b) => b.beerCount - a.beerCount)
                 .slice(0, 5)
-                .map(u => toStatUser(u.uid, u.beerCount));
+                .map(u => toStatUser(u.uid, u.beerCount))
+                .filter(Boolean) as MonthlyUserStat[];
 
             const topWine = allUserData
                 .filter(u => u.wineCount > 0)
                 .sort((a, b) => b.wineCount - a.wineCount)
                 .slice(0, 5)
-                .map(u => toStatUser(u.uid, u.wineCount));
+                .map(u => toStatUser(u.uid, u.wineCount))
+                .filter(Boolean) as MonthlyUserStat[];
 
             const topSpirits = allUserData
                 .filter(u => u.spiritCount > 0)
                 .sort((a, b) => b.spiritCount - a.spiritCount)
                 .slice(0, 5)
-                .map(u => toStatUser(u.uid, u.spiritCount));
+                .map(u => toStatUser(u.uid, u.spiritCount))
+                .filter(Boolean) as MonthlyUserStat[];
 
-            // 4. Top 3 groups by cumulative pure alcohol this month
+            // 4. Top 3 groups — respect showInGlobalRanking
             const groupsSnap = await getDocs(collection(db, "groups"));
             const groupStats: MonthlyGroupStat[] = [];
 
             groupsSnap.forEach((gDoc: any) => {
                 const gData = gDoc.data() as FriendGroup;
+
+                if (gData.showInGlobalRanking === false) return;
+
                 const memberIds: string[] = gData.memberIds || [];
                 let totalGroupAlcohol = 0;
                 for (const mid of memberIds) {
