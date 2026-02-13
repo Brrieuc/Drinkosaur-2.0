@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { UserProfile, WonAward, LeaderboardVisibility, GroupListVisibility } from '../types';
-import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Eye, EyeOff, Calendar, Trophy, Lock, Users } from 'lucide-react';
+import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Eye, EyeOff, Calendar, Trophy, Lock, Users, HelpCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { ImageCropper } from './ImageCropper';
 import { TrophyHall } from './TrophyHall';
@@ -751,6 +751,27 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
             </div>
             <ChevronRight className="text-white/20 group-hover:text-white transition-colors" />
           </button>
+
+          {/* Help & News Button */}
+          <a
+            href="https://x.com/brieucpec"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full glass-panel-3d p-6 rounded-[32px] flex items-center justify-between active:scale-[0.98] transition-all group hover:bg-white/5"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-4 bg-sky-500/10 rounded-2xl group-hover:bg-sky-500/20 transition-colors border border-sky-500/20">
+                <HelpCircle size={24} className="text-sky-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-white leading-tight text-lg">{language === 'fr' ? 'Aide & Actualités' : 'Help & News'}</p>
+                <p className="text-xs text-white/40 mt-1 uppercase tracking-wider font-bold">
+                  {language === 'fr' ? 'Status, Mises à jour, Support' : 'Status, Updates, Support'}
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="text-white/20 group-hover:text-sky-400/40 transition-colors" />
+          </a>
         </div>
 
         {/* Footer Credits */}
