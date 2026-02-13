@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { BacStatus, Drink, UserProfile } from '../types';
-import { Clock, Zap, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Clock, Zap, AlertTriangle, TrendingUp, BarChart3 } from 'lucide-react';
 import { BacChartModal } from './BacChartModal';
+import { StatsModal } from './StatsModal';
 
 
 interface DashboardProps {
@@ -19,6 +20,7 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ status, language = 'en', drinks = [], user }) => {
   const [showChartModal, setShowChartModal] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const isFrench = language === 'fr';
 
   const t = {
@@ -28,7 +30,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ status, language = 'en', d
     unitDesc: isFrench ? 'Grammes par Litre' : 'g/100ml',
     drivingWarning: 'Ne prenez pas le volant',
     peak: isFrench ? 'Pic' : 'Peak',
-    at: isFrench ? 'à' : '@'
+    at: isFrench ? 'à' : '@',
+    stats: isFrench ? 'Stats' : 'Stats'
   };
 
   // Logic for display value and unit
@@ -104,6 +107,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ status, language = 'en', d
       {/* Chart Modal */}
       {showChartModal && user && (
         <BacChartModal drinks={drinks} user={user} onClose={() => setShowChartModal(false)} />
+      )}
+
+      {/* Stats Modal */}
+      {showStats && user && (
+        <StatsModal drinks={drinks} user={user} onClose={() => setShowStats(false)} />
       )}
 
       {/* Header */}
@@ -211,7 +219,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ status, language = 'en', d
         </div>
 
         {/* Data Pills */}
-        <div className="grid grid-cols-2 gap-4 w-full max-w-xs mt-10">
+        <div className="grid grid-cols-3 gap-3 w-full max-w-sm mt-10">
           <div className="glass-panel-3d p-4 rounded-[24px] flex flex-col items-center justify-center group hover:bg-white/5 transition-colors">
             <div className="text-blue-300 mb-2 p-2 bg-blue-500/20 rounded-full"><Clock size={16} /></div>
             <div className="text-white font-bold text-lg">{soberTimeStr || '--:--'}</div>
@@ -222,6 +230,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ status, language = 'en', d
             <div className="text-white font-bold text-lg">{Math.round(liquidHeight)}%</div>
             <div className="text-[10px] text-pink-200/60 uppercase tracking-wider font-semibold">{t.limitLoad}</div>
           </div>
+          <button
+            onClick={() => setShowStats(true)}
+            className="glass-panel-3d p-4 rounded-[24px] flex flex-col items-center justify-center group hover:bg-white/5 transition-colors active:scale-95"
+          >
+            <div className="text-purple-300 mb-2 p-2 bg-purple-500/20 rounded-full group-hover:bg-purple-500/30 transition-colors"><BarChart3 size={16} /></div>
+            <div className="text-white font-bold text-lg">📊</div>
+            <div className="text-[10px] text-purple-200/60 uppercase tracking-wider font-semibold">{t.stats}</div>
+          </button>
         </div>
       </div>
     </div>
