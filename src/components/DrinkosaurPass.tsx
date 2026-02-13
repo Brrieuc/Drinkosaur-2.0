@@ -34,6 +34,7 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
     const [isEditing, setIsEditing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [blobUrl, setBlobUrl] = useState<string | null>(null);
+    const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
     const passRef = useRef<HTMLDivElement>(null);
 
     // Preload profile image as Blob to bypass CORS during export
@@ -290,8 +291,8 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
 
                     {/* Title */}
                     <div className="text-center mt-4">
-                        <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-lg" style={{ fontFamily: 'Impact, sans-serif' }}>
-                            DRINKOSAUR PASS
+                        <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-lg scale-y-110" style={{ fontFamily: 'Impact, sans-serif' }}>
+                            DRINKOPASS
                         </h2>
                     </div>
 
@@ -316,45 +317,56 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                     </div>
 
                     {/* Badges Row */}
-                    <div className="flex justify-center gap-3">
+                    <div className="flex justify-center gap-2">
                         {[0, 1, 2].map(i => {
                             const badgeId = config.selectedBadges[i];
                             const badge = wonAwards.find(w => w.awardId === badgeId);
+                            const def = AWARD_DEFINITIONS.find(a => a.id === badgeId);
+                            const displayName = language === 'fr' ? def?.name_fr : def?.name;
+
                             return (
-                                <div key={i} className="w-24 h-24 bg-white/10 rounded-2xl border border-white/5 flex flex-col items-center justify-center p-2 relative">
-                                    {isEditing && (
-                                        <select
-                                            className="absolute inset-0 opacity-0 cursor-pointer"
-                                            value={badgeId || ''}
-                                            onChange={(e) => {
-                                                const newBadges = [...config.selectedBadges];
-                                                newBadges[i] = e.target.value;
-                                                setConfig({ ...config, selectedBadges: newBadges });
-                                            }}
-                                        >
-                                            <option value="">None</option>
-                                            {wonAwards.map(w => (
-                                                <option key={w.awardId} value={w.awardId}>{w.value} - {w.groupName}</option>
-                                            ))}
-                                        </select>
-                                    )}
-                                    {badge ? (
-                                        <div className="w-full h-full p-0.5 flex flex-col items-center justify-center relative">
+                                <div key={i} className="flex flex-col items-center gap-1 w-28">
+                                    <div
+                                        className={`w-24 h-24 rounded-3xl border border-white/10 flex items-center justify-center p-0 relative transition-transform active:scale-95 ${badge ? 'bg-white/5 cursor-pointer hover:bg-white/10' : 'bg-white/5'}`}
+                                        onClick={() => badge && setSelectedDetailId(badgeId)}
+                                    >
+                                        {isEditing && (
+                                            <select
+                                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                                value={badgeId || ''}
+                                                onChange={(e) => {
+                                                    const newBadges = [...config.selectedBadges];
+                                                    newBadges[i] = e.target.value;
+                                                    setConfig({ ...config, selectedBadges: newBadges });
+                                                }}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <option value="">None</option>
+                                                {wonAwards.map(w => (
+                                                    <option key={w.awardId} value={w.awardId}>{w.value} - {w.groupName}</option>
+                                                ))}
+                                            </select>
+                                        )}
+                                        {badge ? (
                                             <img
-                                                src={AWARD_IMAGES[badgeId] || getSecureImgUrl(AWARD_DEFINITIONS.find(a => a.id === badgeId)?.imageUrl)}
-                                                className="w-full h-full object-contain drop-shadow-lg"
+                                                src={AWARD_IMAGES[badgeId] || getSecureImgUrl(def?.imageUrl)}
+                                                className="w-full h-full object-contain drop-shadow-2xl"
                                                 alt="Award"
                                                 {...(!AWARD_IMAGES[badgeId] ? { crossOrigin: "anonymous", referrerPolicy: "no-referrer" } : {})}
                                             />
-                                            <div className="absolute bottom-0 inset-x-0 bg-black/50 backdrop-blur-[2px] rounded-b-xl py-0.5 flex flex-col items-center">
-                                                <span className="text-[9px] font-bold text-center leading-tight line-clamp-1 text-white/90">{badge.value}</span>
-                                                <span className="text-[7px] text-white/60 max-w-full truncate">{badge.groupName}</span>
-                                            </div>
+                                        ) : (
+                                            <div className="text-white/10 text-xs font-bold uppercase">Empty</div>
+                                        )}
+                                        {isEditing && <div className="absolute top-1 right-1 pointer-events-none z-0"><Edit2 size={12} className="text-white/50" /></div>}
+                                    </div>
+                                    {/* Name Label Below */}
+                                    {badge && (
+                                        <div className="text-center px-1">
+                                            <span className="text-[10px] font-bold text-white/60 uppercase tracking-wide leading-tight block">
+                                                {displayName || badge.groupName}
+                                            </span>
                                         </div>
-                                    ) : (
-                                        <div className="text-white/20 text-xs font-bold uppercase">Empty</div>
                                     )}
-                                    {isEditing && <div className="absolute top-1 right-1 pointer-events-none"><Edit2 size={10} className="text-white/50" /></div>}
                                 </div>
                             );
                         })}
@@ -444,6 +456,46 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                         </div>
                     )}
                 </div>
+
+                {/* Detail Overlay (When Badge Clicked) */}
+                {selectedDetailId && (
+                    <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-8 animate-in fade-in zoom-in duration-200" onClick={() => setSelectedDetailId(null)}>
+                        <button className="absolute top-4 right-4 p-2 bg-white/10 rounded-full text-white/70 hover:bg-white/20">
+                            <X size={24} />
+                        </button>
+
+                        {(() => {
+                            const def = AWARD_DEFINITIONS.find(a => a.id === selectedDetailId);
+                            const won = wonAwards.find(w => w.awardId === selectedDetailId);
+                            const displayName = language === 'fr' ? def?.name_fr : def?.name;
+                            const displayDesc = language === 'fr' ? def?.description_fr : def?.description;
+
+                            return (
+                                <div className="flex flex-col items-center text-center gap-6" onClick={e => e.stopPropagation()}>
+                                    <div className="w-48 h-48 relative">
+                                        <div className="absolute inset-0 bg-white/5 blur-3xl rounded-full animate-pulse"></div>
+                                        <img
+                                            src={AWARD_IMAGES[selectedDetailId] || getSecureImgUrl(def?.imageUrl)}
+                                            className="w-full h-full object-contain drop-shadow-2xl relative z-10"
+                                            alt={displayName}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <h3 className="text-3xl font-black text-white uppercase tracking-tight">{displayName}</h3>
+                                        <div className="px-4 py-1 bg-white/10 rounded-full inline-block">
+                                            <span className="text-emerald-400 font-bold font-mono">{won?.value}</span>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-white/60 text-sm max-w-[280px] leading-relaxed">
+                                        {displayDesc}
+                                    </p>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                )}
             </div>
         </div>
     );
