@@ -12,6 +12,7 @@
     "@google/genai": "*",
     "firebase": "^10.8.0",
     "heic2any": "^0.0.4",
+    "html-to-image": "^1.11.13",
     "lucide-react": "^0.300.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

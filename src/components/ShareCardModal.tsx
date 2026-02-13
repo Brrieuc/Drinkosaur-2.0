@@ -1,7 +1,7 @@
-
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { BacStatus, Drink, UserProfile } from '../types';
-import { X, Share as ShareIcon } from 'lucide-react';
+import { X, Share as ShareIcon, Loader2 } from 'lucide-react';
+import { toBlob } from 'html-to-image';
 
 interface ShareCardModalProps {
     status: BacStatus;
@@ -12,12 +12,14 @@ interface ShareCardModalProps {
 
 export const ShareCardModal: React.FC<ShareCardModalProps> = ({ status, user, drinks, onClose }) => {
     const isFrench = user.language === 'fr';
+    const cardRef = useRef<HTMLDivElement>(null);
+    const [isSharing, setIsSharing] = useState(false);
 
     const t = {
         title: isFrench ? 'Partager mon état' : 'Share my status',
         appName: 'Drinkosaur',
         currentDrinks: isFrench ? 'Boissons en cours' : 'Active Drinks',
-        shareHint: isFrench ? 'Faites une capture d\'écran pour partager !' : 'Take a screenshot to share!',
+        shareHint: isFrench ? 'Partager l\'image' : 'Share Image',
         bacLevel: isFrench ? 'Taux Alcool' : 'BAC Level',
         unitDesc: isFrench ? 'Grammes par Litre' : 'g/100ml',
         peak: isFrench ? 'Pic' : 'Peak',
@@ -85,20 +87,70 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({ status, user, dr
             .slice(0, 4); // Take max 4
     }, [drinks]);
 
+    const handleShare = async () => {
+        if (!cardRef.current || isSharing) return;
+
+        try {
+            setIsSharing(true);
+
+            // Create blob from the card
+            const blob = await toBlob(cardRef.current, {
+                cacheBust: true,
+                style: {
+                    borderRadius: '40px', // Ensure corners are captured correctly
+                    transform: 'none' // Reset any transforms that might affect capture
+                }
+            });
+
+            if (!blob) {
+                throw new Error('Failed to generate image');
+            }
+
+            const file = new File([blob], 'drinkosaur-status.png', { type: 'image/png' });
+
+            // Use Web Share API if available
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: 'Drinkosaur Status',
+                    text: `Mon taux d'alcool actuel : ${displayValue.toFixed(displayDecimals)} ${displayUnit}`
+                });
+            } else {
+                // Fallback: Download the image
+                const link = document.createElement('a');
+                link.download = 'drinkosaur-status.png';
+                link.href = URL.createObjectURL(blob);
+                link.click();
+                URL.revokeObjectURL(link.href);
+            }
+
+            // Close modal after successful share/download attempt
+            onClose();
+
+        } catch (error) {
+            console.error('Sharing failed:', error);
+            alert('Could not share image. Please try again or take a screenshot manually.');
+        } finally {
+            setIsSharing(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-fade-in">
             <div className="relative w-full max-w-sm">
 
                 {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute -top-12 right-0 p-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
-                >
-                    <X size={24} />
-                </button>
+                {!isSharing && (
+                    <button
+                        onClick={onClose}
+                        className="absolute -top-12 right-0 p-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
+                    >
+                        <X size={24} />
+                    </button>
+                )}
 
                 {/* The Card Component */}
-                <div className="bg-[#0f0f13] border border-white/10 rounded-[40px] shadow-2xl overflow-hidden flex flex-col items-center relative p-8">
+                <div ref={cardRef} className="bg-[#0f0f13] border border-white/10 rounded-[40px] shadow-2xl overflow-hidden flex flex-col items-center relative p-8">
 
                     {/* Background Decoration */}
                     <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-blue-500/10 to-transparent pointer-events-none" />
@@ -176,14 +228,22 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({ status, user, dr
                         </div>
                     )}
 
-                    {/* Footer / Hint */}
-                    <div className="mt-8 pt-4 border-t border-white/5 w-full text-center z-10">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 rounded-full border border-blue-500/20">
-                            <ShareIcon size={14} className="text-blue-400" />
-                            <span className="text-[10px] text-blue-200 font-bold uppercase tracking-wide">
+                    {/* Footer / Hint (Only shown when not capturing) */}
+                    <div className="mt-8 pt-4 border-t border-white/5 w-full text-center z-10" data-html2canvas-ignore>
+                        <button
+                            onClick={handleShare}
+                            disabled={isSharing}
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-full shadow-lg shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-wait"
+                        >
+                            {isSharing ? (
+                                <Loader2 size={16} className="text-white animate-spin" />
+                            ) : (
+                                <ShareIcon size={16} className="text-white" />
+                            )}
+                            <span className="text-xs text-white font-bold uppercase tracking-wide">
                                 {t.shareHint}
                             </span>
-                        </div>
+                        </button>
                     </div>
 
                 </div>
