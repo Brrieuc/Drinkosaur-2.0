@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { UserProfile, Drink, WonAward, PassStat, PassStatType, DrinkosaurPassConfig } from '../types';
-import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2, Zap, Monitor } from 'lucide-react';
+import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2, Zap, Monitor, Droplets, Lightbulb } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { AWARD_DEFINITIONS } from '../constants/awards';
 import { AWARD_IMAGES } from '../constants/awardsImages';
@@ -98,6 +98,36 @@ const GlitchEffect: React.FC = () => (
         <div className="glitch-layer bg-blue-500/30" style={{ transform: 'translate(2px, 0)', animationDirection: 'reverse' }}></div>
         <div className="absolute inset-0 bg-gradient-to-tr from-green-500/20 to-purple-500/20 mix-blend-overlay animate-pulse"></div>
         <div className="absolute inset-0 border-2 border-green-400/50 rounded-full" />
+    </div>
+);
+
+const LiquidEffect: React.FC = () => (
+    <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
+        <div className="liquid-wave-ring" style={{ animationDuration: '6s' }} />
+        <div className="liquid-wave-ring" style={{ animationDuration: '10s', animationDirection: 'reverse', width: '120%', height: '120%', opacity: 0.5 }} />
+        <div className="absolute inset-0 rounded-full shadow-[inset_0_0_20px_rgba(56,189,248,0.6)] mix-blend-overlay" />
+        {/* Bubbles */}
+        {[...Array(5)].map((_, i) => (
+            <div
+                key={i}
+                className="absolute bg-white/40 rounded-full animate-float"
+                style={{
+                    width: `${Math.random() * 8 + 4}px`,
+                    height: `${Math.random() * 8 + 4}px`,
+                    left: `${Math.random() * 80 + 10}%`,
+                    bottom: '-10%',
+                    animationDuration: `${2 + Math.random() * 3}s`,
+                    animationDelay: `${Math.random() * 2}s`
+                }}
+            />
+        ))}
+    </div>
+);
+
+const NeonEffect: React.FC = () => (
+    <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
+        <div className="neon-ring" />
+        <div className="absolute inset-[-20%] bg-fuchsia-500/20 blur-xl rounded-full animate-pulse" />
     </div>
 );
 
@@ -382,6 +412,8 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                             {config.profileEffect === 'fire' && <FireEffect />}
                             {config.profileEffect === 'electric' && <ElectricEffect />}
                             {config.profileEffect === 'glitch' && <GlitchEffect />}
+                            {config.profileEffect === 'liquid' && <LiquidEffect />}
+                            {config.profileEffect === 'neon' && <NeonEffect />}
                             <div className={`w-full h-full rounded-full overflow-hidden relative z-20 ${config.profileEffect === 'glitch' ? 'animate-shake' : ''}`}>
                                 <img
                                     src={blobUrl || getSecureImgUrl(user.customPhotoURL || user.photoURL)}
@@ -572,6 +604,18 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                     className={`px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${config.profileEffect === 'glitch' ? 'bg-green-600/20 border-green-500 text-green-400 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
                                 >
                                     <Monitor size={12} /> Glitch
+                                </button>
+                                <button
+                                    onClick={() => setConfig({ ...config, profileEffect: 'liquid' })}
+                                    className={`px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${config.profileEffect === 'liquid' ? 'bg-cyan-600/20 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
+                                >
+                                    <Droplets size={12} /> Liquide
+                                </button>
+                                <button
+                                    onClick={() => setConfig({ ...config, profileEffect: 'neon' })}
+                                    className={`px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${config.profileEffect === 'neon' ? 'bg-fuchsia-600/20 border-fuchsia-500 text-fuchsia-400 shadow-[0_0_15px_rgba(217,70,239,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
+                                >
+                                    <Lightbulb size={12} /> Néon
                                 </button>
                             </div>
                         </div>
