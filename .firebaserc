@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "drinkosaur-5cebe"
-  }
+  },
+  "targets": {
+    "drinkosaur-5cebe": {
+      "hosting": {
+        "macible": [
+          "mydrinkosaur"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

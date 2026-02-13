@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "target": "macible",
     "public": "dist",
     "ignore": [
       "firebase.json",
