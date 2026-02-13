@@ -22,6 +22,7 @@ interface FriendProfileModalProps {
     friendProfile: UserProfile;
     onClose: () => void;
     language: 'en' | 'fr';
+    onUpdateFriend?: (status: any) => void;
 }
 
 export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
@@ -29,7 +30,8 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
     friendDrinks,
     friendProfile,
     onClose,
-    language
+    language,
+    onUpdateFriend
 }) => {
     const [showChart, setShowChart] = useState(false);
 
@@ -43,11 +45,18 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
     // to ensure the number matches the liquid height and color.
     const [tick, setTick] = useState(0);
     useEffect(() => {
-        const i = setInterval(() => setTick(t => t + 1), 60000);
+        const i = setInterval(() => setTick(t => t + 1), 60000); // 1 minute
         return () => clearInterval(i);
     }, []);
 
     const fullStatus = useMemo(() => calculateBac(friendDrinks, friendProfile), [friendDrinks, friendProfile, tick]);
+
+    // Notify parent (List) of the correct calculated status
+    useEffect(() => {
+        if (onUpdateFriend) {
+            onUpdateFriend(fullStatus);
+        }
+    }, [fullStatus, onUpdateFriend]);
 
     const t = {
         title: isFrench ? "Profil de l'ami" : "Friend Profile",
