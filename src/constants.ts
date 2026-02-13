@@ -3,8 +3,8 @@ export const METABOLISM_RATE = 0.015; // Average elimination rate per hour in % 
 export const ALCOHOL_DENSITY = 0.789; // g/ml
 
 export const GENDER_CONSTANT = {
-  male: 0.7,   
-  female: 0.6, 
+  male: 0.7,
+  female: 0.6,
 };
 
 export const MAX_SAFE_BAC = 0.08;
@@ -18,11 +18,11 @@ export const THEME_COLORS = {
 
 // Consumption Speeds in ml/minute
 export const CONSUMPTION_RATES = {
-    beer: { slow: 17, average: 21, fast: 25 },     // Demi (250ml) ~12min avg
-    wine: { slow: 6, average: 7, fast: 8 },        // Glass (125ml) ~18min avg
-    cocktail: { slow: 5, average: 7.5, fast: 10 }, // Glass (150ml) ~20min avg
-    spirit: { slow: 10, average: 20, fast: 40 },   // Usually faster or sipped strictly
-    other: { slow: 10, average: 15, fast: 20 }
+  beer: { slow: 17, average: 21, fast: 25 },     // Demi (250ml) ~12min avg
+  wine: { slow: 6, average: 7, fast: 8 },        // Glass (125ml) ~18min avg
+  cocktail: { slow: 5, average: 7.5, fast: 10 }, // Glass (150ml) ~20min avg
+  spirit: { slow: 10, average: 20, fast: 40 },   // Usually faster or sipped strictly
+  other: { slow: 10, average: 15, fast: 20 }
 };
 
 // --- DATA LIBRARIES ---
@@ -31,10 +31,11 @@ export interface DrinkReference {
   name: string;
   name_fr?: string;
   abv: number;
-  type: 'beer' | 'spirit' | 'wine' | 'other';
+  type: 'beer' | 'spirit' | 'wine' | 'cocktail' | 'other';
   color: string; // Hex or rgba for liquid rendering
   carbonated?: boolean; // Controls foam and bubbles
   tags?: string[];
+  defaultVolume?: number;
 }
 
 export interface MixerReference {
@@ -44,10 +45,10 @@ export interface MixerReference {
 }
 
 export const FUNNY_EXPRESSIONS = [
-  "bleu métal", "défoncé", "arraché", "satellisé", "imbibé", 
-  "plein comme un oeuf", "bourré", "beurré complet", "blindé", 
-  "cuit", "en pétard", "pinté", "pété", "raide", "rétamé", 
-  "torché", "brindezingue", "explosé", "queue de pelle", 
+  "bleu métal", "défoncé", "arraché", "satellisé", "imbibé",
+  "plein comme un oeuf", "bourré", "beurré complet", "blindé",
+  "cuit", "en pétard", "pinté", "pété", "raide", "rétamé",
+  "torché", "brindezingue", "explosé", "queue de pelle",
   "cabane sur le chien", "pas loupé"
 ];
 
@@ -59,7 +60,7 @@ export const BEER_LIBRARY: DrinkReference[] = [
   { name: 'Kronenbourg', abv: 4.2, type: 'beer', color: '#FCD34D', carbonated: true },
   { name: 'Budweiser', abv: 5.0, type: 'beer', color: '#FEF08A', carbonated: true },
   { name: 'Corona', abv: 4.5, type: 'beer', color: '#FEF9C3', carbonated: true },
-  
+
   // Triples & Fortes (Amber/Dark Gold)
   { name: 'Paix-Dieu', abv: 10.0, type: 'beer', color: '#F59E0B', carbonated: true },
   { name: 'Rince-Cochon', abv: 8.5, type: 'beer', color: '#FCD34D', carbonated: true },
@@ -116,6 +117,59 @@ export const SPIRIT_LIBRARY: DrinkReference[] = [
   { name: "Baileys", abv: 17, type: 'spirit', color: '#E7E5E4', carbonated: false },
 ];
 
+export const COCKTAIL_LIBRARY: DrinkReference[] = [
+  // Mojito
+  { name: "Mojito", abv: 13, type: 'cocktail', color: '#eefab6', carbonated: true, defaultVolume: 140 },
+  // Spritz
+  { name: "Spritz", abv: 11, type: 'cocktail', color: '#fdba74', carbonated: true, defaultVolume: 150 },
+  // Margarita
+  { name: "Margarita", abv: 25, type: 'cocktail', color: '#fefce8', carbonated: false, defaultVolume: 90 },
+  // Gin Tonic
+  { name: "Gin Tonic", abv: 14, type: 'cocktail', color: '#ecfeff', carbonated: true, defaultVolume: 150 },
+  // Old Fashioned
+  { name: "Old Fashioned", abv: 30, type: 'cocktail', color: '#b45309', carbonated: false, defaultVolume: 60 },
+  // Moscow Mule
+  { name: "Moscow Mule", abv: 12, type: 'cocktail', color: '#fef3c7', carbonated: true, defaultVolume: 150 },
+  // Caïpirinha
+  { name: "Caïpirinha", abv: 25, type: 'cocktail', color: '#ecfccb', carbonated: false, defaultVolume: 100 },
+  // Piña Colada
+  { name: "Piña Colada", abv: 13, type: 'cocktail', color: '#fefce8', carbonated: false, defaultVolume: 160 },
+  // Negroni
+  { name: "Negroni", abv: 25, type: 'cocktail', color: '#ef4444', carbonated: false, defaultVolume: 90 },
+  // Espresso Martini
+  { name: "Espresso Martini", abv: 20, type: 'cocktail', color: '#451a03', carbonated: false, defaultVolume: 90 },
+  // Cosmopolitan
+  { name: "Cosmopolitan", abv: 20, type: 'cocktail', color: '#f472b6', carbonated: false, defaultVolume: 100 },
+  // Long Island
+  { name: "Long Island", abv: 20, type: 'cocktail', color: '#a8a29e', carbonated: true, defaultVolume: 150 },
+  // Whiskey Sour
+  { name: "Whiskey Sour", abv: 18, type: 'cocktail', color: '#fbbf24', carbonated: false, defaultVolume: 100 },
+  // Daiquiri
+  { name: "Daiquiri", abv: 25, type: 'cocktail', color: '#fef08a', carbonated: false, defaultVolume: 90 },
+  // Sex on the Beach
+  { name: "Sex on the Beach", abv: 12, type: 'cocktail', color: '#f472b6', carbonated: false, defaultVolume: 180 },
+  // Bloody Mary
+  { name: "Bloody Mary", abv: 12, type: 'cocktail', color: '#ef4444', carbonated: false, defaultVolume: 150 },
+  // Mai Tai
+  { name: "Mai Tai", abv: 25, type: 'cocktail', color: '#fb923c', carbonated: false, defaultVolume: 120 },
+  // Cuba Libre
+  { name: "Cuba Libre", abv: 12, type: 'cocktail', color: '#78350f', carbonated: true, defaultVolume: 160 },
+  // Tequila Sunrise
+  { name: "Tequila Sunrise", abv: 12, type: 'cocktail', color: '#fb923c', carbonated: false, defaultVolume: 150 },
+  // Blue Lagoon
+  { name: "Blue Lagoon", abv: 16, type: 'cocktail', color: '#3b82f6', carbonated: true, defaultVolume: 120 },
+  // Manhattan
+  { name: "Manhattan", abv: 30, type: 'cocktail', color: '#b91c1c', carbonated: false, defaultVolume: 80 },
+  // White Russian
+  { name: "White Russian", abv: 20, type: 'cocktail', color: '#d6d3d1', carbonated: false, defaultVolume: 100 },
+  // Dry Martini
+  { name: "Dry Martini", abv: 35, type: 'cocktail', color: '#fef3c7', carbonated: false, defaultVolume: 75 },
+  // Dark 'n' Stormy
+  { name: "Dark 'n' Stormy", abv: 15, type: 'cocktail', color: '#78350f', carbonated: true, defaultVolume: 160 },
+  // Pisco Sour
+  { name: "Pisco Sour", abv: 20, type: 'cocktail', color: '#fef08a', carbonated: false, defaultVolume: 120 }
+];
+
 export const MIXERS: MixerReference[] = [
   { name: 'Coca-Cola', color: '#280802', carbonated: true },
   { name: 'Tonic Water', color: '#E0F2FE', carbonated: true },
@@ -161,67 +215,67 @@ export const SHOT_SIZES = [
 
 // GLASS DEFINITIONS
 export const GLASS_SHAPES = [
-  { 
-    id: 'pint', 
+  {
+    id: 'pint',
     name: 'Pint',
-    name_fr: 'Pinte', 
-    capacity: 568, 
-    path: 'M 20,5 L 24,90 Q 24,97 50,97 Q 76,97 76,90 L 80,5', 
+    name_fr: 'Pinte',
+    capacity: 568,
+    path: 'M 20,5 L 24,90 Q 24,97 50,97 Q 76,97 76,90 L 80,5',
     mask: 'M 22,5 L 26,90 Q 26,95 50,95 Q 74,95 74,90 L 78,5 Z',
     liquidBottom: 95,
     liquidTop: 5,
-    fillType: 'cylinder' 
+    fillType: 'cylinder'
   },
-  { 
-    id: 'wine_std', 
+  {
+    id: 'wine_std',
     name: 'Wine',
     name_fr: 'Vin',
-    capacity: 450, 
-    path: 'M 24,5 L 24,50 C 24,75 76,75 76,50 L 76,5 M 50,75 L 50,92 M 30,96 Q 50,88 70,96', 
+    capacity: 450,
+    path: 'M 24,5 L 24,50 C 24,75 76,75 76,50 L 76,5 M 50,75 L 50,92 M 30,96 Q 50,88 70,96',
     mask: 'M 26,5 L 26,50 C 26,73 74,73 74,50 L 74,5 Z',
     liquidBottom: 73,
     liquidTop: 5,
-    fillType: 'bowl' 
+    fillType: 'bowl'
   },
-  { 
-    id: 'flute', 
+  {
+    id: 'flute',
     name: 'Flute',
     name_fr: 'Flûte',
-    capacity: 200, 
-    path: 'M 38,5 L 40,70 C 40,83 60,83 60,70 L 62,5 M 50,83 L 50,92 M 35,96 Q 50,88 65,96', 
+    capacity: 200,
+    path: 'M 38,5 L 40,70 C 40,83 60,83 60,70 L 62,5 M 50,83 L 50,92 M 35,96 Q 50,88 65,96',
     mask: 'M 40,5 L 42,70 C 42,81 58,81 58,70 L 60,5 Z',
     liquidBottom: 81,
     liquidTop: 5,
     fillType: 'cylinder'
   },
-  { 
-    id: 'martini', 
+  {
+    id: 'martini',
     name: 'Martini',
     name_fr: 'Martini',
-    capacity: 200, 
-    path: 'M 10,5 L 50,55 L 90,5 M 50,55 L 50,92 M 30,96 Q 50,88 70,96', 
+    capacity: 200,
+    path: 'M 10,5 L 50,55 L 90,5 M 50,55 L 50,92 M 30,96 Q 50,88 70,96',
     mask: 'M 12,5 L 50,53 L 88,5 Z',
     liquidBottom: 53,
     liquidTop: 5,
-    fillType: 'cone' 
+    fillType: 'cone'
   },
-  { 
-    id: 'tumbler', 
+  {
+    id: 'tumbler',
     name: 'Tumbler',
     name_fr: 'Tumbler',
-    capacity: 300, 
-    path: 'M 15,10 L 20,90 Q 20,97 50,97 Q 80,97 80,90 L 85,10', 
+    capacity: 300,
+    path: 'M 15,10 L 20,90 Q 20,97 50,97 Q 80,97 80,90 L 85,10',
     mask: 'M 18,10 L 22,88 Q 22,92 50,92 Q 78,92 78,88 L 82,10 Z',
     liquidBottom: 92,
     liquidTop: 10,
     fillType: 'cylinder'
   },
-  { 
-    id: 'shot', 
+  {
+    id: 'shot',
     name: 'Shot',
     name_fr: 'Shot',
-    capacity: 60, 
-    path: 'M 30,25 L 35,90 L 65,90 L 70,25', 
+    capacity: 60,
+    path: 'M 30,25 L 35,90 L 65,90 L 70,25',
     mask: 'M 32,25 L 37,88 L 63,88 L 68,25 Z',
     liquidBottom: 88,
     liquidTop: 25,

@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Drink } from '../types';
 import {
-    BEER_LIBRARY, SPIRIT_LIBRARY, GENERIC_BEERS, GENERIC_WINES,
+    BEER_LIBRARY, SPIRIT_LIBRARY, COCKTAIL_LIBRARY, GENERIC_BEERS, GENERIC_WINES,
     BEER_PRESETS, SHOT_SIZES, GLASS_SHAPES, MIXERS,
     DrinkReference, MixerReference
 } from '../constants';
@@ -84,6 +84,7 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
         let lib: DrinkReference[] = [];
         if (drinkType === 'beer') lib = BEER_LIBRARY;
         else if (drinkType === 'wine') return []; // Generic wines handling handled differently
+        else if (drinkType === 'cocktail') lib = [...COCKTAIL_LIBRARY, ...SPIRIT_LIBRARY];
         else lib = SPIRIT_LIBRARY;
 
         if (!searchTerm) return lib;
@@ -122,7 +123,7 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
         setStep('pour');
         // Default start volumes
         if (drinkType === 'wine') setAlcoholVolume(125); // Std glass
-        if (drinkType === 'cocktail') setAlcoholVolume(50); // Std shot
+        if (drinkType === 'cocktail') setAlcoholVolume(selectedItem?.defaultVolume || 50); // Use default or Std shot
     };
 
     const finalizeDrink = (volumeOverride?: number) => {
@@ -143,11 +144,13 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
         } else if (drinkType === 'cocktail') {
             icon = '🍹';
             type = 'cocktail';
-            finalName = selectedMixer ? `${finalName} & ${selectedMixer.name}` : finalName;
-            const totalVol = finalVol + mixerVolume;
-            const pureAlcohol = finalVol * (selectedItem.abv / 100);
-            finalAbv = totalVol > 0 ? (pureAlcohol / totalVol) * 100 : selectedItem.abv;
-            finalVol = totalVol;
+            if (selectedMixer) {
+                finalName = `${finalName} & ${selectedMixer.name}`;
+                const totalVol = finalVol + mixerVolume;
+                const pureAlcohol = finalVol * (selectedItem.abv / 100);
+                finalAbv = totalVol > 0 ? (pureAlcohol / totalVol) * 100 : selectedItem.abv;
+                finalVol = totalVol;
+            }
         } else if (drinkType === 'shot') {
             icon = '🥃';
             type = 'spirit';
@@ -522,7 +525,7 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
                             </div>
 
                             <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em] mb-4">
-                                {drinkType === 'cocktail' && !selectedMixer ? t.dragAdjust : (drinkType === 'cocktail' ? t.dragMixer : t.dragAdjust)}
+                                {drinkType === 'cocktail' && (!selectedMixer || selectedItem.defaultVolume) ? t.dragAdjust : t.dragMixer}
                             </p>
 
                             <GlassView
@@ -541,7 +544,7 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
                                 }}
                             />
 
-                            {drinkType === 'cocktail' && !selectedMixer && (
+                            {drinkType === 'cocktail' && !selectedMixer && !selectedItem.defaultVolume && (
                                 <div className="w-full mt-6 space-y-3">
                                     <div className="text-center">
                                         <button
@@ -567,7 +570,7 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
                                 </div>
                             )}
 
-                            {(drinkType === 'wine' || selectedMixer) && (
+                            {(drinkType === 'wine' || selectedMixer || selectedItem.defaultVolume) && (
                                 <button
                                     onClick={() => finalizeDrink()}
                                     className="w-full py-6 mt-8 rounded-[32px] bg-gradient-to-br from-blue-500 to-indigo-700 text-white font-black text-2xl shadow-2xl shadow-blue-900/40 active:scale-95 transition-all flex items-center justify-center gap-3"
