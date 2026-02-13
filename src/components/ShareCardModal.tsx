@@ -99,6 +99,10 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({ status, user, dr
                 style: {
                     borderRadius: '40px', // Ensure corners are captured correctly
                     transform: 'none' // Reset any transforms that might affect capture
+                },
+                filter: (node) => {
+                    // Exclude the share button container from the capture
+                    return node.id !== 'share-button-container';
                 }
             });
 
@@ -229,7 +233,7 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({ status, user, dr
                     )}
 
                     {/* Footer / Hint (Only shown when not capturing) */}
-                    <div className="mt-8 pt-4 border-t border-white/5 w-full text-center z-10" data-html2canvas-ignore>
+                    <div id="share-button-container" className="mt-8 pt-4 border-t border-white/5 w-full text-center z-10">
                         <button
                             onClick={handleShare}
                             disabled={isSharing}
