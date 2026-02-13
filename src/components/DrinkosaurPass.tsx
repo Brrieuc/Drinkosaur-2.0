@@ -1,7 +1,8 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { UserProfile, Drink, WonAward, PassStat, PassStatType, DrinkosaurPassConfig } from '../types';
-import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid } from 'lucide-react';
+import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2 } from 'lucide-react';
+import { toPng } from 'html-to-image';
 
 interface DrinkosaurPassProps {
     user: UserProfile;
@@ -29,6 +30,8 @@ const BG_COLORS = [
 
 export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards, drinks, onSave, onClose, language }) => {
     const [isEditing, setIsEditing] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const passRef = useRef<HTMLDivElement>(null);
 
     // Local Config State
     const [config, setConfig] = useState<DrinkosaurPassConfig>(user.drinkosaurPassConfig || {
@@ -156,17 +159,59 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
         setIsEditing(false);
     };
 
+    const handleExport = async () => {
+        if (!passRef.current) return;
+        setIsExporting(true);
+        try {
+            // Small delay to ensure render
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            const dataUrl = await toPng(passRef.current, { cacheBust: true, pixelRatio: 3 });
+
+            // Try Web Share API first
+            if (navigator.share) {
+                const blob = await (await fetch(dataUrl)).blob();
+                const file = new File([blob], 'drinkosaur-pass.png', { type: 'image/png' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'My Drinkosaur Pass',
+                        text: 'Check out my stats on Drinkosaur 🦖'
+                    });
+                    setIsExporting(false);
+                    return;
+                }
+            }
+
+            // Fallback to download
+            const link = document.createElement('a');
+            link.download = `drinkosaur-pass-${user.username || 'user'}.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (err) {
+            console.error('Export failed:', err);
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
             <div className="bg-[#050505] w-full max-w-md rounded-[32px] overflow-hidden flex flex-col max-h-[90vh] border border-white/10 shadow-2xl relative">
 
                 {/* Header Controls */}
                 <div className="absolute top-4 right-4 z-20 flex gap-2">
-                    {!isEditing ? (
-                        <button onClick={() => setIsEditing(true)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
-                            <Edit2 size={20} />
-                        </button>
-                    ) : (
+                    {!isEditing && (
+                        <>
+                            <button onClick={handleExport} disabled={isExporting} className="p-2 bg-emerald-500 hover:bg-emerald-400 rounded-full text-white transition-colors shadow-lg active:scale-95 disabled:opacity-50">
+                                {isExporting ? <Loader2 size={20} className="animate-spin" /> : <Share2 size={20} />}
+                            </button>
+                            <button onClick={() => setIsEditing(true)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
+                                <Edit2 size={20} />
+                            </button>
+                        </>
+                    )}
+                    {isEditing && (
                         <button onClick={handleSaveConfig} className="p-2 bg-blue-600 hover:bg-blue-500 rounded-full text-white transition-colors">
                             <Save size={20} />
                         </button>
@@ -178,7 +223,7 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
 
 
                 {/* --- DISPLAY MODE --- */}
-                <div className="flex-1 overflow-y-auto no-scrollbar relative p-6 flex flex-col gap-6" style={{ background: config.backgroundColor }}>
+                <div ref={passRef} className="flex-1 overflow-y-auto no-scrollbar relative p-6 flex flex-col gap-6" style={{ background: config.backgroundColor }}>
 
                     {/* Title */}
                     <div className="text-center mt-4">
