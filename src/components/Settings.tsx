@@ -483,7 +483,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
           <span className="text-xs text-white/50">{t.stayConnected}</span>
           <button
             onClick={() => handleToggleStayConnected(!stayConnected)}
-            className={`w-10 h-5 rounded-full transition-colors relative ${stayConnected ? 'bg-blue-500' : 'bg-white/10'}`}
+            className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${stayConnected ? 'bg-blue-500' : 'bg-white/10'}`}
           >
             <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${stayConnected ? 'left-6' : 'left-1'}`} />
           </button>
@@ -624,7 +624,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                   setPhotoVisibleToFriends(newVal);
                   onSave({ photoVisibleToFriends: newVal });
                 }}
-                className={`w-12 h-6 rounded-full transition-colors relative ${photoVisibleToFriends ? 'bg-emerald-500' : 'bg-white/10'}`}
+                className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${photoVisibleToFriends ? 'bg-emerald-500' : 'bg-white/10'}`}
               >
                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${photoVisibleToFriends ? 'left-7' : 'left-1'}`} />
               </button>
@@ -655,8 +655,8 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                       onSave({ leaderboardVisibility: opt.value });
                     }}
                     className={`p-3 rounded-2xl border text-left transition-all ${leaderboardVisibility === opt.value
-                        ? 'bg-purple-500/15 border-purple-500/40 shadow-lg shadow-purple-500/10'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                      ? 'bg-purple-500/15 border-purple-500/40 shadow-lg shadow-purple-500/10'
+                      : 'bg-white/5 border-white/10 hover:bg-white/10'
                       }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
@@ -692,7 +692,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                   setBadgesPublic(newVal);
                   onSave({ badgesPublic: newVal });
                 }}
-                className={`w-12 h-6 rounded-full transition-colors relative ${badgesPublic ? 'bg-emerald-500' : 'bg-white/10'}`}
+                className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${badgesPublic ? 'bg-emerald-500' : 'bg-white/10'}`}
               >
                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${badgesPublic ? 'left-7' : 'left-1'}`} />
               </button>
@@ -722,8 +722,8 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                       onSave({ groupListVisibility: opt.value });
                     }}
                     className={`flex-1 p-3 rounded-2xl border text-center transition-all ${groupListVisibility === opt.value
-                        ? 'bg-blue-500/15 border-blue-500/40 shadow-lg shadow-blue-500/10'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                      ? 'bg-blue-500/15 border-blue-500/40 shadow-lg shadow-blue-500/10'
+                      : 'bg-white/5 border-white/10 hover:bg-white/10'
                       }`}
                   >
                     <div className="flex items-center justify-center gap-1.5 mb-0.5">
@@ -792,7 +792,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
         <h2 className="text-2xl font-black tracking-tight">{t.settingsTitle}</h2>
       </div>
 
-      <div className="glass-panel-3d p-8 rounded-[40px] space-y-8 mb-8 border-t-white/30">
+      <div className="glass-panel-3d p-4 md:p-8 rounded-[40px] space-y-8 mb-8 border-t-white/30">
         <div className="space-y-6">
           <div className="space-y-5">
             <div className="space-y-2">
@@ -806,7 +806,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="pseudo"
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl pl-10 pr-5 py-4 text-md font-bold text-white focus:border-blue-500/50 outline-none transition-all shadow-inner"
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl pl-10 pr-5 py-4 text-base font-bold text-white focus:border-blue-500/50 outline-none transition-all shadow-inner min-w-0"
                 />
               </div>
             </div>
@@ -822,7 +822,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 max={new Date().toISOString().split('T')[0]}
-                className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-md font-bold text-white focus:border-blue-500/50 outline-none transition-all shadow-inner [color-scheme:dark]"
+                className="w-full bg-black/40 border border-white/10 rounded-2xl px-4 py-4 text-base font-bold text-white focus:border-blue-500/50 outline-none transition-all shadow-inner [color-scheme:dark] min-w-0"
               />
               {birthDate && getAge(birthDate) < 18 && (
                 <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 mt-2">
