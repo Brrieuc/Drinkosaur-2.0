@@ -84,27 +84,31 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
     }, [friendIds]);
 
     // 2b. Auto-fetch missing details (drinks/profile) for accurate calculation
+    // 2b. Auto-fetch missing details (drinks/profile) for accurate calculation
     useEffect(() => {
-        const missingDataUids = rawFriends
-            .filter(f => (!f.drinks || f.drinks.length === 0) && !detailsCache[f.uid])
-            .map(f => f.uid);
+        if (rawFriends.length === 0) return;
 
-        if (missingDataUids.length === 0) return;
+        // Fetch details for ALL friends not in cache yet
+        const uidsToFetch = rawFriends
+            .map(f => f.uid)
+            .filter(uid => !detailsCache[uid]);
+
+        if (uidsToFetch.length === 0) return;
 
         const fetchDetails = async () => {
             const updates: Record<string, Partial<FriendStatus>> = {};
 
-            await Promise.all(missingDataUids.map(async (uid) => {
+            await Promise.all(uidsToFetch.map(async (uid) => {
                 try {
                     // Start fetching drinks immediately to fill gaps
                     const [profileSnap, drinksSnap] = await Promise.all([
-                        getDocs(query(collection(db, "users"), where("__name__", "==", uid))),
-                        getDocs(query(collection(db, "drinks"), where("__name__", "==", uid)))
+                        getDoc(doc(db, "users", uid)),
+                        getDoc(doc(db, "drinks", uid))
                     ]);
 
-                    if (!profileSnap.empty) {
-                        const p = profileSnap.docs[0].data() as UserProfile;
-                        const d = drinksSnap.empty ? [] : (drinksSnap.docs[0].data()?.list || []) as Drink[];
+                    if (profileSnap.exists()) {
+                        const p = profileSnap.data() as UserProfile;
+                        const d = drinksSnap.exists() ? (drinksSnap.data()?.list || []) as Drink[] : [];
 
                         updates[uid] = {
                             drinks: d,
