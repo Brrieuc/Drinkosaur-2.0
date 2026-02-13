@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://drinkosaur.web.app/sitemap.xml
+Sitemap: https://mydrinkosaur.web.app/sitemap.xml
