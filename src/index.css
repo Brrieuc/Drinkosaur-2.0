@@ -334,3 +334,58 @@ h3 {
   mix-blend-mode: screen;
   animation: fire-flicker 0.1s infinite alternate;
 }
+/* Electric Effect */
+@keyframes lightning-flash {
+  0%, 90% { opacity: 0; }
+  92% { opacity: 1; transform: scale(1.1); }
+  94% { opacity: 0; }
+  96% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0; }
+}
+
+.electric-bolt {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140%;
+  height: 140%;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(139, 92, 246, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.6), inset 0 0 15px rgba(139, 92, 246, 0.6);
+  opacity: 0;
+  animation: lightning-flash 3s infinite;
+  pointer-events: none;
+  z-index: 30;
+}
+
+/* Glitch Effect */
+@keyframes glitch-skew {
+  0% { transform: skew(0deg); }
+  20% { transform: skew(-2deg); }
+  40% { transform: skew(2deg); }
+  60% { transform: skew(-1deg); }
+  80% { transform: skew(1deg); }
+  100% { transform: skew(0deg); }
+}
+
+@keyframes glitch-clip {
+  0% { clip-path: inset(40% 0 61% 0); transform: translate(-2px, 2px); }
+  20% { clip-path: inset(92% 0 1% 0); transform: translate(2px, -2px); }
+  40% { clip-path: inset(43% 0 1% 0); transform: translate(2px, 2px); }
+  60% { clip-path: inset(25% 0 58% 0); transform: translate(-2px, 2px); }
+  80% { clip-path: inset(54% 0 7% 0); transform: translate(2px, -2px); }
+  100% { clip-path: inset(58% 0 43% 0); transform: translate(-2px, 2px); }
+}
+
+.glitch-layer {
+  position: absolute;
+  inset: -4px;
+  background: inherit;
+  filter: hue-rotate(90deg) saturate(200%);
+  mix-blend-mode: hard-light;
+  opacity: 0.8;
+  animation: glitch-clip 2s infinite linear alternate-reverse;
+  pointer-events: none;
+  z-index: 25;
+}

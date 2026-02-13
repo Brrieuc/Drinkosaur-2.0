@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { UserProfile, Drink, WonAward, PassStat, PassStatType, DrinkosaurPassConfig } from '../types';
-import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2 } from 'lucide-react';
+import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2, Zap, Monitor } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { AWARD_DEFINITIONS } from '../constants/awards';
 import { AWARD_IMAGES } from '../constants/awardsImages';
@@ -72,6 +72,32 @@ const FireEffect: React.FC = () => (
                 <feComposite in="SourceGraphic" in2="fire" operator="atop" />
             </filter>
         </svg>
+    </div>
+);
+
+const ElectricEffect: React.FC = () => (
+    <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
+        <div className="absolute inset-[-10px] rounded-full border-2 border-blue-400 opacity-60 animate-pulse shadow-[0_0_20px_#60a5fa]" />
+        <div className="absolute inset-[-4px] rounded-full border border-white opacity-40 animate-ping" />
+        {[...Array(3)].map((_, i) => (
+            <div
+                key={i}
+                className="absolute inset-[-20%] border-2 border-transparent border-t-blue-500 rounded-full animate-spin"
+                style={{ animationDuration: `${1 + i * 0.5}s`, opacity: 0.3 + i * 0.2 }}
+            />
+        ))}
+        {/* Lightning flashes */}
+        <div className="electric-bolt border-l-2 border-blue-300 transform rotate-45" style={{ animationDelay: '0.2s' }} />
+        <div className="electric-bolt border-r-2 border-purple-400 transform -rotate-12" style={{ animationDelay: '1.5s' }} />
+    </div>
+);
+
+const GlitchEffect: React.FC = () => (
+    <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-full">
+        <div className="glitch-layer bg-red-500/30" style={{ transform: 'translate(-2px, 0)' }}></div>
+        <div className="glitch-layer bg-blue-500/30" style={{ transform: 'translate(2px, 0)', animationDirection: 'reverse' }}></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-green-500/20 to-purple-500/20 mix-blend-overlay animate-pulse"></div>
+        <div className="absolute inset-0 border-2 border-green-400/50 rounded-full" />
     </div>
 );
 
@@ -352,13 +378,15 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
 
                     {/* Profile Photo */}
                     <div className="flex justify-center">
-                        <div className="w-40 h-40 rounded-full border-8 border-white/10 shadow-2xl overflow-visible relative bg-black/20">
+                        <div className="w-40 h-40 rounded-full border-8 border-white/10 shadow-2xl overflow-visible relative bg-black/20 group">
                             {config.profileEffect === 'fire' && <FireEffect />}
-                            <div className="w-full h-full rounded-full overflow-hidden relative z-20">
+                            {config.profileEffect === 'electric' && <ElectricEffect />}
+                            {config.profileEffect === 'glitch' && <GlitchEffect />}
+                            <div className={`w-full h-full rounded-full overflow-hidden relative z-20 ${config.profileEffect === 'glitch' ? 'animate-shake' : ''}`}>
                                 <img
                                     src={blobUrl || getSecureImgUrl(user.customPhotoURL || user.photoURL)}
                                     alt="Profile"
-                                    className="w-full h-full object-cover"
+                                    className={`w-full h-full object-cover ${config.profileEffect === 'glitch' ? 'brightness-125 contrast-125' : ''}`}
                                     // Only add CORS attributes if we successfully loaded a blob.
                                     // If falling back to remote URL, avoid crossOrigin to prevent broken image icon (display priority).
                                     {...((blobUrl?.startsWith('blob:') || blobUrl?.startsWith('data:')) ? { crossOrigin: "anonymous" } : {})}
@@ -520,18 +548,30 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                 <Flame size={16} className="text-orange-400" />
                                 <span className="text-xs font-bold text-white/60 uppercase tracking-widest">Effets Photo</span>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
                                 <button
                                     onClick={() => setConfig({ ...config, profileEffect: 'none' })}
-                                    className={`px-4 py-2 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all ${!config.profileEffect || config.profileEffect === 'none' ? 'bg-white/20 border-white text-white' : 'bg-white/5 border-white/10 text-white/40'}`}
+                                    className={`px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all ${!config.profileEffect || config.profileEffect === 'none' ? 'bg-white/20 border-white text-white' : 'bg-white/5 border-white/10 text-white/40'}`}
                                 >
                                     Aucun
                                 </button>
                                 <button
                                     onClick={() => setConfig({ ...config, profileEffect: 'fire' })}
-                                    className={`px-4 py-2 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${config.profileEffect === 'fire' ? 'bg-orange-600/20 border-orange-500 text-orange-400 shadow-[0_0_15px_rgba(234,88,12,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
+                                    className={`px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${config.profileEffect === 'fire' ? 'bg-orange-600/20 border-orange-500 text-orange-400 shadow-[0_0_15px_rgba(234,88,12,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
                                 >
-                                    <Flame size={14} /> Flammes
+                                    <Flame size={12} /> Feu
+                                </button>
+                                <button
+                                    onClick={() => setConfig({ ...config, profileEffect: 'electric' })}
+                                    className={`px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${config.profileEffect === 'electric' ? 'bg-blue-600/20 border-blue-500 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
+                                >
+                                    <Zap size={12} /> Électrique
+                                </button>
+                                <button
+                                    onClick={() => setConfig({ ...config, profileEffect: 'glitch' })}
+                                    className={`px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${config.profileEffect === 'glitch' ? 'bg-green-600/20 border-green-500 text-green-400 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
+                                >
+                                    <Monitor size={12} /> Glitch
                                 </button>
                             </div>
                         </div>
