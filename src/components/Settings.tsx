@@ -811,19 +811,20 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
               </div>
             </div>
 
-            {/* Date of Birth */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-white/60 ml-2 flex items-center gap-2 uppercase tracking-widest text-[10px]">
                 <Calendar size={12} /> {t.birthDate}
               </label>
               <p className="text-[10px] text-white/30 ml-2 font-medium">{t.birthDateDesc}</p>
-              <input
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                max={new Date().toISOString().split('T')[0]}
-                className="w-full bg-black/40 border border-white/10 rounded-2xl px-4 py-4 text-base font-bold text-white focus:border-blue-500/50 outline-none transition-all shadow-inner [color-scheme:dark] min-w-0"
-              />
+              <div className="relative w-full">
+                <input
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl px-4 py-4 text-base font-bold text-white focus:border-blue-500/50 outline-none transition-all shadow-inner [color-scheme:dark] min-w-0 appearance-none"
+                />
+              </div>
               {birthDate && getAge(birthDate) < 18 && (
                 <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 mt-2">
                   <p className="text-red-300 text-sm font-bold flex items-center gap-2">
