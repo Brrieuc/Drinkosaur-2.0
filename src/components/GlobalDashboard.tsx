@@ -252,7 +252,7 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                                                     <Lock size={16} className="text-white/20" />
                                                 </div>
                                             ) : user.photoURL ? (
-                                                <img src={user.photoURL} alt="" className="w-10 h-10 rounded-xl object-cover border-2 border-white/10" />
+                                                <img src={user.photoURL} alt="" loading="lazy" className="w-10 h-10 rounded-xl object-cover border-2 border-white/10" />
                                             ) : (
                                                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white/40 text-sm font-black border border-white/10">
                                                     {user.username.charAt(0).toUpperCase()}
@@ -395,7 +395,7 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                                             <Lock size={14} className="text-white/20" />
                                         </div>
                                     ) : user.photoURL ? (
-                                        <img src={user.photoURL} alt="" className="w-9 h-9 rounded-xl object-cover border border-white/10 shrink-0" />
+                                        <img src={user.photoURL} alt="" loading="lazy" className="w-9 h-9 rounded-xl object-cover border border-white/10 shrink-0" />
                                     ) : (
                                         <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white/40 text-xs font-black border border-white/10 shrink-0">
                                             {user.username.charAt(0).toUpperCase()}

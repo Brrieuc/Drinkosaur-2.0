@@ -151,7 +151,7 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                         <div className="relative mb-4">
                             <div className="absolute inset-0 rounded-full blur-xl opacity-30 animate-pulse" style={{ backgroundColor: fullStatus.color }} />
                             {friend.photoURL ? (
-                                <img src={friend.photoURL} alt={friend.displayName} className="w-20 h-20 rounded-full border-4 relative z-10 shadow-2xl object-cover" style={{ borderColor: fullStatus.color }} />
+                                <img src={friend.photoURL} alt={friend.displayName} loading="lazy" className="w-20 h-20 rounded-full border-4 relative z-10 shadow-2xl object-cover" style={{ borderColor: fullStatus.color }} />
                             ) : (
                                 <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center text-3xl font-bold relative z-10 border-4" style={{ borderColor: fullStatus.color }}>
                                     {friend.displayName[0]}

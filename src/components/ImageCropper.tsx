@@ -48,16 +48,16 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({ image, onCropComplet
                 croppedAreaPixels.height
             );
 
-            // Resize to a standard profile size to save space/bandwidth
+            // Resize to 256x256 (smaller for faster loading)
             const outputCanvas = document.createElement('canvas');
-            outputCanvas.width = 320;
-            outputCanvas.height = 320;
+            outputCanvas.width = 256;
+            outputCanvas.height = 256;
             const outCtx = outputCanvas.getContext('2d');
             if (outCtx) {
-                outCtx.drawImage(canvas, 0, 0, 320, 320);
+                outCtx.drawImage(canvas, 0, 0, 256, 256);
             }
 
-            const base64Image = outputCanvas.toDataURL('image/jpeg', 0.6);
+            const base64Image = outputCanvas.toDataURL('image/jpeg', 0.5);
 
             onCropComplete(base64Image);
         } catch (e) {

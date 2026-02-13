@@ -573,7 +573,7 @@ export const Social: React.FC<SocialProps> = (props) => {
                                             </div>
                                             <div className="relative">
                                                 <div className="absolute inset-0 rounded-full animate-pulse opacity-20" style={{ backgroundColor: player.color }} />
-                                                <img src={player.photoURL || 'https://via.placeholder.com/150'} className="w-12 h-12 rounded-full border-2 relative z-10 shadow-lg object-cover" style={{ borderColor: player.color }} />
+                                                <img src={player.photoURL || 'https://via.placeholder.com/150'} loading="lazy" className="w-12 h-12 rounded-full border-2 relative z-10 shadow-lg object-cover" style={{ borderColor: player.color }} />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <h3 className={`font-bold truncate text-left ${isMe ? 'text-blue-400' : 'text-white'}`}>
@@ -777,7 +777,7 @@ export const Social: React.FC<SocialProps> = (props) => {
                                                     <div className="w-8 flex justify-center items-center font-black text-lg italic text-white/20">{rank === 1 ? <Medal size={24} className="text-amber-400" /> : rank === 2 ? <Medal size={24} className="text-slate-300" /> : rank === 3 ? <Medal size={24} className="text-amber-700" /> : rank}</div>
                                                     <div className="relative">
                                                         <div className="absolute inset-0 rounded-full animate-pulse opacity-20" style={{ backgroundColor: player.color }} />
-                                                        <img src={player.photoURL || 'https://via.placeholder.com/150'} className="w-12 h-12 rounded-full border-2 relative z-10 shadow-lg object-cover" style={{ borderColor: player.color }} />
+                                                        <img src={player.photoURL || 'https://via.placeholder.com/150'} loading="lazy" className="w-12 h-12 rounded-full border-2 relative z-10 shadow-lg object-cover" style={{ borderColor: player.color }} />
                                                     </div>
                                                     <div className="flex-1 min-w-0 text-left">
                                                         <h3 className="font-bold truncate text-white italic">@{player.displayName}</h3>
