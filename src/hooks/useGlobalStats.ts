@@ -154,10 +154,14 @@ export const useGlobalStats = () => {
                 const isFoF = friendsOfFriends.has(uid);
                 const showIdentity = canSeeIdentity(visibility, isFriend, isFoF, isMe);
 
+                const displayPhoto = showIdentity && profile.photoVisibleToFriends !== false
+                    ? (profile.customPhotoURL || profile.photoURL || '')
+                    : '';
+
                 liveUsers.push({
                     uid,
                     username: showIdentity ? (profile.username || profile.displayName || 'Anon') : '???',
-                    photoURL: showIdentity ? (profile.customPhotoURL || profile.photoURL || '') : '',
+                    photoURL: displayPhoto,
                     currentBac: bac.currentBac,
                     statusMessage: bac.statusMessage,
                     color: bac.color,
@@ -301,11 +305,14 @@ export const useGlobalStats = () => {
                 const isFriend = myFriends.has(uid);
                 const isFoF = friendsOfFriends.has(uid);
                 const showIdentity = canSeeIdentity(visibility, isFriend, isFoF, isMe);
+                const displayPhoto = showIdentity && p?.photoVisibleToFriends !== false
+                    ? (p?.customPhotoURL || p?.photoURL || '')
+                    : '';
 
                 return {
                     uid,
                     username: showIdentity ? (p?.username || p?.displayName || 'Anon') : '???',
-                    photoURL: showIdentity ? (p?.customPhotoURL || p?.photoURL || '') : '',
+                    photoURL: displayPhoto,
                     count,
                     isFriend,
                     isMe,
