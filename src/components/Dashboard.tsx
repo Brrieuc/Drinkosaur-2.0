@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { BacStatus, Drink, UserProfile, FriendGroup } from '../types';
-import { Clock, Zap, AlertTriangle, TrendingUp, BarChart3, Inbox } from 'lucide-react';
+import { Clock, Zap, AlertTriangle, TrendingUp, BarChart3, Inbox, Share } from 'lucide-react';
 import { BacChartModal } from './BacChartModal';
 import { StatsModal } from './StatsModal';
 import { NotificationsModal } from './NotificationsModal';
+import { ShareCardModal } from './ShareCardModal';
 import { FriendRequest } from '../hooks/useSocial';
 import { AwardNotification } from '../hooks/useAwardNotifications';
 import { ComputedAward } from '../constants/awards';
@@ -53,6 +54,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showChartModal, setShowChartModal] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const isFrench = language === 'fr';
 
   const notificationCount = incomingRequests.length + groupInvites.length + unreadAwardCount;
@@ -65,7 +67,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     drivingWarning: 'Ne prenez pas le volant',
     peak: isFrench ? 'Pic' : 'Peak',
     at: isFrench ? 'à' : '@',
-    stats: isFrench ? 'Stats' : 'Stats'
+    stats: isFrench ? 'Stats' : 'Stats',
+    share: isFrench ? 'Partager' : 'Share'
   };
 
   // Gyroscope pour mouvement du liquide
@@ -149,6 +152,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Stats Modal */}
       {showStats && user && (
         <StatsModal drinks={drinks} user={user} onClose={() => setShowStats(false)} />
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && user && (
+        <ShareCardModal status={status} user={user} drinks={drinks} onClose={() => setShowShareModal(false)} />
       )}
 
       {/* Notifications Modal */}
@@ -353,6 +361,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="text-[10px] text-pink-200/60 uppercase tracking-wider font-semibold">{t.limitLoad}</div>
           </div>
         </div>
+
+        {/* Share Button (New) */}
+        <button
+          onClick={() => setShowShareModal(true)}
+          className="mt-6 flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-full border border-white/5 transition-colors group active:scale-95"
+        >
+          <Share size={12} className="text-white/40 group-hover:text-white transition-colors" />
+          <span className="text-[10px] font-bold text-white/40 group-hover:text-white uppercase tracking-widest transition-colors">
+            {t.share}
+          </span>
+        </button>
       </div>
     </div>
   );
