@@ -127,6 +127,51 @@ const NeonEffect: React.FC = () => (
     </div>
 );
 
+const BeerFoamEffect: React.FC = () => (
+    <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
+        {/* Main Foam Cap - Overflowing Top */}
+        <div className="absolute -top-[15%] left-[5%] right-[5%] h-[40%] bg-gradient-to-b from-white via-white to-transparent rounded-[50%_50%_40%_40%] opacity-90 blur-[2px] animate-pulse"></div>
+
+        {/* Drips */}
+        {[...Array(5)].map((_, i) => (
+            <div
+                key={`drip-${i}`}
+                className="absolute top-[-10%] bg-white/90 rounded-b-full shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
+                style={{
+                    left: `${15 + i * 18}%`,
+                    width: `${Math.random() * 12 + 10}px`,
+                    height: `${Math.random() * 40 + 20}px`, // Varied initial height
+                    animation: `foam-flow ${3 + Math.random() * 3}s linear infinite`,
+                    animationDelay: `${Math.random() * 2}s`
+                }}
+            >
+                {/* Bubble texture inside drip */}
+                <div className="w-full h-full rounded-b-full bg-[radial-gradient(circle_at_30%_30%,_white_20%,_#f3f4f6_100%)] opacity-80"></div>
+            </div>
+        ))}
+
+        {/* Floating Bubbles */}
+        {[...Array(15)].map((_, i) => (
+            <div
+                key={`bubble-${i}`}
+                className="foam-bubble"
+                style={{
+                    left: `${Math.random() * 90 + 5}%`,
+                    top: `${Math.random() * 20 - 10}%`,
+                    width: `${Math.random() * 8 + 4}px`,
+                    height: `${Math.random() * 8 + 4}px`,
+                    animationDuration: `${1.5 + Math.random()}s`,
+                    animationDelay: `${Math.random() * 2}s`
+                }}
+            />
+        ))}
+
+        {/* Specular Highlights for Wet Look */}
+        <div className="absolute top-[5%] right-[20%] w-3 h-3 bg-white rounded-full blur-[1px] opacity-80 hook-shadow"></div>
+        <div className="absolute top-[8%] left-[25%] w-2 h-2 bg-white rounded-full blur-[1px] opacity-60"></div>
+    </div>
+);
+
 export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards, drinks, onSave, onClose, language, isReadOnly }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
@@ -411,6 +456,7 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                             {config.profileEffect === 'glitch' && <GlitchEffect />}
                             {config.profileEffect === 'liquid' && <LiquidEffect />}
                             {config.profileEffect === 'neon' && <NeonEffect />}
+                            {config.profileEffect === 'foam' && <BeerFoamEffect />}
 
                             <div className={`w-full h-full rounded-full overflow-hidden relative z-20 ${config.profileEffect === 'glitch' ? 'glitch-container' : ''}`}>
                                 <img
@@ -614,6 +660,12 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                     className={`px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${config.profileEffect === 'neon' ? 'bg-fuchsia-600/20 border-fuchsia-500 text-fuchsia-400 shadow-[0_0_15px_rgba(217,70,239,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
                                 >
                                     <Lightbulb size={12} /> Néon
+                                </button>
+                                <button
+                                    onClick={() => setConfig({ ...config, profileEffect: 'foam' })}
+                                    className={`px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${config.profileEffect === 'foam' ? 'bg-yellow-600/20 border-yellow-500 text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
+                                >
+                                    <Beer size={12} /> Mousse
                                 </button>
                             </div>
                         </div>
