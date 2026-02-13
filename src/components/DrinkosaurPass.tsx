@@ -33,41 +33,31 @@ const BG_COLORS = [
 
 const FireEffect: React.FC = () => (
     <div className="absolute inset-0 z-10 pointer-events-none overflow-visible">
-        <div className="fire-container">
-            <div className="fire-core" />
-            {[...Array(12)].map((_, i) => (
+        {/* Heat Haze / Glow */}
+        <div className="absolute inset-[-15%] bg-gradient-to-t from-orange-500/20 to-transparent blur-xl rounded-full animate-pulse"></div>
+        <div className="absolute inset-0 fire-core opacity-80 mix-blend-screen" />
+
+        {/* 3D Rising Particles */}
+        <div className="absolute inset-0 overflow-visible">
+            {[...Array(15)].map((_, i) => (
                 <div
-                    key={`bg-${i}`}
-                    className="fire-particle"
+                    key={`fire-3d-${i}`}
+                    className="fire-particle-3d"
                     style={{
                         left: `${Math.random() * 80 + 10}%`,
-                        animationDelay: `${Math.random() * 1}s`,
-                        animationDuration: `${0.5 + Math.random() * 0.8}s`,
-                        zIndex: 5
+                        bottom: '-10%',
+                        width: `${Math.random() * 20 + 20}px`,
+                        height: `${Math.random() * 20 + 20}px`,
+                        animationDelay: `${Math.random() * 2}s`,
+                        animationDuration: `${1.5 + Math.random()}s`
                     }}
                 />
             ))}
         </div>
-        {/* Foreground particles */}
-        <div className="absolute inset-0 z-[30] pointer-events-none">
-            {[...Array(6)].map((_, i) => (
-                <div
-                    key={`fg-${i}`}
-                    className="fire-particle"
-                    style={{
-                        left: `${Math.random() * 60 + 20}%`,
-                        animationDelay: `${Math.random() * 1.5}s`,
-                        animationDuration: `${0.8 + Math.random() * 0.5}s`,
-                        opacity: 0.6,
-                        width: '12px',
-                        height: '12px'
-                    }}
-                />
-            ))}
-        </div>
+
         <svg style={{ position: 'absolute', width: 0, height: 0 }}>
             <filter id="fire-filter">
-                <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+                <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
                 <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="fire" />
                 <feComposite in="SourceGraphic" in2="fire" operator="atop" />
             </filter>
@@ -77,47 +67,51 @@ const FireEffect: React.FC = () => (
 
 const ElectricEffect: React.FC = () => (
     <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
-        <div className="absolute inset-[-10px] rounded-full border-2 border-blue-400 opacity-60 animate-pulse shadow-[0_0_20px_#60a5fa]" />
-        <div className="absolute inset-[-4px] rounded-full border border-white opacity-40 animate-ping" />
-        {[...Array(3)].map((_, i) => (
-            <div
-                key={i}
-                className="absolute inset-[-20%] border-2 border-transparent border-t-blue-500 rounded-full animate-spin"
-                style={{ animationDuration: `${1 + i * 0.5}s`, opacity: 0.3 + i * 0.2 }}
-            />
-        ))}
+        {/* Intense Bloom */}
+        <div className="absolute inset-[-5%] rounded-full shadow-[0_0_30px_#3b82f6] opacity-60 animate-pulse"></div>
+        <div className="absolute inset-[-2%] rounded-full border-2 border-white/50 blur-[1px] animate-ping" />
+
+        {/* Plasma Core */}
+        <div className="electric-arc" />
+        <div className="electric-arc" style={{ animationDirection: 'reverse', animationDuration: '3s', borderColor: '#a855f7' }} />
+
         {/* Lightning flashes */}
-        <div className="electric-bolt border-l-2 border-blue-300 transform rotate-45" style={{ animationDelay: '0.2s' }} />
-        <div className="electric-bolt border-r-2 border-purple-400 transform -rotate-12" style={{ animationDelay: '1.5s' }} />
+        <div className="electric-bolt border-l-2 border-cyan-300 transform rotate-45" style={{ animationDelay: '0.2s', filter: 'drop-shadow(0 0 5px cyan)' }} />
+        <div className="electric-bolt border-r-2 border-white transform -rotate-12" style={{ animationDelay: '1.5s', filter: 'drop-shadow(0 0 8px white)' }} />
+        <div className="electric-bolt border-t-2 border-purple-400 transform rotate-90" style={{ animationDelay: '2.3s', filter: 'drop-shadow(0 0 5px purple)' }} />
     </div>
 );
 
 const GlitchEffect: React.FC = () => (
-    <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-full">
-        <div className="glitch-layer bg-red-500/30" style={{ transform: 'translate(-2px, 0)' }}></div>
-        <div className="glitch-layer bg-blue-500/30" style={{ transform: 'translate(2px, 0)', animationDirection: 'reverse' }}></div>
+    <div className="absolute inset-0 z-50 pointer-events-none rounded-full glitch-container">
+        <div className="glitch-layer bg-red-500/30" style={{ transform: 'translate(-2px, 0)', animation: 'glitch-rgb-shift 2.5s infinite steps(2, start) reverse' }}></div>
+        <div className="glitch-layer bg-blue-500/30" style={{ transform: 'translate(2px, 0)', animation: 'glitch-rgb-shift 2s infinite steps(2, start)' }}></div>
         <div className="absolute inset-0 bg-gradient-to-tr from-green-500/20 to-purple-500/20 mix-blend-overlay animate-pulse"></div>
-        <div className="absolute inset-0 border-2 border-green-400/50 rounded-full" />
+        <div className="absolute inset-0 border-2 border-green-400/50 rounded-full shadow-[0_0_15px_rgba(74,222,128,0.4)]" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
     </div>
 );
 
 const LiquidEffect: React.FC = () => (
     <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
-        <div className="liquid-wave-ring" style={{ animationDuration: '6s' }} />
-        <div className="liquid-wave-ring" style={{ animationDuration: '10s', animationDirection: 'reverse', width: '120%', height: '120%', opacity: 0.5 }} />
-        <div className="absolute inset-0 rounded-full shadow-[inset_0_0_20px_rgba(56,189,248,0.6)] mix-blend-overlay" />
-        {/* Bubbles */}
-        {[...Array(5)].map((_, i) => (
+        <div className="liquid-wave-ring" style={{ animationDuration: '6s', border: '3px solid rgba(56,189,248,0.6)', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))' }} />
+        <div className="liquid-wave-ring" style={{ animationDuration: '9s', animationDirection: 'reverse', width: '115%', height: '115%', opacity: 0.6, borderColor: 'rgba(14,165,233,0.5)' }} />
+        <div className="absolute inset-0 rounded-full shadow-[inset_0_0_30px_rgba(56,189,248,0.5)] mix-blend-overlay" />
+        <div className="liquid-specular" />
+
+        {/* 3D Bubbles */}
+        {[...Array(8)].map((_, i) => (
             <div
                 key={i}
-                className="absolute bg-white/40 rounded-full animate-float"
+                className="absolute bg-gradient-to-br from-white/80 to-transparent rounded-full animate-float shadow-inner border border-white/20"
                 style={{
-                    width: `${Math.random() * 8 + 4}px`,
-                    height: `${Math.random() * 8 + 4}px`,
+                    width: `${Math.random() * 10 + 4}px`,
+                    height: `${Math.random() * 10 + 4}px`,
                     left: `${Math.random() * 80 + 10}%`,
-                    bottom: '-10%',
-                    animationDuration: `${2 + Math.random() * 3}s`,
-                    animationDelay: `${Math.random() * 2}s`
+                    bottom: '-15%',
+                    animationDuration: `${2 + Math.random() * 4}s`,
+                    animationDelay: `${Math.random() * 2}s`,
+                    backdropFilter: 'blur(1px)'
                 }}
             />
         ))}
@@ -126,8 +120,10 @@ const LiquidEffect: React.FC = () => (
 
 const NeonEffect: React.FC = () => (
     <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
-        <div className="neon-ring" />
-        <div className="absolute inset-[-20%] bg-fuchsia-500/20 blur-xl rounded-full animate-pulse" />
+        <div className="neon-ring" style={{ animation: 'neon-flicker-3d 4s infinite' }} />
+        <div className="absolute inset-[-20%] bg-fuchsia-500/30 blur-2xl rounded-full animate-pulse" />
+        {/* Inner Light Reflection */}
+        <div className="absolute inset-0 rounded-full shadow-[inset_0_0_20px_#d946ef] opacity-50 Mix-blend-overlay"></div>
     </div>
 );
 
@@ -411,14 +407,16 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                         <div className="w-40 h-40 rounded-full border-8 border-white/10 shadow-2xl overflow-visible relative bg-black/20 group">
                             {config.profileEffect === 'fire' && <FireEffect />}
                             {config.profileEffect === 'electric' && <ElectricEffect />}
+                            {/* For Glitch, we render the mask separately, but the effect component handles the layers */}
                             {config.profileEffect === 'glitch' && <GlitchEffect />}
                             {config.profileEffect === 'liquid' && <LiquidEffect />}
                             {config.profileEffect === 'neon' && <NeonEffect />}
-                            <div className={`w-full h-full rounded-full overflow-hidden relative z-20 ${config.profileEffect === 'glitch' ? 'animate-shake' : ''}`}>
+
+                            <div className={`w-full h-full rounded-full overflow-hidden relative z-20 ${config.profileEffect === 'glitch' ? 'glitch-container' : ''}`}>
                                 <img
                                     src={blobUrl || getSecureImgUrl(user.customPhotoURL || user.photoURL)}
                                     alt="Profile"
-                                    className={`w-full h-full object-cover ${config.profileEffect === 'glitch' ? 'brightness-125 contrast-125' : ''}`}
+                                    className={`w-full h-full object-cover ${config.profileEffect === 'glitch' ? 'brightness-125 contrast-125 grayscale-[0.3]' : ''}`}
                                     // Only add CORS attributes if we successfully loaded a blob.
                                     // If falling back to remote URL, avoid crossOrigin to prevent broken image icon (display priority).
                                     {...((blobUrl?.startsWith('blob:') || blobUrl?.startsWith('data:')) ? { crossOrigin: "anonymous" } : {})}
