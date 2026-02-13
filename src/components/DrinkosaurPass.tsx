@@ -3,6 +3,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { UserProfile, Drink, WonAward, PassStat, PassStatType, DrinkosaurPassConfig } from '../types';
 import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2 } from 'lucide-react';
 import { toPng } from 'html-to-image';
+import { AWARD_DEFINITIONS } from '../constants/awards';
 
 interface DrinkosaurPassProps {
     user: UserProfile;
@@ -168,12 +169,14 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
             // 1. Generate PNG with iOS-safe settings
             const dataUrl = await toPng(passRef.current, {
                 cacheBust: true,
-                pixelRatio: 2, // 3 is too high for many iOS devices (memory limit)
+                pixelRatio: 1.5, // Further reduced for iOS stability
                 backgroundColor: config.backgroundColor,
-                quality: 0.95,
+                quality: 0.9,
                 style: {
-                    borderRadius: '0', // Avoid corner artifacts
-                }
+                    borderRadius: '0',
+                },
+                // Ensure all images are loaded
+                skipFonts: true, // Fonts can sometimes block rendering on iOS
             });
 
             // 2. Prepare File for Sharing
@@ -248,7 +251,12 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                     {/* Profile Photo */}
                     <div className="flex justify-center">
                         <div className="w-40 h-40 rounded-full border-8 border-white/10 shadow-2xl overflow-hidden relative bg-black/20">
-                            <img src={user.customPhotoURL || user.photoURL || 'https://via.placeholder.com/150'} alt="Profile" className="w-full h-full object-cover" />
+                            <img
+                                src={user.customPhotoURL || user.photoURL || 'https://via.placeholder.com/150'}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                                crossOrigin="anonymous"
+                            />
                         </div>
                     </div>
 
@@ -281,11 +289,16 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                         </select>
                                     )}
                                     {badge ? (
-                                        <>
-                                            <Trophy size={32} className="text-amber-400 mb-1" />
+                                        <div className="w-full h-full p-2 flex flex-col items-center justify-center">
+                                            <img
+                                                src={AWARD_DEFINITIONS.find(a => a.id === badgeId)?.imageUrl}
+                                                className="w-12 h-12 object-contain drop-shadow-lg mb-1"
+                                                alt="Award"
+                                                crossOrigin="anonymous"
+                                            />
                                             <span className="text-[10px] font-bold text-center leading-tight line-clamp-2 text-white/80">{badge.value}</span>
                                             <span className="text-[8px] text-white/40 mt-0.5 max-w-full truncate">{badge.groupName}</span>
-                                        </>
+                                        </div>
                                     ) : (
                                         <div className="text-white/20 text-xs font-bold uppercase">Empty</div>
                                     )}
