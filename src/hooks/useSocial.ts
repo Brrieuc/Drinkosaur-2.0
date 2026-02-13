@@ -16,7 +16,8 @@ export interface FriendRequest {
 
 export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDrinks: Drink[] = []) => {
     const { user: authUser } = useAuth();
-    const [friends, setFriends] = useState<FriendStatus[]>([]);
+    const [rawFriends, setRawFriends] = useState<FriendStatus[]>([]);
+    const [detailsCache, setDetailsCache] = useState<Record<string, Partial<FriendStatus>>>({});
     const [friendIds, setFriendIds] = useState<string[]>([]);
     const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
     const [loading, setLoading] = useState(true);
@@ -25,7 +26,7 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
     useEffect(() => {
         if (!authUser) {
             setFriendIds([]);
-            setFriends([]);
+            setRawFriends([]);
             setIncomingRequests([]);
             setLoading(false);
             return;
@@ -39,7 +40,6 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
             }
         });
 
-        // 1b. Listen to incoming friend requests
         const requestsQuery = query(
             collection(db, "friend_requests"),
             where("to", "==", authUser.uid)
@@ -61,13 +61,11 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
     // 2. Listen to friends' live status
     useEffect(() => {
         if (friendIds.length === 0) {
-            setFriends([]);
+            setRawFriends([]);
             setLoading(false);
             return;
         }
 
-        // Firestore "in" query limited to 10-30 IDs usually. 
-        // For Drinkosaur, we assume a small number of active friends.
         const statusQuery = query(
             collection(db, "live_status"),
             where("__name__", "in", friendIds)
@@ -78,12 +76,64 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
             querySnapshot.forEach((doc: any) => {
                 statuses.push({ uid: doc.id, ...doc.data() } as FriendStatus);
             });
-            setFriends(statuses.sort((a, b) => b.currentBac - a.currentBac));
+            setRawFriends(statuses);
             setLoading(false);
         });
 
         return () => unsubscribe();
     }, [friendIds]);
+
+    // 2b. Auto-fetch missing details (drinks/profile) for accurate calculation
+    useEffect(() => {
+        const missingDataUids = rawFriends
+            .filter(f => (!f.drinks || f.drinks.length === 0) && !detailsCache[f.uid])
+            .map(f => f.uid);
+
+        if (missingDataUids.length === 0) return;
+
+        const fetchDetails = async () => {
+            const updates: Record<string, Partial<FriendStatus>> = {};
+
+            await Promise.all(missingDataUids.map(async (uid) => {
+                try {
+                    // Start fetching drinks immediately to fill gaps
+                    const [profileSnap, drinksSnap] = await Promise.all([
+                        getDocs(query(collection(db, "users"), where("__name__", "==", uid))),
+                        getDocs(query(collection(db, "drinks"), where("__name__", "==", uid)))
+                    ]);
+
+                    if (!profileSnap.empty) {
+                        const p = profileSnap.docs[0].data() as UserProfile;
+                        const d = drinksSnap.empty ? [] : (drinksSnap.docs[0].data()?.list || []) as Drink[];
+
+                        updates[uid] = {
+                            drinks: d,
+                            weightKg: p.weightKg || 70,
+                            gender: p.gender || 'male',
+                            drinkingSpeed: p.drinkingSpeed || 'average'
+                        };
+                    }
+                } catch (e) {
+                    console.warn(`Failed to fetch details for ${uid}`, e);
+                }
+            }));
+
+            if (Object.keys(updates).length > 0) {
+                setDetailsCache(prev => ({ ...prev, ...updates }));
+            }
+        };
+
+        fetchDetails();
+    }, [rawFriends, detailsCache]);
+
+    // Merge raw live status with cached full details
+    const friends = rawFriends.map(f => {
+        const cached = detailsCache[f.uid];
+        if (cached) {
+            return { ...f, ...cached };
+        }
+        return f;
+    }).sort((a, b) => b.currentBac - a.currentBac);
 
     // 3. Update my own live status
     useEffect(() => {
@@ -222,7 +272,7 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
             querySnapshot.forEach((doc: any) => {
                 statuses.push({ uid: doc.id, ...doc.data() } as FriendStatus);
             });
-            setFriends(statuses.sort((a, b) => b.currentBac - a.currentBac));
+            setRawFriends(statuses.sort((a, b) => b.currentBac - a.currentBac));
         }
         setLoading(false);
     };

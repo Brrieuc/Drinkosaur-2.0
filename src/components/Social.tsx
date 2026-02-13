@@ -119,8 +119,7 @@ export const Social: React.FC<SocialProps> = (props) => {
 
     const [isSoberExpanded, setIsSoberExpanded] = useState(false);
 
-    // Cache local pour améliorer la cohérence Liste <-> Modal
-    const [friendOverrides, setFriendOverrides] = useState<Record<string, Partial<FriendStatus>>>({});
+
 
     // Live update for ranking
     const [tick, setTick] = useState(0);
@@ -241,17 +240,7 @@ export const Social: React.FC<SocialProps> = (props) => {
             let statusMessage = f.statusMessage;
             let color = f.color;
 
-            // 0. Vérifier si on a une version plus récente en cache local (via le modal)
-            const override = friendOverrides[f.uid];
-            if (override && override.lastUpdate && override.lastUpdate > (f.lastUpdate || 0)) {
-                // On utilise les données du modal qui sont "fraiches"
-                // On applique TOUJOURS le recalcul ou le decay sur ces données override aussi
-                if (override.drinks && override.weightKg) {
-                    f = { ...f, ...override, drinks: override.drinks }; // On enrichit f avec les drinks du cache
-                } else {
-                    f = { ...f, ...override };
-                }
-            }
+
 
             // 1. Recalculation complète si on a les données (Précision maximale)
             if (f.drinks && f.drinks.length > 0 && f.weightKg) {
@@ -305,7 +294,7 @@ export const Social: React.FC<SocialProps> = (props) => {
 
         return [...liveFriends, me].sort((a, b) => b.currentBac - a.currentBac);
         return [...liveFriends, me].sort((a, b) => b.currentBac - a.currentBac);
-    }, [friends, myBac, myProfile, t.you, tick, language, friendOverrides]);
+    }, [friends, myBac, myProfile, t.you, tick, language]);
 
     // --- HELPERS ---
     const renderBac = (bac: number) => {
