@@ -293,8 +293,57 @@ export const Social: React.FC<SocialProps> = (props) => {
         };
 
         return [...liveFriends, me].sort((a, b) => b.currentBac - a.currentBac);
-        return [...liveFriends, me].sort((a, b) => b.currentBac - a.currentBac);
     }, [friends, myBac, myProfile, t.you, tick, language]);
+
+    // Same live recalculation logic for GROUP ranking
+    const calculatedGroupRanking = useMemo(() => {
+        return groupRanking.map(member => {
+            // 0. Is it me?
+            if (member.uid === myUid) {
+                return {
+                    ...member,
+                    displayName: myProfile.username || t.you,
+                    currentBac: myBac.currentBac,
+                    statusMessage: myBac.statusMessage,
+                    color: myBac.color,
+                };
+            }
+
+            // 1. Is it a friend with better live data?
+            const friendData = friends.find(f => f.uid === member.uid);
+            let f = friendData ? { ...member, ...friendData } : { ...member };
+
+            let currentBac = f.currentBac;
+            let statusMessage = f.statusMessage;
+            let color = f.color;
+
+            // 2. Recalculation complete
+            if (f.drinks && f.drinks.length > 0 && f.weightKg) {
+                const live = calculateBac(f.drinks, {
+                    weightKg: f.weightKg,
+                    gender: f.gender,
+                    drinkingSpeed: f.drinkingSpeed || 'average',
+                    language: language
+                } as UserProfile);
+                currentBac = live.currentBac;
+                statusMessage = live.statusMessage;
+                color = live.color;
+            }
+            // 3. Decay prudent
+            else if (f.lastUpdate && f.currentBac > 0) {
+                const hoursPassed = (Date.now() - f.lastUpdate) / (1000 * 60 * 60);
+                const safeRate = METABOLISM_RATE * 0.7;
+                const reduction = hoursPassed * safeRate;
+                currentBac = Math.max(0, f.currentBac - reduction);
+
+                if (currentBac === 0) {
+                    statusMessage = language === 'fr' ? 'Sobre' : 'Sober';
+                    color = THEME_COLORS.safe;
+                }
+            }
+            return { ...f, currentBac, statusMessage, color };
+        }).sort((a, b) => b.currentBac - a.currentBac);
+    }, [groupRanking, friends, myBac, myProfile, t, tick, language, myUid]);
 
     // --- HELPERS ---
     const renderBac = (bac: number) => {
@@ -706,7 +755,7 @@ export const Social: React.FC<SocialProps> = (props) => {
                                     <div className="flex justify-center py-20"><Loader2 className="animate-spin text-white/20" size={40} /></div>
                                 ) : (
                                     <div className="space-y-3">
-                                        {groupRanking.map((player, index) => {
+                                        {calculatedGroupRanking.map((player, index) => {
                                             const isMe = player.uid === myUid;
                                             const rank = index + 1;
                                             const isFriend = friends.some(f => f.uid === player.uid);
