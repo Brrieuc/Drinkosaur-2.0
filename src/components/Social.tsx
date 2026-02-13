@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { calculateBac } from '../services/bacService';
 import { FriendStatus, UserProfile, BacStatus, FriendGroup } from '../types';
 import { FriendRequest } from '../hooks/useSocial';
 import { ComputedAward } from '../constants/awards';
@@ -116,6 +117,13 @@ export const Social: React.FC<SocialProps> = (props) => {
     const [showAwardsModal, setShowAwardsModal] = useState(false);
     const [isSoberExpanded, setIsSoberExpanded] = useState(false);
 
+    // Live update for ranking
+    const [tick, setTick] = useState(0);
+    useEffect(() => {
+        const i = setInterval(() => setTick(t => t + 1), 60000);
+        return () => clearInterval(i);
+    }, []);
+
     const t = useMemo(() => ({
         title: language === 'fr' ? 'Social' : 'Social',
         friendsTab: language === 'fr' ? 'Amis' : 'Friends',
@@ -223,6 +231,25 @@ export const Social: React.FC<SocialProps> = (props) => {
 
     // --- LEADERBOARD LOGIC ---
     const ranking = useMemo(() => {
+        const liveFriends = friends.map(f => {
+            // Recalculate friend's status locally for perfect consistency and real-time sobriety
+            if (f.drinks && f.weightKg) {
+                const live = calculateBac(f.drinks, {
+                    weightKg: f.weightKg,
+                    gender: f.gender,
+                    drinkingSpeed: f.drinkingSpeed,
+                    language: language
+                } as UserProfile);
+                return {
+                    ...f,
+                    currentBac: live.currentBac,
+                    statusMessage: live.statusMessage,
+                    color: live.color
+                };
+            }
+            return f;
+        });
+
         const me: FriendStatus = {
             uid: 'me',
             displayName: myProfile.username || t.you,
@@ -230,11 +257,15 @@ export const Social: React.FC<SocialProps> = (props) => {
             currentBac: myBac.currentBac,
             color: myBac.color,
             statusMessage: myBac.statusMessage,
-            lastUpdate: Date.now()
+            lastUpdate: Date.now(),
+            drinks: [], // Local user doesn't need to share with self via this object
+            weightKg: myProfile.weightKg,
+            gender: myProfile.gender,
+            drinkingSpeed: myProfile.drinkingSpeed
         };
 
-        return [...friends, me].sort((a, b) => b.currentBac - a.currentBac);
-    }, [friends, myBac, myProfile, t.you]);
+        return [...liveFriends, me].sort((a, b) => b.currentBac - a.currentBac);
+    }, [friends, myBac, myProfile, t.you, tick, language]);
 
     // --- HELPERS ---
     const renderBac = (bac: number) => {

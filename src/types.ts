@@ -62,6 +62,11 @@ export interface FriendStatus {
   statusMessage: string;
   color: string;
   lastUpdate: number;
+  // Raw data for local recalculation
+  drinks: Drink[];
+  weightKg: number;
+  gender: 'male' | 'female';
+  drinkingSpeed: 'slow' | 'average' | 'fast';
 }
 
 export interface BacStatus {

@@ -59,7 +59,7 @@ const App: React.FC = () => {
     getSuggestions,
     fetchFriendData,
     loading: socialLoading
-  } = useSocial(bacStatus, user as UserProfile);
+  } = useSocial(bacStatus, user as UserProfile, drinks);
 
   const {
     groups,

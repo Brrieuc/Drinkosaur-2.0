@@ -14,7 +14,7 @@ export interface FriendRequest {
     timestamp: number;
 }
 
-export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
+export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDrinks: Drink[] = []) => {
     const { user: authUser } = useAuth();
     const [friends, setFriends] = useState<FriendStatus[]>([]);
     const [friendIds, setFriendIds] = useState<string[]>([]);
@@ -101,7 +101,12 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile) => {
                 currentBac: myBacStatus.currentBac,
                 statusMessage: myBacStatus.statusMessage,
                 color: myBacStatus.color,
-                lastUpdate: Date.now()
+                lastUpdate: Date.now(),
+                // Extra data for live recalculation by friends
+                weightKg: myProfile.weightKg || 70,
+                gender: myProfile.gender || 'male',
+                drinkingSpeed: myProfile.drinkingSpeed || 'average',
+                drinks: myDrinks.filter(d => d.timestamp > Date.now() - 18 * 60 * 60 * 1000)
             }, { merge: true });
         };
 
