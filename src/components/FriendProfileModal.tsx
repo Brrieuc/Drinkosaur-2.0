@@ -39,6 +39,10 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
     const isFrench = language === 'fr';
     const monthNames = isFrench ? MONTH_NAMES_FR : MONTH_NAMES_EN;
 
+    // We rely on fullStatus (calculated locally from fresh drinks data) for everything
+    // to ensure the number matches the liquid height and color.
+    const fullStatus = useMemo(() => calculateBac(friendDrinks, friendProfile), [friendDrinks, friendProfile]);
+
     const t = {
         title: isFrench ? "Profil de l'ami" : "Friend Profile",
         bacLevel: isFrench ? 'Taux Alcool' : 'BAC Level',
@@ -51,17 +55,11 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
         at: isFrench ? 'à' : '@'
     };
 
-    const displayValue = isFrench ? friend.currentBac * 10 : friend.currentBac;
+    const displayValue = isFrench ? fullStatus.currentBac * 10 : fullStatus.currentBac;
     const displayUnit = isFrench ? 'g/L' : '%';
     const displayDecimals = isFrench ? 2 : 3;
 
-    // We don't have the full BacStatus for the friend (soberTime, peak) unless we calculate it.
-    // For simplicity, we can calculate it on the fly or just show the current value.
-    // Given the request asks for "the same bubble", we should ideally show the same info.
-    // We have friendProfile and friendDrinks, so we can use calculateBac.
 
-    // We'll import calculateBac from services
-    const fullStatus = useMemo(() => calculateBac(friendDrinks, friendProfile), [friendDrinks, friendProfile]);
 
     const liquidHeight = Math.min((fullStatus.currentBac / 0.20) * 100, 100);
     // Dynamic gradient based on consumed drinks
