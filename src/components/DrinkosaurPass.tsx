@@ -50,16 +50,23 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
         let isMounted = true;
         (async () => {
             try {
-                // Fetch with CORS mode 'cors'
+                // 1. Try direct fetch with CORS
                 const response = await fetch(url, { mode: 'cors' });
+                if (!response.ok) throw new Error('Direct fetch failed');
                 const blob = await response.blob();
-                if (isMounted) {
-                    const objectUrl = URL.createObjectURL(blob);
-                    setBlobUrl(objectUrl);
-                }
+                if (isMounted) setBlobUrl(URL.createObjectURL(blob));
             } catch (e) {
-                console.warn('Failed to load profile image as blob, falling back to direct URL', e);
-                setBlobUrl(url); // Fallback
+                // 2. Fallback: Try fetching via CORS proxy (wsrv.nl)
+                try {
+                    const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) throw new Error('Proxy fetch failed');
+                    const blob = await response.blob();
+                    if (isMounted) setBlobUrl(URL.createObjectURL(blob));
+                } catch (proxyError) {
+                    console.warn('All profile image loading attempts failed, falling back to direct URL (Export might fail)', proxyError);
+                    if (isMounted) setBlobUrl(url);
+                }
             }
         })();
 
@@ -295,7 +302,9 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                 src={blobUrl || getSecureImgUrl(user.customPhotoURL || user.photoURL)}
                                 alt="Profile"
                                 className="w-full h-full object-cover"
-                                crossOrigin="anonymous"
+                                // Only add CORS attributes if we successfully loaded a blob.
+                                // If falling back to remote URL, avoid crossOrigin to prevent broken image icon (display priority).
+                                {...((blobUrl?.startsWith('blob:') || blobUrl?.startsWith('data:')) ? { crossOrigin: "anonymous" } : {})}
                                 referrerPolicy="no-referrer"
                             />
                         </div>
@@ -330,16 +339,17 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                         </select>
                                     )}
                                     {badge ? (
-                                        <div className="w-full h-full p-1 flex flex-col items-center justify-center">
+                                        <div className="w-full h-full p-0.5 flex flex-col items-center justify-center relative">
                                             <img
                                                 src={AWARD_IMAGES[badgeId] || getSecureImgUrl(AWARD_DEFINITIONS.find(a => a.id === badgeId)?.imageUrl)}
-                                                className="w-16 h-16 object-contain drop-shadow-lg mb-0.5"
+                                                className="w-full h-full object-contain drop-shadow-lg"
                                                 alt="Award"
-                                                // Only add CORS attributes if it's NOT a base64 image (fallback)
                                                 {...(!AWARD_IMAGES[badgeId] ? { crossOrigin: "anonymous", referrerPolicy: "no-referrer" } : {})}
                                             />
-                                            <span className="text-[9px] font-bold text-center leading-tight line-clamp-2 text-white/80">{badge.value}</span>
-                                            <span className="text-[7px] text-white/40 mt-0.5 max-w-full truncate">{badge.groupName}</span>
+                                            <div className="absolute bottom-0 inset-x-0 bg-black/50 backdrop-blur-[2px] rounded-b-xl py-0.5 flex flex-col items-center">
+                                                <span className="text-[9px] font-bold text-center leading-tight line-clamp-1 text-white/90">{badge.value}</span>
+                                                <span className="text-[7px] text-white/60 max-w-full truncate">{badge.groupName}</span>
+                                            </div>
                                         </div>
                                     ) : (
                                         <div className="text-white/20 text-xs font-bold uppercase">Empty</div>
