@@ -215,11 +215,21 @@ export const Social: React.FC<SocialProps> = (props) => {
     }, [friends, myBac, myProfile, t.you]);
 
     // --- HELPERS ---
-    const formatBac = (bac: number) => {
+    const renderBac = (bac: number) => {
         if (language === 'fr') {
-            return `${(bac * 10).toFixed(2)} g/L`;
+            return (
+                <span className="flex items-baseline justify-end">
+                    {(bac * 10).toFixed(2)}
+                    <span className="text-[10px] ml-1 opacity-70 font-sans font-bold">g/L</span>
+                </span>
+            );
         }
-        return `${bac.toFixed(3)}%`;
+        return (
+            <span className="flex items-baseline justify-end">
+                {bac.toFixed(3)}
+                <span className="text-[10px] ml-0.5 opacity-70 font-sans font-bold">%</span>
+            </span>
+        );
     };
 
     // --- PULL TO REFRESH HANDLERS ---
@@ -440,7 +450,7 @@ export const Social: React.FC<SocialProps> = (props) => {
                                                 <p className="text-[10px] text-white/30 truncate uppercase font-black tracking-widest text-left">{player.statusMessage}</p>
                                             </div>
                                             <div className="flex flex-col items-end">
-                                                <div className="text-xl font-black font-mono leading-none tracking-tighter" style={{ color: player.color }}>{formatBac(player.currentBac)}</div>
+                                                <div className="text-xl font-black font-mono leading-none tracking-tighter" style={{ color: player.color }}>{renderBac(player.currentBac)}</div>
                                                 {!isMe && <button onClick={(e) => { e.stopPropagation(); onRemoveFriend(player.uid); }} className="mt-1 p-1 text-white/5 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>}
                                             </div>
                                         </div>
@@ -501,7 +511,7 @@ export const Social: React.FC<SocialProps> = (props) => {
                                                         <h3 className="font-bold truncate text-white italic">@{player.displayName}</h3>
                                                         <p className="text-[10px] text-white/30 truncate uppercase font-black tracking-widest">{player.statusMessage}</p>
                                                     </div>
-                                                    <div className="text-xl font-black font-mono tracking-tighter" style={{ color: player.color }}>{formatBac(player.currentBac)}</div>
+                                                    <div className="text-xl font-black font-mono tracking-tighter" style={{ color: player.color }}>{renderBac(player.currentBac)}</div>
                                                 </div>
                                             );
                                         })}
