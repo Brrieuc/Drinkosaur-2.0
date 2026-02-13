@@ -169,13 +169,12 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
             // 1. Generate PNG with iOS-safe settings
             const dataUrl = await toPng(passRef.current, {
                 cacheBust: true,
-                pixelRatio: 1.5, // Further reduced for iOS stability
-                backgroundColor: config.backgroundColor,
+                pixelRatio: 1.5, // Reduced from 3 to prevent iOS memory limit crashes
+                backgroundColor: config.backgroundColor, // Ensure background is captured
                 quality: 0.9,
                 style: {
-                    borderRadius: '0',
+                    borderRadius: '0', // Prevent corner artifacts
                 },
-                // Ensure all images are loaded
                 skipFonts: true, // Fonts can sometimes block rendering on iOS
             });
 
@@ -209,6 +208,15 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
         } finally {
             setIsExporting(false);
         }
+    };
+
+    // Helper to avoid CORS cache issues
+    const getSecureImgUrl = (url?: string) => {
+        if (!url) return 'https://via.placeholder.com/150';
+        if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+        // Append cache buster to force fresh request with CORS headers
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}t=${new Date().getDate()}`; // Salt by day to allow some caching but fix initial mismatch
     };
 
     return (
@@ -252,10 +260,11 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                     <div className="flex justify-center">
                         <div className="w-40 h-40 rounded-full border-8 border-white/10 shadow-2xl overflow-hidden relative bg-black/20">
                             <img
-                                src={user.customPhotoURL || user.photoURL || 'https://via.placeholder.com/150'}
+                                src={getSecureImgUrl(user.customPhotoURL || user.photoURL)}
                                 alt="Profile"
                                 className="w-full h-full object-cover"
                                 crossOrigin="anonymous"
+                                referrerPolicy="no-referrer"
                             />
                         </div>
                     </div>
@@ -291,10 +300,11 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                     {badge ? (
                                         <div className="w-full h-full p-2 flex flex-col items-center justify-center">
                                             <img
-                                                src={AWARD_DEFINITIONS.find(a => a.id === badgeId)?.imageUrl}
+                                                src={getSecureImgUrl(AWARD_DEFINITIONS.find(a => a.id === badgeId)?.imageUrl)}
                                                 className="w-12 h-12 object-contain drop-shadow-lg mb-1"
                                                 alt="Award"
                                                 crossOrigin="anonymous"
+                                                referrerPolicy="no-referrer"
                                             />
                                             <span className="text-[10px] font-bold text-center leading-tight line-clamp-2 text-white/80">{badge.value}</span>
                                             <span className="text-[8px] text-white/40 mt-0.5 max-w-full truncate">{badge.groupName}</span>
