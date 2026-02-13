@@ -4,6 +4,7 @@ import { UserProfile, Drink, WonAward, PassStat, PassStatType, DrinkosaurPassCon
 import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { AWARD_DEFINITIONS } from '../constants/awards';
+import { AWARD_IMAGES } from '../constants/awardsImages';
 
 interface DrinkosaurPassProps {
     user: UserProfile;
@@ -300,11 +301,11 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                     {badge ? (
                                         <div className="w-full h-full p-2 flex flex-col items-center justify-center">
                                             <img
-                                                src={getSecureImgUrl(AWARD_DEFINITIONS.find(a => a.id === badgeId)?.imageUrl)}
+                                                src={AWARD_IMAGES[badgeId] || getSecureImgUrl(AWARD_DEFINITIONS.find(a => a.id === badgeId)?.imageUrl)}
                                                 className="w-12 h-12 object-contain drop-shadow-lg mb-1"
                                                 alt="Award"
-                                                crossOrigin="anonymous"
-                                                referrerPolicy="no-referrer"
+                                                // Only add CORS attributes if it's NOT a base64 image (fallback)
+                                                {...(!AWARD_IMAGES[badgeId] ? { crossOrigin: "anonymous", referrerPolicy: "no-referrer" } : {})}
                                             />
                                             <span className="text-[10px] font-bold text-center leading-tight line-clamp-2 text-white/80">{badge.value}</span>
                                             <span className="text-[8px] text-white/40 mt-0.5 max-w-full truncate">{badge.groupName}</span>
