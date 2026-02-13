@@ -163,33 +163,46 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
         if (!passRef.current) return;
         setIsExporting(true);
         try {
-            // Small delay to ensure render
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 100)); // Render delay
 
-            const dataUrl = await toPng(passRef.current, { cacheBust: true, pixelRatio: 3 });
+            // 1. Generate PNG with iOS-safe settings
+            const dataUrl = await toPng(passRef.current, {
+                cacheBust: true,
+                pixelRatio: 2, // 3 is too high for many iOS devices (memory limit)
+                backgroundColor: config.backgroundColor,
+                quality: 0.95,
+                style: {
+                    borderRadius: '0', // Avoid corner artifacts
+                }
+            });
 
-            // Try Web Share API first
-            if (navigator.share) {
-                const blob = await (await fetch(dataUrl)).blob();
-                const file = new File([blob], 'drinkosaur-pass.png', { type: 'image/png' });
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            // 2. Prepare File for Sharing
+            const blob = await (await fetch(dataUrl)).blob();
+            const file = new File([blob], 'drinkosaur-pass.png', { type: 'image/png' });
+
+            // 3. Try Native Share (Mobile)
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
                     await navigator.share({
                         files: [file],
-                        title: 'My Drinkosaur Pass',
-                        text: 'Check out my stats on Drinkosaur 🦖'
+                        title: 'Drinkosaur Pass',
+                        text: 'Check my stats! 🦖'
                     });
-                    setIsExporting(false);
-                    return;
+                    return; // Success, stop here
+                } catch (shareError) {
+                    console.warn('Share cancelled or failed, falling back to download');
                 }
             }
 
-            // Fallback to download
+            // 4. Download Fallback (Desktop / Share failed)
             const link = document.createElement('a');
             link.download = `drinkosaur-pass-${user.username || 'user'}.png`;
             link.href = dataUrl;
             link.click();
+
         } catch (err) {
             console.error('Export failed:', err);
+            alert(language === 'fr' ? 'Erreur lors de l\'export. Réessayez.' : 'Export failed. Please try again.');
         } finally {
             setIsExporting(false);
         }
