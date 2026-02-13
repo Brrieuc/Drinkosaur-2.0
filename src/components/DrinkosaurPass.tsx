@@ -251,12 +251,19 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
     };
 
     // Helper to avoid CORS cache issues (only for non-blob URLs)
-    const getSecureImgUrl = (url?: string) => {
+    const getSecureImgUrl = (url?: string, highRes: boolean = false) => {
         if (!url) return 'https://via.placeholder.com/150';
         if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+
+        let processedUrl = url;
+        // Improve quality for Blogger URLs if highRes requested
+        if (highRes && url.includes('blogger.googleusercontent.com')) {
+            processedUrl = url.replace(/\/s[0-9]+\//, '/s1000/');
+        }
+
         // Append cache buster to force fresh request with CORS headers
-        const separator = url.includes('?') ? '&' : '?';
-        return `${url}${separator}t=${new Date().getDate()}`; // Salt by day to allow some caching but fix initial mismatch
+        const separator = processedUrl.includes('?') ? '&' : '?';
+        return `${processedUrl}${separator}t=${new Date().getDate()}`; // Salt by day to allow some caching but fix initial mismatch
     };
 
     return (
@@ -475,9 +482,11 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                     <div className="w-48 h-48 relative">
                                         <div className="absolute inset-0 bg-white/5 blur-3xl rounded-full animate-pulse"></div>
                                         <img
-                                            src={AWARD_IMAGES[selectedDetailId] || getSecureImgUrl(def?.imageUrl)}
-                                            className="w-full h-full object-contain drop-shadow-2xl relative z-10"
+                                            src={getSecureImgUrl(def?.imageUrl, true)}
+                                            className="w-full h-full object-contain drop-shadow-2xl relative z-10 hover:scale-105 transition-transform duration-500"
                                             alt={displayName}
+                                            crossOrigin="anonymous"
+                                            referrerPolicy="no-referrer"
                                         />
                                     </div>
 
