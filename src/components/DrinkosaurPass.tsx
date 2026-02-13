@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { UserProfile, Drink, WonAward, PassStat, PassStatType, DrinkosaurPassConfig } from '../types';
-import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2, Zap, Monitor, Droplets, Lightbulb } from 'lucide-react';
+import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2, Zap, Monitor, Lightbulb } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { AWARD_DEFINITIONS } from '../constants/awards';
 import { AWARD_IMAGES } from '../constants/awardsImages';
@@ -92,31 +92,7 @@ const GlitchEffect: React.FC = () => (
     </div>
 );
 
-const LiquidEffect: React.FC = () => (
-    <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
-        <div className="liquid-wave-ring" style={{ animationDuration: '6s', border: '3px solid rgba(56,189,248,0.6)', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))' }} />
-        <div className="liquid-wave-ring" style={{ animationDuration: '9s', animationDirection: 'reverse', width: '115%', height: '115%', opacity: 0.6, borderColor: 'rgba(14,165,233,0.5)' }} />
-        <div className="absolute inset-0 rounded-full shadow-[inset_0_0_30px_rgba(56,189,248,0.5)] mix-blend-overlay" />
-        <div className="liquid-specular" />
 
-        {/* 3D Bubbles */}
-        {[...Array(8)].map((_, i) => (
-            <div
-                key={i}
-                className="absolute bg-gradient-to-br from-white/80 to-transparent rounded-full animate-float shadow-inner border border-white/20"
-                style={{
-                    width: `${Math.random() * 10 + 4}px`,
-                    height: `${Math.random() * 10 + 4}px`,
-                    left: `${Math.random() * 80 + 10}%`,
-                    bottom: '-15%',
-                    animationDuration: `${2 + Math.random() * 4}s`,
-                    animationDelay: `${Math.random() * 2}s`,
-                    backdropFilter: 'blur(1px)'
-                }}
-            />
-        ))}
-    </div>
-);
 
 const NeonEffect: React.FC = () => (
     <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
@@ -127,39 +103,6 @@ const NeonEffect: React.FC = () => (
     </div>
 );
 
-const FreshPintEffect: React.FC = () => (
-    <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
-        {/* Amber Glass Glow */}
-        <div className="absolute inset-0 rounded-full border-4 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.4),inset_0_0_30px_rgba(245,158,11,0.2)]"></div>
-        <div className="absolute inset-0 rounded-full bg-gradient-to-t from-amber-500/10 to-transparent mix-blend-overlay"></div>
-
-        {/* Fast Rising Tiny Bubbles (Carbonation) */}
-        <div className="absolute inset-0 rounded-full overflow-hidden">
-            {[...Array(20)].map((_, i) => (
-                <div
-                    key={`carb-${i}`}
-                    className="beer-bubble"
-                    style={{
-                        left: `${Math.random() * 100}%`,
-                        bottom: '-10%',
-                        width: `${Math.random() * 3 + 1}px`,
-                        height: `${Math.random() * 3 + 1}px`,
-                        animationDuration: `${0.8 + Math.random() * 1.5}s`,
-                        animationDelay: `${Math.random() * 2}s`
-                    }}
-                />
-            ))}
-        </div>
-
-        {/* Subtle Foam Head (Creamy Top) */}
-        <div className="absolute top-[-5%] left-[10%] right-[10%] h-[15%] rounded-[100%] bg-gradient-to-b from-white via-[#fffbeb] to-transparent blur-[4px] opacity-80"></div>
-
-        {/* Condensation / Dew Drops on Glass */}
-        <div className="absolute top-[20%] right-[15%] w-1 h-1 bg-white/60 rounded-full blur-[0.5px]"></div>
-        <div className="absolute top-[25%] right-[18%] w-1.5 h-1.5 bg-white/40 rounded-full blur-[0.5px]"></div>
-        <div className="absolute bottom-[30%] left-[20%] w-1 h-1 bg-white/50 rounded-full blur-[0.5px]"></div>
-    </div>
-);
 
 export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards, drinks, onSave, onClose, language, isReadOnly }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -443,9 +386,8 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                             {config.profileEffect === 'electric' && <ElectricEffect />}
                             {/* For Glitch, we render the mask separately, but the effect component handles the layers */}
                             {config.profileEffect === 'glitch' && <GlitchEffect />}
-                            {config.profileEffect === 'liquid' && <LiquidEffect />}
+
                             {config.profileEffect === 'neon' && <NeonEffect />}
-                            {config.profileEffect === 'foam' && <FreshPintEffect />}
 
                             <div className={`w-full h-full rounded-full overflow-hidden relative z-20 ${config.profileEffect === 'glitch' ? 'glitch-container' : ''}`}>
                                 <img
@@ -639,22 +581,10 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                     <Monitor size={12} /> Glitch
                                 </button>
                                 <button
-                                    onClick={() => setConfig({ ...config, profileEffect: 'liquid' })}
-                                    className={`px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${config.profileEffect === 'liquid' ? 'bg-cyan-600/20 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
-                                >
-                                    <Droplets size={12} /> Liquide
-                                </button>
-                                <button
                                     onClick={() => setConfig({ ...config, profileEffect: 'neon' })}
                                     className={`px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${config.profileEffect === 'neon' ? 'bg-fuchsia-600/20 border-fuchsia-500 text-fuchsia-400 shadow-[0_0_15px_rgba(217,70,239,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
                                 >
                                     <Lightbulb size={12} /> Néon
-                                </button>
-                                <button
-                                    onClick={() => setConfig({ ...config, profileEffect: 'foam' })}
-                                    className={`px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${config.profileEffect === 'foam' ? 'bg-amber-500/20 border-amber-500 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
-                                >
-                                    <Beer size={12} /> Bière
                                 </button>
                             </div>
                         </div>

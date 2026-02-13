@@ -62,7 +62,7 @@ export interface DrinkosaurPassConfig {
   selectedBadges: string[]; // Up to 3 award IDs
   backgroundColor: string;
   stats: PassStat[]; // Exactly 4
-  profileEffect?: 'none' | 'fire' | 'electric' | 'glitch' | 'liquid' | 'neon' | 'foam';
+  profileEffect?: 'none' | 'fire' | 'electric' | 'glitch' | 'neon';
 }
 
 export interface WonAward {
