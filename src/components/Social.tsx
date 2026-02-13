@@ -673,9 +673,42 @@ export const Social: React.FC<SocialProps> = (props) => {
                     <div className="animate-fade-in">
                         {selectedGroupId ? (
                             <div className="space-y-6">
-                                <button onClick={() => setSelectedGroupId(null)} className="flex items-center gap-2 text-white/50 hover:text-white transition-colors font-bold text-sm uppercase tracking-widest">
-                                    <ChevronLeft size={16} /> {t.groupsTab}
-                                </button>
+                                <div className="flex items-center justify-between">
+                                    <button onClick={() => setSelectedGroupId(null)} className="flex items-center gap-2 text-white/50 hover:text-white transition-colors font-bold text-sm uppercase tracking-widest">
+                                        <ChevronLeft size={16} /> {t.groupsTab}
+                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setShowAwardsModal(true)}
+                                            className="p-2 bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-xl text-amber-400 hover:from-amber-500/30 hover:to-orange-500/30 transition-all shadow-lg shadow-amber-500/10"
+                                            title={language === 'fr' ? 'Awards du mois' : 'Monthly Awards'}
+                                        >
+                                            <Trophy size={16} />
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                if (selectedGroupId) {
+                                                    setLoadingPendingInvites(true);
+                                                    setShowPendingInvites(true);
+                                                    try {
+                                                        const invites = await onFetchGroupInvites(selectedGroupId);
+                                                        setPendingInvites(invites);
+                                                    } catch (e) {
+                                                        console.error(e);
+                                                    } finally {
+                                                        setLoadingPendingInvites(false);
+                                                    }
+                                                }
+                                            }}
+                                            className="p-2 bg-white/5 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                                            title={language === 'fr' ? 'Invitations en attente' : 'Pending Invites'}
+                                        >
+                                            <Clock size={16} />
+                                        </button>
+                                        <button onClick={() => setIsInvitingToGroup(true)} className="p-2 bg-blue-600 rounded-xl text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20"><UserPlus size={16} /></button>
+                                        <button onClick={() => { onLeaveGroup(selectedGroupId); setSelectedGroupId(null); }} className="p-2 bg-white/5 rounded-xl text-red-400 hover:bg-red-500/20 transition-colors"><LogOut size={16} /></button>
+                                    </div>
+                                </div>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="relative">
@@ -707,37 +740,6 @@ export const Social: React.FC<SocialProps> = (props) => {
                                             )}
                                         </div>
                                         <h3 className="text-3xl font-black text-white">{groups.find(g => g.id === selectedGroupId)?.name}</h3>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => setShowAwardsModal(true)}
-                                            className="p-2 bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-xl text-amber-400 hover:from-amber-500/30 hover:to-orange-500/30 transition-all shadow-lg shadow-amber-500/10"
-                                            title={language === 'fr' ? 'Awards du mois' : 'Monthly Awards'}
-                                        >
-                                            <Trophy size={16} />
-                                        </button>
-                                        <button
-                                            onClick={async () => {
-                                                if (selectedGroupId) {
-                                                    setLoadingPendingInvites(true);
-                                                    setShowPendingInvites(true);
-                                                    try {
-                                                        const invites = await onFetchGroupInvites(selectedGroupId);
-                                                        setPendingInvites(invites);
-                                                    } catch (e) {
-                                                        console.error(e);
-                                                    } finally {
-                                                        setLoadingPendingInvites(false);
-                                                    }
-                                                }
-                                            }}
-                                            className="p-2 bg-white/5 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-                                            title={language === 'fr' ? 'Invitations en attente' : 'Pending Invites'}
-                                        >
-                                            <Clock size={16} />
-                                        </button>
-                                        <button onClick={() => setIsInvitingToGroup(true)} className="p-2 bg-blue-600 rounded-xl text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20"><UserPlus size={16} /></button>
-                                        <button onClick={() => { onLeaveGroup(selectedGroupId); setSelectedGroupId(null); }} className="p-2 bg-white/5 rounded-xl text-red-400 hover:bg-red-500/20 transition-colors"><LogOut size={16} /></button>
                                     </div>
                                 </div>
 
@@ -909,12 +911,13 @@ export const Social: React.FC<SocialProps> = (props) => {
                                         ) : (
                                             <div className="space-y-3">
                                                 {pendingInvites.map(user => (
-                                                    <div key={user.uid} className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/5">
-                                                        <img src={user.customPhotoURL || user.photoURL || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-full object-cover border border-white/10" />
-                                                        <div className="flex-1">
-                                                            <div className="font-bold text-white">@{user.username || user.displayName}</div>
-                                                            <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
-                                                                {language === 'fr' ? 'Invité' : 'Invited'}
+                                                    <div key={user.uid} className="flex items-center gap-4 bg-white/10 p-4 rounded-3xl border border-white/10 shadow-lg">
+                                                        <img src={user.customPhotoURL || user.photoURL || 'https://via.placeholder.com/150'} className="w-12 h-12 rounded-full object-cover border-2 border-white/20" />
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="font-black text-white text-lg truncate">@{user.username || user.displayName || 'Utilisateur'}</div>
+                                                            <div className="text-[10px] text-white/50 uppercase tracking-widest font-bold flex items-center gap-1">
+                                                                <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                                                                {language === 'fr' ? 'Invitation envoyée' : 'Invite Sent'}
                                                             </div>
                                                         </div>
                                                     </div>
