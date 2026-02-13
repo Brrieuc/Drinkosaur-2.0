@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { UserProfile, Drink, WonAward, PassStat, PassStatType, DrinkosaurPassConfig } from '../types';
 import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2 } from 'lucide-react';
 import { toPng } from 'html-to-image';
@@ -33,7 +33,38 @@ const BG_COLORS = [
 export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards, drinks, onSave, onClose, language }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [blobUrl, setBlobUrl] = useState<string | null>(null);
     const passRef = useRef<HTMLDivElement>(null);
+
+    // Preload profile image as Blob to bypass CORS during export
+    useEffect(() => {
+        const url = user.customPhotoURL || user.photoURL;
+        if (!url) return;
+
+        // If it's already a blob or data URL, use it
+        if (url.startsWith('blob:') || url.startsWith('data:')) {
+            setBlobUrl(url);
+            return;
+        }
+
+        let isMounted = true;
+        (async () => {
+            try {
+                // Fetch with CORS mode 'cors'
+                const response = await fetch(url, { mode: 'cors' });
+                const blob = await response.blob();
+                if (isMounted) {
+                    const objectUrl = URL.createObjectURL(blob);
+                    setBlobUrl(objectUrl);
+                }
+            } catch (e) {
+                console.warn('Failed to load profile image as blob, falling back to direct URL', e);
+                setBlobUrl(url); // Fallback
+            }
+        })();
+
+        return () => { isMounted = false; };
+    }, [user.customPhotoURL, user.photoURL]);
 
     // Local Config State
     const [config, setConfig] = useState<DrinkosaurPassConfig>(user.drinkosaurPassConfig || {
@@ -211,7 +242,7 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
         }
     };
 
-    // Helper to avoid CORS cache issues
+    // Helper to avoid CORS cache issues (only for non-blob URLs)
     const getSecureImgUrl = (url?: string) => {
         if (!url) return 'https://via.placeholder.com/150';
         if (url.startsWith('data:') || url.startsWith('blob:')) return url;
@@ -261,7 +292,7 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                     <div className="flex justify-center">
                         <div className="w-40 h-40 rounded-full border-8 border-white/10 shadow-2xl overflow-hidden relative bg-black/20">
                             <img
-                                src={getSecureImgUrl(user.customPhotoURL || user.photoURL)}
+                                src={blobUrl || getSecureImgUrl(user.customPhotoURL || user.photoURL)}
                                 alt="Profile"
                                 className="w-full h-full object-cover"
                                 crossOrigin="anonymous"
@@ -299,16 +330,16 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                         </select>
                                     )}
                                     {badge ? (
-                                        <div className="w-full h-full p-2 flex flex-col items-center justify-center">
+                                        <div className="w-full h-full p-1 flex flex-col items-center justify-center">
                                             <img
                                                 src={AWARD_IMAGES[badgeId] || getSecureImgUrl(AWARD_DEFINITIONS.find(a => a.id === badgeId)?.imageUrl)}
-                                                className="w-12 h-12 object-contain drop-shadow-lg mb-1"
+                                                className="w-16 h-16 object-contain drop-shadow-lg mb-0.5"
                                                 alt="Award"
                                                 // Only add CORS attributes if it's NOT a base64 image (fallback)
                                                 {...(!AWARD_IMAGES[badgeId] ? { crossOrigin: "anonymous", referrerPolicy: "no-referrer" } : {})}
                                             />
-                                            <span className="text-[10px] font-bold text-center leading-tight line-clamp-2 text-white/80">{badge.value}</span>
-                                            <span className="text-[8px] text-white/40 mt-0.5 max-w-full truncate">{badge.groupName}</span>
+                                            <span className="text-[9px] font-bold text-center leading-tight line-clamp-2 text-white/80">{badge.value}</span>
+                                            <span className="text-[7px] text-white/40 mt-0.5 max-w-full truncate">{badge.groupName}</span>
                                         </div>
                                     ) : (
                                         <div className="text-white/20 text-xs font-bold uppercase">Empty</div>
