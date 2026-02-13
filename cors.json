@@ -1,0 +1,25 @@
+[
+    {
+        "origin": [
+            "https://drinkosaur.vercel.app",
+            "https://drinkosaur-5cebe.web.app",
+            "https://drinkosaur-5cebe.firebaseapp.com",
+            "http://localhost:5173",
+            "http://localhost:3000"
+        ],
+        "method": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "HEAD"
+        ],
+        "maxAgeSeconds": 3600,
+        "responseHeader": [
+            "Content-Type",
+            "Authorization",
+            "Content-Length",
+            "X-Requested-With"
+        ]
+    }
+]
