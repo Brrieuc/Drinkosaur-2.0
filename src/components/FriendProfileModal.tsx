@@ -5,6 +5,7 @@ import { BacChartModal } from './BacChartModal';
 import { calculateBac } from '../services/bacService';
 import { AWARD_DEFINITIONS } from '../constants/awards';
 import { useDeviceMotion } from '../hooks/useDeviceMotion';
+import { DrinkosaurPass } from './DrinkosaurPass';
 
 const MONTH_NAMES_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const MONTH_NAMES_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -38,6 +39,7 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
     // Gyroscope pour mouvement du liquide
     const { tilt } = useDeviceMotion();
     const [selectedBadgeDetail, setSelectedBadgeDetail] = useState<WonAward | null>(null);
+    const [showPass, setShowPass] = useState(false);
     const isFrench = language === 'fr';
     const monthNames = isFrench ? MONTH_NAMES_FR : MONTH_NAMES_EN;
 
@@ -248,6 +250,26 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                         </div>
                     </div>
 
+                    {/* Drinkopass Button */}
+                    <div className="flex justify-center mb-8 -mt-4">
+                        <button
+                            onClick={() => setShowPass(true)}
+                            className="w-48 relative h-14 rounded-2xl overflow-hidden group shadow-xl active:scale-95 transition-all border border-white/10"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-900 to-indigo-900 z-0">
+                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30 mix-blend-overlay"></div>
+                            </div>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-2 text-center">
+                                <h3 className="text-xl font-black italic uppercase tracking-tighter text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.5)]" style={{ fontFamily: 'Impact, sans-serif' }}>
+                                    DRINKOPASS
+                                </h3>
+                                <span className="text-[7px] font-black uppercase tracking-widest text-white/40">{isFrench ? 'Voir la carte' : 'View Pass'}</span>
+                            </div>
+                            {/* Holographic effect */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent translate-y-full group-hover:translate-y-[-100%] transition-transform duration-1000 z-20 pointer-events-none"></div>
+                        </button>
+                    </div>
+
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 gap-4 mb-8">
                         <div className="glass-panel-3d p-4 rounded-3xl flex flex-col items-center">
@@ -351,6 +373,19 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                             </div>
                         );
                     })()}
+
+                    {/* Friend's Drinkopass Modal */}
+                    {showPass && (
+                        <DrinkosaurPass
+                            user={friendProfile}
+                            wonAwards={friendProfile.wonAwards || []}
+                            drinks={friendDrinks}
+                            onSave={() => { }} // No-op for friend view
+                            onClose={() => setShowPass(false)}
+                            language={language}
+                            isReadOnly={true}
+                        />
+                    )}
                 </div>
             </div>
         </div>

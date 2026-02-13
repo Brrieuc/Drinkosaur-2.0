@@ -586,7 +586,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
             </div>
             <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-6 text-center">
               <h3 className="text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-[0_4px_0_rgba(0,0,0,0.5)] mb-2" style={{ fontFamily: 'Impact, sans-serif' }}>
-                DRINKOSAUR PASS
+                DRINKOPASS
               </h3>
               <p className="text-white/60 text-xs font-bold uppercase tracking-widest bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10 group-hover:bg-white/20 transition-colors">
                 {language === 'fr' ? 'Afficher ma carte joueur' : 'View Player Card'}

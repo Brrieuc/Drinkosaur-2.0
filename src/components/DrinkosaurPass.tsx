@@ -13,6 +13,7 @@ interface DrinkosaurPassProps {
     onSave: (updates: Partial<UserProfile>) => void;
     onClose: () => void;
     language: 'en' | 'fr';
+    isReadOnly?: boolean;
 }
 
 const STAT_OPTIONS: { type: PassStatType; label: string; icon: any }[] = [
@@ -30,7 +31,7 @@ const BG_COLORS = [
     '#1a1a1a', '#2e1065', '#451a03', '#064e3b', '#881337', '#1e3a8a', '#312e81', '#111827'
 ];
 
-export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards, drinks, onSave, onClose, language }) => {
+export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards, drinks, onSave, onClose, language, isReadOnly }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -258,10 +259,10 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
         let processedUrl = url;
         // Improve quality for Blogger URLs if highRes requested
         if (highRes && url.includes('blogger.googleusercontent.com')) {
-            processedUrl = url.replace(/\/s[0-9]+\//, '/s1000/');
+            return url.replace(/\/s[0-9]+\//, '/s1000/');
         }
 
-        // Append cache buster to force fresh request with CORS headers
+        // Append cache buster to force fresh request with CORS headers for non-resizing calls
         const separator = processedUrl.includes('?') ? '&' : '?';
         return `${processedUrl}${separator}t=${new Date().getDate()}`; // Salt by day to allow some caching but fix initial mismatch
     };
@@ -277,9 +278,11 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                             <button onClick={handleExport} disabled={isExporting} className="p-2 bg-emerald-500 hover:bg-emerald-400 rounded-full text-white transition-colors shadow-lg active:scale-95 disabled:opacity-50">
                                 {isExporting ? <Loader2 size={20} className="animate-spin" /> : <Share2 size={20} />}
                             </button>
-                            <button onClick={() => setIsEditing(true)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
-                                <Edit2 size={20} />
-                            </button>
+                            {!isReadOnly && (
+                                <button onClick={() => setIsEditing(true)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
+                                    <Edit2 size={20} />
+                                </button>
+                            )}
                         </>
                     )}
                     {isEditing && (
@@ -485,8 +488,6 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                             src={getSecureImgUrl(def?.imageUrl, true)}
                                             className="w-full h-full object-contain drop-shadow-2xl relative z-10 hover:scale-105 transition-transform duration-500"
                                             alt={displayName}
-                                            crossOrigin="anonymous"
-                                            referrerPolicy="no-referrer"
                                         />
                                     </div>
 
