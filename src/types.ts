@@ -30,6 +30,18 @@ export interface UserProfile {
   groups?: string[];
   birthDate?: string; // ISO date string (YYYY-MM-DD)
   photoVisibleToFriends?: boolean; // Privacy: show photo to friends
+  wonAwards?: WonAward[]; // All awards this user has won
+  selectedBadges?: string[]; // Up to 3 award IDs to display as badges
+}
+
+export interface WonAward {
+  awardId: string;      // e.g. 'rhumosaur'
+  groupId: string;      // which group it was won in
+  groupName: string;    // group display name
+  month: number;        // 0-indexed
+  year: number;
+  value: string;        // display value e.g. '12 drinks'
+  wonAt: number;        // timestamp of when it was recorded
 }
 
 
@@ -70,5 +82,6 @@ export enum AppView {
   SETTINGS = 'SETTINGS',
   HISTORY = 'HISTORY',
   SOCIAL = 'SOCIAL',
+  GLOBE = 'GLOBE',
 }
 

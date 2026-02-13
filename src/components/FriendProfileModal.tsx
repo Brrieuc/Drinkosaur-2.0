@@ -1,8 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { X, Clock, Zap, History } from 'lucide-react';
-import { Drink, UserProfile } from '../types';
+import { Drink, UserProfile, WonAward } from '../types';
 import { BacChartModal } from './BacChartModal';
 import { calculateBac } from '../services/bacService';
+import { AWARD_DEFINITIONS } from '../constants/awards';
+
+const MONTH_NAMES_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+const MONTH_NAMES_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 interface FriendProfileModalProps {
     friend: {
@@ -27,7 +31,9 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
     language
 }) => {
     const [showChart, setShowChart] = useState(false);
+    const [selectedBadgeDetail, setSelectedBadgeDetail] = useState<WonAward | null>(null);
     const isFrench = language === 'fr';
+    const monthNames = isFrench ? MONTH_NAMES_FR : MONTH_NAMES_EN;
 
     const t = {
         title: isFrench ? "Profil de l'ami" : "Friend Profile",
@@ -140,6 +146,39 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                             <div className={`w-2 h-2 rounded-full animate-pulse`} style={{ backgroundColor: fullStatus.color }} />
                             <span className="text-[10px] font-black uppercase tracking-widest text-white/70">{fullStatus.statusMessage}</span>
                         </div>
+
+                        {/* Selected Badges */}
+                        {friendProfile.selectedBadges && friendProfile.selectedBadges.length > 0 && (() => {
+                            const badgeDefs = friendProfile.selectedBadges
+                                .map(bid => ({ id: bid, def: AWARD_DEFINITIONS.find(a => a.id === bid) }))
+                                .filter(b => b.def);
+
+                            if (badgeDefs.length === 0) return null;
+
+                            // Find the WonAward instance for each badge
+                            const wonAwards = friendProfile.wonAwards || [];
+
+                            return (
+                                <div className="mt-3 flex gap-2 justify-center">
+                                    {badgeDefs.map(({ id, def }) => {
+                                        const instance = wonAwards.find(w => w.awardId === id);
+                                        return (
+                                            <button
+                                                key={id}
+                                                onClick={() => instance && setSelectedBadgeDetail(instance)}
+                                                className="w-14 h-14 rounded-xl bg-amber-500/10 border border-amber-500/20 p-1.5 hover:scale-110 transition-all active:scale-95"
+                                            >
+                                                <img
+                                                    src={def!.imageUrl}
+                                                    alt={def!.name}
+                                                    className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+                                                />
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     {/* The Bubble (Miniaturized Dash) */}
@@ -224,6 +263,63 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                             </div>
                         )}
                     </div>
+
+                    {/* Badge Detail Modal */}
+                    {selectedBadgeDetail && (() => {
+                        const def = AWARD_DEFINITIONS.find(a => a.id === selectedBadgeDetail.awardId);
+                        if (!def) return null;
+                        return (
+                            <div
+                                className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-3xl flex items-center justify-center p-8 animate-fade-in"
+                                onClick={() => setSelectedBadgeDetail(null)}
+                            >
+                                <div
+                                    className="relative bg-gradient-to-br from-[#1a1a2e] to-[#0a0a15] rounded-[40px] p-8 border border-white/10 shadow-2xl max-w-sm w-full animate-scale-in"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <button
+                                        onClick={() => setSelectedBadgeDetail(null)}
+                                        className="absolute top-4 right-4 p-2 text-white/30 hover:text-white transition-colors"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-amber-500/20 rounded-full blur-[80px] pointer-events-none" />
+                                    <div className="relative flex flex-col items-center text-center gap-5">
+                                        <div className="w-28 h-28 animate-float-slow">
+                                            <img src={def.imageUrl} alt={def.name} className="w-full h-full object-contain drop-shadow-[0_0_40px_rgba(245,158,11,0.5)]" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-black text-amber-400 uppercase tracking-wider mb-2">
+                                                {isFrench ? def.name_fr : def.name}
+                                            </h3>
+                                            <p className="text-white/40 text-xs font-medium leading-relaxed">
+                                                {isFrench ? def.description_fr : def.description}
+                                            </p>
+                                        </div>
+                                        <div className="w-full p-5 rounded-3xl bg-amber-500/10 border border-amber-500/20">
+                                            <p className="text-[10px] text-white/30 font-black uppercase tracking-widest mb-1">
+                                                {isFrench ? 'Stat' : 'Stat'}
+                                            </p>
+                                            <p className="text-xl font-black text-amber-400">{selectedBadgeDetail.value}</p>
+                                        </div>
+                                        <div className="w-full space-y-2">
+                                            <div className="flex items-center justify-between bg-white/5 px-4 py-3 rounded-2xl">
+                                                <span className="text-[10px] text-white/30 font-black uppercase tracking-widest">
+                                                    {isFrench ? 'Groupe' : 'Group'}
+                                                </span>
+                                                <span className="text-sm font-bold text-white">{selectedBadgeDetail.groupName}</span>
+                                            </div>
+                                            <div className="bg-white/5 px-4 py-2 rounded-full text-center">
+                                                <span className="text-[10px] text-white/30 font-black uppercase tracking-widest">
+                                                    {monthNames[selectedBadgeDetail.month]} {selectedBadgeDetail.year}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
             </div>
         </div>

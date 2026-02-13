@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { BacStatus, Drink, UserProfile, FriendGroup } from '../types';
-import { Clock, Zap, AlertTriangle, TrendingUp, BarChart3, Inbox, Bell } from 'lucide-react';
+import { Clock, Zap, AlertTriangle, TrendingUp, BarChart3, Inbox } from 'lucide-react';
 import { BacChartModal } from './BacChartModal';
 import { StatsModal } from './StatsModal';
 import { NotificationsModal } from './NotificationsModal';
 import { FriendRequest } from '../hooks/useSocial';
+import { AwardNotification } from '../hooks/useAwardNotifications';
+import { ComputedAward } from '../constants/awards';
 
 
 interface DashboardProps {
@@ -17,13 +19,16 @@ interface DashboardProps {
   onRespondRequest?: (requestId: string, accept: boolean) => void;
   onAcceptGroup?: (groupId: string) => void;
   onDeclineGroup?: (groupId: string) => void;
+  // Award notification props
+  awardNotifications?: AwardNotification[];
+  onMarkAwardRead?: (notificationId: string) => void;
+  unreadAwardCount?: number;
+  awards?: ComputedAward[];
+  awardsLoading?: boolean;
+  awardsMonth?: { month: number; year: number };
+  onFetchGroupAwards?: (groupId: string, month: number, year: number) => void;
+  myUid?: string;
 }
-
-// NOTE: Dashboard now needs full drinks/user props for the modal chart, 
-// but to maintain compatibility with App.tsx without breaking changes immediately,
-// we will handle optional props gracefully.
-// However, App.tsx should ideally pass these. We will update App.tsx in a real scenario,
-// but for this specific "change", we assume App.tsx passes them or we don't show chart if missing.
 
 export const Dashboard: React.FC<DashboardProps> = ({
   status,
@@ -34,14 +39,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
   groupInvites = [],
   onRespondRequest,
   onAcceptGroup,
-  onDeclineGroup
+  onDeclineGroup,
+  awardNotifications = [],
+  onMarkAwardRead,
+  unreadAwardCount = 0,
+  awards = [],
+  awardsLoading = false,
+  awardsMonth = { month: 0, year: 2026 },
+  onFetchGroupAwards,
+  myUid = ''
 }) => {
   const [showChartModal, setShowChartModal] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const isFrench = language === 'fr';
 
-  const notificationCount = incomingRequests.length + groupInvites.length;
+  const notificationCount = incomingRequests.length + groupInvites.length + unreadAwardCount;
 
   const t = {
     bacLevel: isFrench ? 'Taux Alcool' : 'BAC Level',
@@ -134,11 +147,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <StatsModal drinks={drinks} user={user} onClose={() => setShowStats(false)} />
       )}
 
-      {/* Stats Modal */}
-      {showStats && user && (
-        <StatsModal drinks={drinks} user={user} onClose={() => setShowStats(false)} />
-      )}
-
       {/* Notifications Modal */}
       {showNotifications && (
         <NotificationsModal
@@ -149,6 +157,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           onAcceptGroup={(id) => onAcceptGroup?.(id)}
           onDeclineGroup={(id) => onDeclineGroup?.(id)}
           language={language}
+          awardNotifications={awardNotifications}
+          onMarkAwardRead={(id) => onMarkAwardRead?.(id)}
+          awards={awards}
+          awardsLoading={awardsLoading}
+          awardsMonth={awardsMonth}
+          onFetchGroupAwards={(groupId, month, year) => onFetchGroupAwards?.(groupId, month, year)}
+          myUid={myUid}
         />
       )}
 

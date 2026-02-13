@@ -1,21 +1,26 @@
 
 import React, { useState, useRef } from 'react';
-import { UserProfile } from '../types';
-import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Eye, EyeOff, Calendar } from 'lucide-react';
+import { UserProfile, WonAward } from '../types';
+import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Eye, EyeOff, Calendar, Trophy } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { ImageCropper } from './ImageCropper';
+import { TrophyHall } from './TrophyHall';
 import heic2any from 'heic2any';
 
 interface SettingsProps {
   user: UserProfile;
   onSave: (user: Partial<UserProfile>) => void;
   onUploadAvatar: (base64: string) => Promise<string>;
+  wonAwards?: WonAward[];
+  selectedBadges?: string[];
+  onUpdateBadges?: (badges: string[]) => void;
 }
 
 type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn' | 'errorWeight' | 'errorUsername' | 'birthDate' | 'birthDateDesc' | 'underageTitle' | 'underageMsg' | 'errorBirthDate' | 'privacy' | 'photoVisible' | 'photoVisibleDesc';
 
-export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar }) => {
+export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar, wonAwards = [], selectedBadges = [], onUpdateBadges }) => {
   const [showAdvanced, setShowAdvanced] = useState(!user.isSetup);
+  const [showTrophyHall, setShowTrophyHall] = useState(false);
   const [weight, setWeight] = useState(user.weightKg || 70);
   const [gender, setGender] = useState<'male' | 'female'>(user.gender);
   const [language, setLanguage] = useState<'en' | 'fr'>(user.language || 'en');
@@ -562,6 +567,38 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
             </div>
             {renderAuthSection()}
           </div>
+
+          {/* Trophy Hall Button */}
+          <button
+            onClick={() => setShowTrophyHall(true)}
+            className="w-full glass-panel-3d p-6 rounded-[32px] flex items-center justify-between active:scale-[0.98] transition-all group hover:bg-white/5"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-4 bg-amber-500/10 rounded-2xl group-hover:bg-amber-500/20 transition-colors border border-amber-500/20">
+                <Trophy size={24} className="text-amber-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-white leading-tight text-lg">{language === 'fr' ? 'Hall des Trophées' : 'Trophy Hall'}</p>
+                <p className="text-xs text-white/40 mt-1 uppercase tracking-wider font-bold">
+                  {wonAwards.length} {language === 'fr' ? 'trophées remportés' : 'trophies earned'}
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="text-white/20 group-hover:text-amber-400/40 transition-colors" />
+          </button>
+
+          {/* Trophy Hall Modal */}
+          {showTrophyHall && (
+            <TrophyHall
+              wonAwards={wonAwards}
+              selectedBadges={selectedBadges}
+              onUpdateBadges={(badges) => {
+                onUpdateBadges?.(badges);
+              }}
+              onClose={() => setShowTrophyHall(false)}
+              language={language}
+            />
+          )}
 
           {/* Privacy Section */}
           <div className="glass-panel-3d p-6 rounded-[32px] space-y-5">

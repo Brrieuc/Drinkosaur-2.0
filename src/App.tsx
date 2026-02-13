@@ -8,14 +8,18 @@ import { Social } from './components/Social';
 import { OnboardingTour } from './components/OnboardingTour';
 import { InstallPwaGuide } from './components/InstallPwaGuide';
 import { FriendProfileModal } from './components/FriendProfileModal';
+import { GlobalDashboard } from './components/GlobalDashboard';
 import { AppView, Drink, UserProfile } from './types';
-import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users, Loader2, X, Mail } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users, Loader2, X, Mail, Globe } from 'lucide-react';
 import { useUser } from './hooks/useUser';
 import { useDrinks } from './hooks/useDrinks';
 import { useSocial } from './hooks/useSocial';
 import { useGroups } from './hooks/useGroups';
 import { useAuth } from './hooks/useAuth';
 import useBacCalculator from './hooks/useBacCalculator';
+import { useAwards } from './hooks/useAwards';
+import { useAwardNotifications } from './hooks/useAwardNotifications';
+import { useGlobalStats } from './hooks/useGlobalStats';
 
 const Toast = ({ message, type = 'success' }: { message: string, type?: 'success' | 'warning' }) => (
   <div className={`fixed top-6 left-1/2 transform -translate-x-1/2 z-[200] px-6 py-4 rounded-2xl backdrop-blur-xl border shadow-2xl animate-bounce-in flex items-center gap-3 ${type === 'warning' ? 'bg-red-500/20 border-red-500/30 text-red-100' : 'bg-emerald-500/20 border-emerald-500/30 text-emerald-100'
@@ -68,6 +72,28 @@ const App: React.FC = () => {
     inviteMemberToGroup,
     updateGroupIcon
   } = useGroups();
+
+  const {
+    awards,
+    loading: awardsLoading,
+    selectedMonth: awardsMonth,
+    fetchGroupAwards
+  } = useAwards();
+
+  const {
+    awardNotifications,
+    markAwardAsRead,
+    unreadAwardCount
+  } = useAwardNotifications(groups);
+
+  const {
+    liveStats,
+    monthlyStats,
+    loadingLive,
+    loadingMonthly,
+    fetchLiveStats,
+    fetchMonthlyStats,
+  } = useGlobalStats();
 
   const handleSelectFriend = async (uid: string) => {
     const friendStatus = friends.find(f => f.uid === uid);
@@ -317,6 +343,7 @@ const App: React.FC = () => {
     history: user.language === 'fr' ? 'Historique' : 'History',
     monitor: user.language === 'fr' ? 'Moniteur' : 'Monitor',
     social: user.language === 'fr' ? 'Amis' : 'Friends',
+    globe: user.language === 'fr' ? 'Global' : 'Global',
     add: user.language === 'fr' ? 'Ajouter' : 'Add Drink',
     settings: user.language === 'fr' ? 'Paramètres' : 'Settings'
   };
@@ -400,6 +427,17 @@ const App: React.FC = () => {
               }
             }}
             onUploadAvatar={uploadAvatar}
+            wonAwards={user.wonAwards || []}
+            selectedBadges={user.selectedBadges || []}
+            onUpdateBadges={async (badges) => {
+              const result = await saveUser({ selectedBadges: badges });
+              if (result.success) {
+                setToast({ msg: user.language === 'fr' ? 'Badges mis à jour !' : 'Badges updated!', type: 'success' });
+              } else {
+                setToast({ msg: result.error || 'Error', type: 'warning' });
+              }
+              setTimeout(() => setToast(null), 3000);
+            }}
           />
         )}
 
@@ -431,6 +469,10 @@ const App: React.FC = () => {
               onFetchGroupStatus={fetchGroupMembersStatus}
               onInviteToGroup={inviteMemberToGroup}
               onUpdateGroupIcon={updateGroupIcon}
+              awards={awards}
+              awardsLoading={awardsLoading}
+              awardsMonth={awardsMonth}
+              onFetchGroupAwards={(groupId: string, month: number, year: number) => fetchGroupAwards(groupId, month, year, user.language)}
             />
             {selectedFriend && (
               <FriendProfileModal
@@ -455,6 +497,27 @@ const App: React.FC = () => {
             onRespondRequest={respondToRequest}
             onAcceptGroup={acceptGroupInvite}
             onDeclineGroup={declineGroupInvite}
+            awardNotifications={awardNotifications}
+            onMarkAwardRead={markAwardAsRead}
+            unreadAwardCount={unreadAwardCount}
+            awards={awards}
+            awardsLoading={awardsLoading}
+            awardsMonth={awardsMonth}
+            onFetchGroupAwards={(groupId: string, month: number, year: number) => fetchGroupAwards(groupId, month, year, user.language)}
+            myUid={authUser?.uid || ''}
+          />
+        )}
+
+        {view === AppView.GLOBE && (
+          <GlobalDashboard
+            liveStats={liveStats}
+            monthlyStats={monthlyStats}
+            loadingLive={loadingLive}
+            loadingMonthly={loadingMonthly}
+            onFetchLive={fetchLiveStats}
+            onFetchMonthly={fetchMonthlyStats}
+            language={user.language}
+            myUid={authUser?.uid || ''}
           />
         )}
 
@@ -492,6 +555,7 @@ const App: React.FC = () => {
               </div>
 
               <NavButton target={AppView.SOCIAL} icon={Users} label={navText.social} hasBadge={hasSocialNotification} />
+              <NavButton target={AppView.GLOBE} icon={Globe} label={navText.globe} />
               <NavButton target={AppView.SETTINGS} icon={User} label={navText.settings} hasBadge={hasSettingsNotification} />
             </div>
           </div>

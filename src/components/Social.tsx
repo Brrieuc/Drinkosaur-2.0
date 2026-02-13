@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { FriendStatus, UserProfile, BacStatus, FriendGroup } from '../types';
 import { FriendRequest } from '../hooks/useSocial';
+import { ComputedAward } from '../constants/awards';
+import { AwardsModal } from './AwardsModal';
 import {
     UserPlus, Loader2, AlertTriangle, Trash2, Check, X, LogOut,
     Bell, Trophy, Medal, RefreshCw, Sparkles, Share2, Users, Plus, ChevronLeft, Edit2
@@ -34,6 +36,12 @@ interface SocialProps {
     onFetchGroupStatus: (groupId: string) => Promise<FriendStatus[]>;
     onInviteToGroup: (groupId: string, friendIds: string[]) => Promise<void>;
     onUpdateGroupIcon: (groupId: string, icon: string) => Promise<void>;
+
+    // Awards Props
+    awards: ComputedAward[];
+    awardsLoading: boolean;
+    awardsMonth: { month: number; year: number };
+    onFetchGroupAwards: (groupId: string, month: number, year: number) => void;
 }
 
 enum SocialTab {
@@ -67,7 +75,11 @@ export const Social: React.FC<SocialProps> = (props) => {
         onLeaveGroup,
         onFetchGroupStatus,
         onInviteToGroup,
-        onUpdateGroupIcon
+        onUpdateGroupIcon,
+        awards,
+        awardsLoading,
+        awardsMonth,
+        onFetchGroupAwards
     } = props;
 
     const [searchUsername, setSearchUsername] = useState('');
@@ -99,6 +111,7 @@ export const Social: React.FC<SocialProps> = (props) => {
     // Invite to Group State
     const [isInvitingToGroup, setIsInvitingToGroup] = useState(false);
     const [showIconPicker, setShowIconPicker] = useState(false);
+    const [showAwardsModal, setShowAwardsModal] = useState(false);
     const [isSoberExpanded, setIsSoberExpanded] = useState(false);
 
     const t = useMemo(() => ({
@@ -557,6 +570,13 @@ export const Social: React.FC<SocialProps> = (props) => {
                                         <h3 className="text-3xl font-black text-white">{groups.find(g => g.id === selectedGroupId)?.name}</h3>
                                     </div>
                                     <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setShowAwardsModal(true)}
+                                            className="p-2 bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-xl text-amber-400 hover:from-amber-500/30 hover:to-orange-500/30 transition-all shadow-lg shadow-amber-500/10"
+                                            title={language === 'fr' ? 'Awards du mois' : 'Monthly Awards'}
+                                        >
+                                            <Trophy size={16} />
+                                        </button>
                                         <button onClick={() => setIsInvitingToGroup(true)} className="p-2 bg-blue-600 rounded-xl text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20"><UserPlus size={16} /></button>
                                         <button onClick={() => { onLeaveGroup(selectedGroupId); setSelectedGroupId(null); }} className="p-2 bg-white/5 rounded-xl text-red-400 hover:bg-red-500/20 transition-colors"><LogOut size={16} /></button>
                                     </div>
@@ -796,6 +816,21 @@ export const Social: React.FC<SocialProps> = (props) => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* --- AWARDS MODAL --- */}
+            {showAwardsModal && selectedGroupId && (
+                <AwardsModal
+                    groupId={selectedGroupId}
+                    groupName={groups.find(g => g.id === selectedGroupId)?.name || ''}
+                    awards={awards}
+                    loading={awardsLoading}
+                    selectedMonth={awardsMonth}
+                    onFetchAwards={onFetchGroupAwards}
+                    onClose={() => setShowAwardsModal(false)}
+                    language={language}
+                    myUid={myUid}
+                />
             )}
         </div>
     );
