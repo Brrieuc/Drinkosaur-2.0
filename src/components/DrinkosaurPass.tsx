@@ -108,7 +108,9 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
     const [isEditing, setIsEditing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [blobUrl, setBlobUrl] = useState<string | null>(null);
+
     const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
+    const [activeBadgeSlot, setActiveBadgeSlot] = useState<number | null>(null); // Track which slot is being edited
     const passRef = useRef<HTMLDivElement>(null);
 
     // Preload profile image as Blob to bypass CORS during export
@@ -420,25 +422,14 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                 <div key={i} className="flex flex-col items-center gap-1 w-28">
                                     <div
                                         className={`w-24 h-24 rounded-3xl border border-white/10 flex items-center justify-center p-0 relative transition-transform active:scale-95 ${badge ? 'bg-white/5 cursor-pointer hover:bg-white/10' : 'bg-white/5'}`}
-                                        onClick={() => badge && setSelectedDetailId(badgeId)}
+                                        onClick={() => {
+                                            if (isEditing) {
+                                                setActiveBadgeSlot(i);
+                                            } else if (badge) {
+                                                setSelectedDetailId(badgeId);
+                                            }
+                                        }}
                                     >
-                                        {isEditing && (
-                                            <select
-                                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                                value={badgeId || ''}
-                                                onChange={(e) => {
-                                                    const newBadges = [...config.selectedBadges];
-                                                    newBadges[i] = e.target.value;
-                                                    setConfig({ ...config, selectedBadges: newBadges });
-                                                }}
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <option value="">None</option>
-                                                {wonAwards.map(w => (
-                                                    <option key={w.awardId} value={w.awardId}>{w.value} - {w.groupName}</option>
-                                                ))}
-                                            </select>
-                                        )}
                                         {badge ? (
                                             <img
                                                 src={AWARD_IMAGES[badgeId] || getSecureImgUrl(def?.imageUrl)}
@@ -628,6 +619,79 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                 </div>
                             );
                         })()}
+                    </div>
+                )}
+
+                {/* Badge Selector Modal (Grid View) */}
+                {activeBadgeSlot !== null && (
+                    <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col p-6 animate-in fade-in zoom-in duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-white uppercase tracking-wider">Select Badge</h3>
+                            <button
+                                onClick={() => setActiveBadgeSlot(null)}
+                                className="p-2 bg-white/10 rounded-full text-white/70 hover:bg-white/20"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto no-scrollbar grid grid-cols-4 gap-4 pb-20">
+                            {/* Empty Option */}
+                            <div
+                                className="aspect-square rounded-2xl border-2 border-white/10 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white/5 transition-colors"
+                                onClick={() => {
+                                    const newBadges = [...config.selectedBadges];
+                                    newBadges[activeBadgeSlot] = '';
+                                    setConfig({ ...config, selectedBadges: newBadges });
+                                    setActiveBadgeSlot(null);
+                                }}
+                            >
+                                <div className="w-10 h-10 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center">
+                                    <X size={16} className="text-white/30" />
+                                </div>
+                                <span className="text-[10px] font-bold text-white/40 uppercase">None</span>
+                            </div>
+
+                            {/* Won Awards */}
+                            {wonAwards.map((award) => {
+                                const def = AWARD_DEFINITIONS.find(a => a.id === award.awardId);
+                                const isSelected = config.selectedBadges.includes(award.awardId);
+                                const isActive = config.selectedBadges[activeBadgeSlot] === award.awardId;
+
+                                // Group Name or Display Name
+                                // User asked for "Nom du dinosaure (Beerosaur...)" which is typically the groupName
+                                const dinoName = award.groupName;
+
+                                return (
+                                    <div
+                                        key={award.awardId}
+                                        className={`aspect-square rounded-2xl border-2 flex flex-col items-center justify-center p-2 cursor-pointer transition-all ${isActive ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/10 hover:bg-white/5'} ${isSelected && !isActive ? 'opacity-50 grayscale' : ''}`}
+                                        onClick={() => {
+                                            const newBadges = [...config.selectedBadges];
+                                            newBadges[activeBadgeSlot] = award.awardId;
+                                            setConfig({ ...config, selectedBadges: newBadges });
+                                            setActiveBadgeSlot(null);
+                                        }}
+                                    >
+                                        <div className="flex-1 w-full flex items-center justify-center relative">
+                                            <img
+                                                src={AWARD_IMAGES[award.awardId] || getSecureImgUrl(def?.imageUrl)}
+                                                className="w-full h-full object-contain drop-shadow-lg"
+                                                alt={dinoName}
+                                            />
+                                            {isActive && (
+                                                <div className="absolute top-0 right-0 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
+                                                    <X size={10} className="text-white transform rotate-45" style={{ transform: 'none' /* Override X rotate */ }}><span className="text-[10px]">✓</span></X>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="text-[9px] font-bold text-white/60 uppercase tracking-wide text-center mt-1 truncate w-full">
+                                            {dinoName}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
             </div>
