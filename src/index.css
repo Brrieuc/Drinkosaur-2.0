@@ -575,3 +575,24 @@ h3 {
   pointer-events: none;
   z-index: 40; /* Above image */
 }
+
+/* --- FRESH PINT (BEER) EFFECT --- */
+@keyframes bubble-rise-fast {
+  0% { transform: translateY(100%) scale(0.5); opacity: 0; }
+  20% { opacity: 0.8; }
+  80% { opacity: 0.6; }
+  100% { transform: translateY(-20%) scale(1.2); opacity: 0; }
+}
+
+.beer-bubble {
+  position: absolute;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0.4));
+  border-radius: 50%;
+  animation: bubble-rise-fast linear infinite;
+}
+
+.beer-froth {
+  background: radial-gradient(circle, #ffffff 0%, #fef3c7 100%);
+  filter: blur(3px);
+  opacity: 0.9;
+}
