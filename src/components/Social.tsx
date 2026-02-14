@@ -48,6 +48,8 @@ interface SocialProps {
     onFetchGroupAwards: (groupId: string, month: number, year: number) => void;
     onFetchGroupInvites: (groupId: string) => Promise<any[]>;
     onOpenGlobal: () => void;
+    onClaimAward: (groupId: string, award: ComputedAward) => Promise<boolean>;
+    appLaunch: { month: number; year: number };
 }
 
 enum SocialTab {
@@ -1112,9 +1114,12 @@ export const Social: React.FC<SocialProps> = (props) => {
                                 loading={awardsLoading}
                                 selectedMonth={awardsMonth}
                                 onFetchAwards={onFetchGroupAwards}
+                                onClaimAward={(award) => props.onClaimAward(selectedGroupId, award)}
                                 onClose={() => setShowAwardsModal(false)}
                                 language={language}
                                 myUid={myUid}
+                                wonAwards={props.myProfile.wonAwards}
+                                appLaunch={props.appLaunch}
                             />
                         )}
                     </div>

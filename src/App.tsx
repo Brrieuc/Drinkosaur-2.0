@@ -18,6 +18,7 @@ import { useGroups } from './hooks/useGroups';
 import { useAuth } from './hooks/useAuth';
 import useBacCalculator from './hooks/useBacCalculator';
 import { useAwards } from './hooks/useAwards';
+import { ComputedAward } from './constants/awards';
 import { useAwardNotifications } from './hooks/useAwardNotifications';
 import { useGlobalStats } from './hooks/useGlobalStats';
 import { HelmetProvider } from 'react-helmet-async';
@@ -80,7 +81,9 @@ const App: React.FC = () => {
     awards,
     loading: awardsLoading,
     selectedMonth: awardsMonth,
-    fetchGroupAwards
+    fetchGroupAwards,
+    claimAward,
+    appLaunch
   } = useAwards();
 
   const {
@@ -480,7 +483,9 @@ const App: React.FC = () => {
                 awardsLoading={awardsLoading}
                 awardsMonth={awardsMonth}
                 onFetchGroupAwards={(groupId: string, month: number, year: number) => fetchGroupAwards(groupId, month, year, user.language)}
+                onClaimAward={(groupId: string, award: ComputedAward) => claimAward(authUser?.uid || '', groupId, award)}
                 onOpenGlobal={() => setView(AppView.GLOBE)}
+                appLaunch={appLaunch}
               />
               {selectedFriend && (
                 <FriendProfileModal

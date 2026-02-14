@@ -99,7 +99,7 @@ export const NeonEffect: React.FC = () => (
         <div className="neon-ring" style={{ animation: 'neon-flicker-3d 4s infinite' }} />
         <div className="absolute inset-[-20%] bg-fuchsia-500/30 blur-2xl rounded-full animate-pulse" />
         {/* Inner Light Reflection */}
-        <div className="absolute inset-0 rounded-full shadow-[inset_0_0_20px_#d946ef] opacity-50 Mix-blend-overlay"></div>
+        <div className="absolute inset-0 rounded-full shadow-[inset_0_0_20px_#d946ef] opacity-50 mix-blend-overlay"></div>
     </div>
 );
 
@@ -129,11 +129,6 @@ export const DivineEffect: React.FC = () => (
 
         {/* Subtle Foam Head (Creamy Top) */}
         <div className="absolute top-[-5%] left-[10%] right-[10%] h-[15%] rounded-[100%] bg-gradient-to-b from-white via-[#fffbeb] to-transparent blur-[4px] opacity-80"></div>
-
-        {/* Condensation / Dew Drops on Glass */}
-        <div className="absolute top-[20%] right-[15%] w-1 h-1 bg-white/60 rounded-full blur-[0.5px]"></div>
-        <div className="absolute top-[25%] right-[18%] w-1.5 h-1.5 bg-white/40 rounded-full blur-[0.5px]"></div>
-        <div className="absolute bottom-[30%] left-[20%] w-1 h-1 bg-white/50 rounded-full blur-[0.5px]"></div>
     </div>
 );
 
@@ -155,22 +150,28 @@ export const ProfilePhoto: React.FC<{
     borderColor?: string;
     className?: string;
     containerClassName?: string;
-}> = ({ photoURL, effect, size = 'w-12 h-12', borderColor = 'white', className = '', containerClassName = '' }) => {
+    rounded?: string;
+}> = ({ photoURL, effect, size = 'w-12 h-12', borderColor = 'white', className = '', containerClassName = '', rounded = 'rounded-full' }) => {
     return (
         <div className={`relative ${size} ${containerClassName}`}>
             {effect && <ProfileEffect effect={effect} />}
-            <div className={`w-full h-full rounded-full overflow-hidden relative z-20 ${effect === 'glitch' ? 'glitch-container' : ''} ${className}`}>
+            <div className={`w-full h-full ${rounded} overflow-hidden relative z-20 ${effect === 'glitch' ? 'glitch-container' : ''} ${className}`}>
                 <img
                     src={photoURL || 'https://via.placeholder.com/150'}
                     alt="Profile"
                     className="w-full h-full object-cover"
                     loading="lazy"
+                    referrerPolicy="no-referrer"
+                    crossOrigin="anonymous"
                 />
                 {/* Glossy Overlay for depth */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none opacity-50" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none opacity-40 mix-blend-overlay" />
+                <div className="absolute inset-0 bg-gradient-to-bl from-transparent via-transparent to-black/20 pointer-events-none" />
             </div>
-            {/* Visual Border */}
-            <div className="absolute inset-0 border-2 rounded-full z-30 pointer-events-none opacity-50 shadow-inner" style={{ borderColor: borderColor }} />
+            {/* Visual Border / Ring */}
+            <div className={`absolute inset-0 border-2 ${rounded} z-30 pointer-events-none opacity-40 shadow-inner`} style={{ borderColor: borderColor }} />
+            {/* Ambient Shadow for depth */}
+            <div className={`absolute -inset-1 ${rounded} bg-black/20 blur-sm -z-10 pointer-events-none`} />
         </div>
     );
 };
@@ -453,11 +454,12 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                             )}
 
                             <ProfilePhoto
-                                photoURL={blobUrl || undefined}
+                                photoURL={blobUrl || user.customPhotoURL || user.photoURL || undefined}
                                 effect={config.profileEffect}
                                 size="w-32 h-32"
                                 borderColor={config.backgroundColor || 'rgba(139, 92, 246, 0.5)'}
                                 className="shadow-[0_0_30px_rgba(0,0,0,0.5)]"
+                                rounded="rounded-[32px]"
                             />
                         </div>
                     </div>

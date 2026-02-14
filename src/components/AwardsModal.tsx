@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, Trophy, Loader2, Award } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Trophy, Loader2, Award, CheckCircle2, Sparkles } from 'lucide-react';
 import { AWARD_DEFINITIONS, ComputedAward } from '../constants/awards';
+import { WonAward } from '../types';
 
 const MONTH_NAMES_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const MONTH_NAMES_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -15,6 +16,9 @@ interface AwardsModalProps {
     onClose: () => void;
     language: 'en' | 'fr';
     myUid: string;
+    wonAwards?: WonAward[];
+    onClaimAward: (award: ComputedAward) => Promise<boolean>;
+    appLaunch: { month: number; year: number };
 }
 
 export const AwardsModal: React.FC<AwardsModalProps> = ({
@@ -26,11 +30,15 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
     onFetchAwards,
     onClose,
     language,
-    myUid
+    myUid,
+    wonAwards = [],
+    onClaimAward,
+    appLaunch
 }) => {
     const [revealedIndex, setRevealedIndex] = useState(-1);
     const [isRevealing, setIsRevealing] = useState(false);
     const [selectedAward, setSelectedAward] = useState<ComputedAward | null>(null);
+    const [isClaiming, setIsClaiming] = useState(false);
 
     const monthNames = language === 'fr' ? MONTH_NAMES_FR : MONTH_NAMES_EN;
 
@@ -44,6 +52,11 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
         let newYear = selectedMonth.year;
         if (newMonth < 0) { newMonth = 11; newYear--; }
         if (newMonth > 11) { newMonth = 0; newYear++; }
+
+        // Don't go before launch
+        if (newYear < appLaunch.year || (newYear === appLaunch.year && newMonth < appLaunch.month)) {
+            return;
+        }
 
         // Don't go to future months
         const now = new Date();
@@ -85,6 +98,30 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
         return nextYear < now.getFullYear() || (nextYear === now.getFullYear() && nextMonth < now.getMonth());
     })();
 
+    const canGoBackward = (() => {
+        let prevMonth = selectedMonth.month - 1;
+        let prevYear = selectedMonth.year;
+        if (prevMonth < 0) { prevMonth = 11; prevYear--; }
+        return prevYear > appLaunch.year || (prevYear === appLaunch.year && prevMonth >= appLaunch.month);
+    })();
+
+    const isAwardClaimed = (award: ComputedAward) => {
+        return wonAwards.some(w =>
+            w.awardId === award.awardId &&
+            w.groupId === groupId &&
+            w.month === award.month &&
+            w.year === award.year
+        );
+    };
+
+    const handleClaim = async (e: React.MouseEvent, award: ComputedAward) => {
+        e.stopPropagation();
+        if (isClaiming || isAwardClaimed(award)) return;
+        setIsClaiming(true);
+        await onClaimAward(award);
+        setIsClaiming(false);
+    };
+
     return (
         <div className="fixed inset-0 z-[150] bg-black/90 backdrop-blur-2xl flex flex-col animate-fade-in">
             {/* Header */}
@@ -109,7 +146,8 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
             <div className="flex items-center justify-center gap-6 mb-6 px-6">
                 <button
                     onClick={() => navigateMonth(-1)}
-                    className="p-3 bg-white/5 rounded-2xl text-white/40 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                    disabled={!canGoBackward}
+                    className="p-3 bg-white/5 rounded-2xl text-white/40 hover:text-white hover:bg-white/10 transition-all active:scale-95 disabled:opacity-5"
                 >
                     <ChevronLeft size={20} />
                 </button>
@@ -122,7 +160,7 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
                 <button
                     onClick={() => navigateMonth(1)}
                     disabled={!canGoForward}
-                    className="p-3 bg-white/5 rounded-2xl text-white/40 hover:text-white hover:bg-white/10 transition-all active:scale-95 disabled:opacity-20"
+                    className="p-3 bg-white/5 rounded-2xl text-white/40 hover:text-white hover:bg-white/10 transition-all active:scale-95 disabled:opacity-5"
                 >
                     <ChevronRight size={20} />
                 </button>
@@ -176,16 +214,17 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
                                 if (!def) return null;
                                 const isRevealed = index <= revealedIndex;
                                 const isMyAward = award.recipientUid === myUid;
+                                const claimed = isAwardClaimed(award);
 
                                 return (
                                     <div
                                         key={award.awardId}
                                         onClick={() => isRevealed && setSelectedAward(award)}
                                         className={`relative rounded-[28px] overflow-hidden transition-all duration-500 cursor-pointer active:scale-95 ${isRevealed
-                                                ? 'opacity-100 translate-y-0'
-                                                : revealedIndex >= 0
-                                                    ? 'opacity-20 translate-y-4 pointer-events-none'
-                                                    : 'opacity-40 pointer-events-none blur-sm'
+                                            ? 'opacity-100 translate-y-0'
+                                            : revealedIndex >= 0
+                                                ? 'opacity-20 translate-y-4 pointer-events-none'
+                                                : 'opacity-40 pointer-events-none blur-sm'
                                             } ${isMyAward && isRevealed ? 'ring-2 ring-amber-400/50' : ''}`}
                                         style={{
                                             animationDelay: `${index * 100}ms`,
@@ -237,6 +276,13 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
                                                     </span>
                                                 </div>
                                             )}
+
+                                            {/* Claimed Badge */}
+                                            {isRevealed && isMyAward && claimed && (
+                                                <div className="absolute top-2 right-2 text-emerald-400">
+                                                    <CheckCircle2 size={14} />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -251,6 +297,7 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
                 const def = getAwardDef(selectedAward.awardId);
                 if (!def) return null;
                 const isMyAward = selectedAward.recipientUid === myUid;
+                const claimed = isAwardClaimed(selectedAward);
 
                 return (
                     <div
@@ -314,6 +361,32 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
                                     </div>
                                 </div>
 
+                                {/* Action Button */}
+                                {isMyAward && (
+                                    <button
+                                        onClick={(e) => handleClaim(e, selectedAward)}
+                                        disabled={claimed || isClaiming}
+                                        className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${claimed
+                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                            : 'bg-white text-black active:scale-95 shadow-xl hover:bg-amber-400'
+                                            }`}
+                                    >
+                                        {isClaiming ? (
+                                            <Loader2 size={16} className="animate-spin" />
+                                        ) : claimed ? (
+                                            <>
+                                                <CheckCircle2 size={16} />
+                                                {language === 'fr' ? 'Récupéré' : 'Claimed'}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles size={16} />
+                                                {language === 'fr' ? 'Récupérer le badge' : 'Claim Badge'}
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+
                                 {/* Month badge */}
                                 <div className="bg-white/5 px-4 py-2 rounded-full">
                                     <span className="text-[10px] text-white/30 font-black uppercase tracking-widest">
@@ -328,3 +401,4 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
         </div>
     );
 };
+

@@ -118,6 +118,10 @@ const totalAlcoholGrams = (drinks: Drink[]): number => {
     return drinks.reduce((sum, d) => sum + (d.volumeMl * (d.abv / 100) * 0.789), 0);
 };
 
+// Launch date: February 2026
+const APP_LAUNCH_MONTH = 1; // February
+const APP_LAUNCH_YEAR = 2026;
+
 /** Compute all awards for a group in a specific month */
 const computeMonthlyAwards = (
     membersData: MemberData[],
@@ -127,14 +131,27 @@ const computeMonthlyAwards = (
 ): ComputedAward[] => {
     const awards: ComputedAward[] = [];
 
+    // Check if period is before launch
+    if (year < APP_LAUNCH_YEAR || (year === APP_LAUNCH_YEAR && month < APP_LAUNCH_MONTH)) {
+        return [];
+    }
+
     // Pre-filter drinks for the month
     const membersMonthly = membersData.map(m => ({
         ...m,
         monthlyDrinks: filterDrinksByMonth(m.drinks, month, year),
     }));
 
+    // Calculate group total activity to validate "least_drinks"
+    const groupTotalAlcohol = membersMonthly.reduce((sum, m) => sum + totalAlcoholGrams(m.monthlyDrinks), 0);
+
     // For each award category, find the winner
     for (const awardDef of AWARD_DEFINITIONS) {
+        // Skip Sobrosaure if nobody drank anything in the group this month
+        if (awardDef.category === 'least_drinks' && groupTotalAlcohol === 0) {
+            continue;
+        }
+
         let bestUid = '';
         let bestName = '';
         let bestPhoto = '';
@@ -229,7 +246,7 @@ const computeMonthlyAwards = (
             }
         }
 
-        // Only award if there's a winner (for "most" awards, must be > 0)
+        // Only award if there's a winner
         if (bestUid) {
             awards.push({
                 awardId: awardDef.id,
@@ -251,9 +268,15 @@ export const useAwards = () => {
     const [loading, setLoading] = useState(false);
     const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number }>(() => {
         const now = new Date();
-        // Default to previous month
-        const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
-        const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        // Default to previous month, but not before launch
+        let prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+        let prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+
+        if (prevYear < APP_LAUNCH_YEAR || (prevYear === APP_LAUNCH_YEAR && prevMonth < APP_LAUNCH_MONTH)) {
+            prevMonth = APP_LAUNCH_MONTH;
+            prevYear = APP_LAUNCH_YEAR;
+        }
+
         return { month: prevMonth, year: prevYear };
     });
 
@@ -263,6 +286,12 @@ export const useAwards = () => {
         year: number,
         language: 'en' | 'fr'
     ) => {
+        if (year < APP_LAUNCH_YEAR || (year === APP_LAUNCH_YEAR && month < APP_LAUNCH_MONTH)) {
+            setAwards([]);
+            setSelectedMonth({ month, year });
+            return;
+        }
+
         setLoading(true);
         try {
             // 1. Get group member IDs
@@ -316,36 +345,6 @@ export const useAwards = () => {
             const computed = computeMonthlyAwards(membersData, month, year, language);
             setAwards(computed);
             setSelectedMonth({ month, year });
-
-            // 4. Persist won awards to each winner's Firestore user doc
-            const groupName = groupSnap.data().name || '';
-            for (const award of computed) {
-                try {
-                    // Check if this award is already saved (avoid duplicates)
-                    const userRef = doc(db, "users", award.recipientUid);
-                    const userSnap = await getDoc(userRef);
-                    const existing: WonAward[] = userSnap.data()?.wonAwards || [];
-                    const alreadySaved = existing.some(
-                        (w: WonAward) => w.awardId === award.awardId && w.groupId === groupId && w.month === month && w.year === year
-                    );
-                    if (!alreadySaved) {
-                        const wonAward: WonAward = {
-                            awardId: award.awardId,
-                            groupId,
-                            groupName,
-                            month,
-                            year,
-                            value: String(award.value),
-                            wonAt: Date.now(),
-                        };
-                        await updateDoc(userRef, {
-                            wonAwards: arrayUnion(wonAward)
-                        });
-                    }
-                } catch (e) {
-                    console.warn("Could not persist award for", award.recipientUid, e);
-                }
-            }
         } catch (err) {
             console.error("Error computing awards:", err);
             setAwards([]);
@@ -354,10 +353,39 @@ export const useAwards = () => {
         }
     };
 
+    const claimAward = async (uid: string, groupId: string, award: ComputedAward) => {
+        try {
+            const groupSnap = await getDoc(doc(db, "groups", groupId));
+            const groupName = groupSnap.data()?.name || '';
+            const userRef = doc(db, "users", uid);
+
+            const wonAward: WonAward = {
+                awardId: award.awardId,
+                groupId,
+                groupName,
+                month: award.month,
+                year: award.year,
+                value: String(award.value),
+                wonAt: Date.now(),
+            };
+
+            await updateDoc(userRef, {
+                wonAwards: arrayUnion(wonAward)
+            });
+            return true;
+        } catch (e) {
+            console.error("Error claiming award:", e);
+            return false;
+        }
+    };
+
     return {
         awards,
         loading,
         selectedMonth,
         fetchGroupAwards,
+        claimAward,
+        appLaunch: { month: APP_LAUNCH_MONTH, year: APP_LAUNCH_YEAR }
     };
 };
+
