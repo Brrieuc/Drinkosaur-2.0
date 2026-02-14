@@ -521,6 +521,8 @@ const App: React.FC = () => {
               awardsLoading={awardsLoading}
               awardsMonth={awardsMonth}
               onFetchGroupAwards={(groupId: string, month: number, year: number) => fetchGroupAwards(groupId, month, year, user.language)}
+              onClaimAward={(groupId, award) => claimAward(authUser!.uid, groupId, award)}
+              appLaunch={appLaunch}
               myUid={authUser?.uid || ''}
             />
           )}

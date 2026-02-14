@@ -140,16 +140,16 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({ status, user, dr
     };
 
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-fade-in">
-            <div className="relative w-full max-w-sm">
+        <div className="modal-overlay">
+            <div className="modal-container w-full max-w-sm rounded-[40px] relative overflow-visible">
 
                 {/* Close Button */}
                 {!isSharing && (
                     <button
                         onClick={onClose}
-                        className="absolute -top-12 right-0 p-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
+                        className="absolute -top-12 right-0 p-3 bg-white/5 rounded-2xl text-white/40 hover:text-white hover:bg-white/10 transition-colors z-20 border border-white/5"
                     >
-                        <X size={24} />
+                        <X size={20} />
                     </button>
                 )}
 

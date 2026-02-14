@@ -21,6 +21,8 @@ interface NotificationsModalProps {
     awardsLoading: boolean;
     awardsMonth: { month: number; year: number };
     onFetchGroupAwards: (groupId: string, month: number, year: number) => void;
+    onClaimAward: (groupId: string, award: ComputedAward) => Promise<boolean>;
+    appLaunch: { month: number; year: number };
     myUid: string;
 }
 
@@ -38,6 +40,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
     awardsLoading,
     awardsMonth,
     onFetchGroupAwards,
+    onClaimAward,
+    appLaunch,
     myUid
 }) => {
     const isFrench = language === 'fr';
@@ -64,11 +68,9 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
 
     return (
         <>
-            <div className="fixed inset-0 z-[100] flex items-end justify-center animate-fade-in" onClick={onClose}>
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
+            <div className="modal-overlay">
                 <div
-                    className="relative w-full max-w-lg bg-gradient-to-b from-[#1a1a2e] to-[#0d0d1a] rounded-t-[40px] border-t border-white/10 shadow-[0_-10px_80px_rgba(0,0,0,0.7)] overflow-hidden animate-slide-up"
-                    onClick={(e) => e.stopPropagation()}
+                    className="modal-container w-full max-w-lg rounded-[40px] relative"
                     style={{ maxHeight: '85vh' }}
                 >
                     {/* Glow decoration */}
@@ -112,8 +114,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                                                     key={notif.id}
                                                     onClick={() => handleOpenAwardNotif(notif)}
                                                     className={`w-full text-left glass-panel-3d p-4 rounded-3xl flex items-center gap-4 transition-all active:scale-[0.98] relative overflow-hidden group ${notif.isRead
-                                                            ? 'opacity-50 bg-white/[0.02]'
-                                                            : 'bg-amber-500/5 border-amber-500/20'
+                                                        ? 'opacity-50 bg-white/[0.02]'
+                                                        : 'bg-amber-500/5 border-amber-500/20'
                                                         }`}
                                                 >
                                                     {/* Unread glow effect */}
@@ -123,8 +125,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
 
                                                     {/* Icon */}
                                                     <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0 ${notif.isRead
-                                                            ? 'bg-white/5 border-white/10 text-white/30'
-                                                            : 'bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-amber-500/30 text-amber-400'
+                                                        ? 'bg-white/5 border-white/10 text-white/30'
+                                                        : 'bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-amber-500/30 text-amber-400'
                                                         }`}>
                                                         {notif.groupIcon ? (
                                                             <span className="text-2xl">{notif.groupIcon}</span>
@@ -228,6 +230,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                     loading={awardsLoading}
                     selectedMonth={awardsMonth}
                     onFetchAwards={onFetchGroupAwards}
+                    onClaimAward={(award) => onClaimAward(openAwardsNotif.groupId, award)}
+                    appLaunch={appLaunch}
                     onClose={() => setOpenAwardsNotif(null)}
                     language={language as 'en' | 'fr'}
                     myUid={myUid}

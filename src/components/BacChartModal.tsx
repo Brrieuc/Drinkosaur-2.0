@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer, CartesianGrid, Label } from 'recharts';
 import { X, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Drink, UserProfile } from '../types';
@@ -85,25 +85,43 @@ export const BacChartModal: React.FC<BacChartModalProps> = ({ drinks, user, onCl
     return null;
   };
 
+  // Body scroll lock (nested)
+  useEffect(() => {
+    // Already locked by parent, but let's be safe
+    document.body.classList.add('modal-open');
+    return () => {
+      // Don't remove if parent modal is still open
+      const hasOtherModals = document.querySelectorAll('.modal-overlay').length > 1;
+      if (!hasOtherModals) {
+        document.body.classList.remove('modal-open');
+      }
+    };
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
-      <div className="w-full max-w-2xl bg-[#0f0f13] border border-white/10 rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-slide-up">
+    <div className="modal-overlay nested-modal-overlay">
+      <div className="modal-container w-full max-w-2xl rounded-[40px] relative">
 
         {/* Header */}
-        <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/5 bg-white/5 gap-2">
-          <h3 className="text-xl font-bold text-white tracking-tight truncate min-w-0">{t.title}</h3>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button onClick={() => setCenterTime(prev => prev - (4 * 60 * 60 * 1000))} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-white transition-colors">
+        <div className="flex items-center justify-between p-5 md:p-6 border-b border-white/5 bg-white/5">
+          <div className="flex flex-col min-w-0">
+            <h3 className="text-xl font-black italic uppercase tracking-tighter text-white truncate">{t.title}</h3>
+            <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest leading-none mt-1">Real-time BAC Forecast</p>
+          </div>
+
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-black/20 rounded-2xl border border-white/5">
+            <button onClick={() => setCenterTime(prev => prev - (4 * 60 * 60 * 1000))} className="p-1.5 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-all">
               <ChevronLeft size={16} />
             </button>
-            <button onClick={() => setCenterTime(Date.now())} className="text-xs font-bold text-blue-400 uppercase tracking-widest hover:text-blue-300 px-3 py-1 border border-blue-500/30 rounded-lg bg-blue-500/10">
+            <button onClick={() => setCenterTime(Date.now())} className="text-[10px] font-black text-blue-400 uppercase tracking-widest hover:text-blue-300 px-3 py-1 hover:bg-blue-500/10 rounded-lg transition-all">
               {t.now}
             </button>
-            <button onClick={() => setCenterTime(prev => prev + (4 * 60 * 60 * 1000))} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-white transition-colors">
+            <button onClick={() => setCenterTime(prev => prev + (4 * 60 * 60 * 1000))} className="p-1.5 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-all">
               <ChevronRight size={16} />
             </button>
           </div>
-          <button onClick={onClose} className="p-2 bg-white/10 rounded-full hover:bg-white/20 text-white transition-colors ml-2 shrink-0">
+
+          <button onClick={onClose} className="p-2.5 bg-white/5 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-white/40 transition-all border border-white/5 ml-2">
             <X size={20} />
           </button>
         </div>

@@ -62,7 +62,9 @@ export const useGroups = () => {
             creatorId: authUser.uid,
             memberIds: [authUser.uid], // Creator is always the first member
             pendingInviteIds: friendIds.filter(id => id !== authUser.uid),
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            memberListPublic: true,
+            showInGlobalRanking: true
         };
 
         const docRef = await addDoc(collection(db, "groups"), groupData);

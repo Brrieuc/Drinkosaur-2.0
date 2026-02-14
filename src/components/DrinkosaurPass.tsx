@@ -407,9 +407,20 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
         return `${processedUrl}${separator}t=${new Date().getDate()}`; // Salt by day to allow some caching but fix initial mismatch
     };
 
+    // Body scroll lock
+    useEffect(() => {
+        document.body.classList.add('modal-open');
+        return () => {
+            const hasOtherModals = document.querySelectorAll('.modal-overlay').length > 1;
+            if (!hasOtherModals) {
+                document.body.classList.remove('modal-open');
+            }
+        };
+    }, []);
+
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-            <div className="bg-[#050505] w-full max-w-md rounded-[32px] overflow-hidden flex flex-col max-h-[90vh] border border-white/10 shadow-2xl relative">
+        <div className="modal-overlay nested-modal-overlay">
+            <div className="modal-container w-full max-w-md rounded-[32px] relative overflow-x-hidden">
 
                 {/* Header Controls */}
                 <div className="absolute top-4 right-4 z-20 flex gap-2">

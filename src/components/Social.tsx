@@ -7,7 +7,7 @@ import { ComputedAward } from '../constants/awards';
 import { AwardsModal } from './AwardsModal';
 import {
     UserPlus, Loader2, AlertTriangle, Trash2, Check, X, LogOut,
-    Bell, Trophy, Medal, RefreshCw, Sparkles, Share2, Users, Plus, ChevronLeft, Edit2, Shield, Globe, Eye, EyeOff, Clock
+    Bell, Trophy, Medal, RefreshCw, Sparkles, Share2, Users, Plus, ChevronLeft, Edit2, Globe, Clock
 } from 'lucide-react';
 import { ProfilePhoto } from './DrinkosaurPass';
 
@@ -86,7 +86,6 @@ export const Social: React.FC<SocialProps> = (props) => {
         onFetchGroupStatus,
         onInviteToGroup,
         onUpdateGroupIcon,
-        onUpdateGroupSettings,
         awards,
         awardsLoading,
         awardsMonth,
@@ -127,15 +126,26 @@ export const Social: React.FC<SocialProps> = (props) => {
     const [isInvitingToGroup, setIsInvitingToGroup] = useState(false);
     const [showIconPicker, setShowIconPicker] = useState(false);
     const [showAwardsModal, setShowAwardsModal] = useState(false);
+    const [showGroupActions, setShowGroupActions] = useState(false);
     const [showPendingInvites, setShowPendingInvites] = useState(false);
     const [pendingInvites, setPendingInvites] = useState<any[]>([]);
     const [loadingPendingInvites, setLoadingPendingInvites] = useState(false);
 
     const [isSoberExpanded, setIsSoberExpanded] = useState(false);
-    const [isGroupPrivacyExpanded, setIsGroupPrivacyExpanded] = useState(false);
     const [showSentRequests, setShowSentRequests] = useState(false);
 
 
+
+    // Body scroll lock for all modals
+    useEffect(() => {
+        const isAnyModalOpen = showSentRequests || isCreatingGroup || isInvitingToGroup || showAwardsModal || showPendingInvites || !!selectedGroupId;
+        if (isAnyModalOpen) {
+            document.body.classList.add('modal-open');
+        } else {
+            document.body.classList.remove('modal-open');
+        }
+        return () => document.body.classList.remove('modal-open');
+    }, [showSentRequests, isCreatingGroup, isInvitingToGroup, showAwardsModal, showPendingInvites, selectedGroupId]);
 
     // Live update for ranking
     const [tick, setTick] = useState(0);
@@ -467,6 +477,13 @@ export const Social: React.FC<SocialProps> = (props) => {
                 style={{ transform: `translateY(${pullOffset}px)` }}
             >
                 <div className="flex items-center justify-between mb-10 px-1">
+                    <div className="flex items-center gap-2">
+                        <Users size={20} className="text-blue-400" />
+                        <h2 className="text-xl font-black uppercase tracking-tighter text-white/90">
+                            {t.title}
+                        </h2>
+                    </div>
+
                     <button
                         onClick={onOpenGlobal}
                         className="flex items-center gap-2.5 px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl active:scale-95 transition-all group"
@@ -476,16 +493,6 @@ export const Social: React.FC<SocialProps> = (props) => {
                         </span>
                         <Globe size={18} className="text-cyan-400 group-hover:rotate-12 transition-transform" />
                     </button>
-
-                    <div className="flex items-center gap-2">
-                        <Users size={20} className="text-blue-400" />
-                        <h2 className="text-xl font-black uppercase tracking-tighter text-white/90">
-                            {t.title}
-                        </h2>
-                    </div>
-
-                    {/* Spacer for symmetry if needed, or just leave it */}
-                    <div className="w-10 sm:w-20 hidden md:block" />
                 </div>
 
                 {/* --- TABS --- */}
@@ -626,8 +633,8 @@ export const Social: React.FC<SocialProps> = (props) => {
 
                         {/* --- SENT REQUESTS MODAL --- */}
                         {showSentRequests && (
-                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-fade-in">
-                                <div className="w-full max-w-md glass-panel-3d rounded-[40px] overflow-hidden flex flex-col max-h-[80vh] animate-slide-up">
+                            <div className="modal-overlay nested-modal-overlay">
+                                <div className="modal-container w-full max-w-md rounded-[40px] relative">
                                     <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
                                         <h3 className="text-xl font-black italic uppercase tracking-tighter text-white flex items-center gap-3">
                                             <Clock className="text-blue-400" /> {t.sentRequests}
@@ -780,30 +787,70 @@ export const Social: React.FC<SocialProps> = (props) => {
                                         >
                                             <Trophy size={16} />
                                         </button>
-                                        <button
-                                            onClick={async () => {
-                                                if (selectedGroupId) {
-                                                    setLoadingPendingInvites(true);
-                                                    setShowPendingInvites(true);
-                                                    try {
-                                                        const invites = await onFetchGroupInvites(selectedGroupId);
-                                                        setPendingInvites(invites);
-                                                    } catch (e) {
-                                                        console.error(e);
-                                                    } finally {
-                                                        setLoadingPendingInvites(false);
-                                                    }
-                                                }
-                                            }}
-                                            className="p-2 bg-white/5 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-                                            title={language === 'fr' ? 'Invitations en attente' : 'Pending Invites'}
-                                        >
-                                            <Clock size={16} />
-                                        </button>
-                                        <button onClick={() => setIsInvitingToGroup(true)} className="p-2 bg-blue-600 rounded-xl text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20"><UserPlus size={16} /></button>
-                                        <button onClick={() => { onLeaveGroup(selectedGroupId); setSelectedGroupId(null); }} className="p-2 bg-white/5 rounded-xl text-red-400 hover:bg-red-500/20 transition-colors"><LogOut size={16} /></button>
+                                        <div className="relative">
+                                            <button
+                                                onClick={() => setShowGroupActions(!showGroupActions)}
+                                                className={`p-2 rounded-xl transition-all border border-white/10 ${showGroupActions ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20' : 'bg-white/5 text-white/40 hover:text-white hover:bg-white/10'}`}
+                                            >
+                                                <ChevronLeft size={20} className={`transition-transform duration-300 ${showGroupActions ? '-rotate-90' : 'rotate-180'}`} />
+                                            </button>
+
+                                            {showGroupActions && (
+                                                <div className="absolute right-0 top-12 z-[100] min-w-[200px] bg-[#1a1a2e] border border-white/10 rounded-2xl p-2 shadow-2xl animate-fade-in space-y-1">
+                                                    <button
+                                                        onClick={async () => {
+                                                            setShowGroupActions(false);
+                                                            if (selectedGroupId) {
+                                                                setLoadingPendingInvites(true);
+                                                                setShowPendingInvites(true);
+                                                                try {
+                                                                    const invites = await onFetchGroupInvites(selectedGroupId);
+                                                                    setPendingInvites(invites);
+                                                                } catch (e) {
+                                                                    console.error(e);
+                                                                } finally {
+                                                                    setLoadingPendingInvites(false);
+                                                                }
+                                                            }
+                                                        }}
+                                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl text-white/70 hover:text-white transition-all text-sm font-bold"
+                                                    >
+                                                        <Clock size={16} className="text-blue-400" />
+                                                        {language === 'fr' ? 'Invitations en attente' : 'Pending Invites'}
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => {
+                                                            setShowGroupActions(false);
+                                                            setIsInvitingToGroup(true);
+                                                        }}
+                                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl text-white/70 hover:text-white transition-all text-sm font-bold"
+                                                    >
+                                                        <UserPlus size={16} className="text-emerald-400" />
+                                                        {language === 'fr' ? 'Inviter des membres' : 'Invite Members'}
+                                                    </button>
+
+                                                    <div className="h-px bg-white/5 my-1" />
+
+                                                    <button
+                                                        onClick={() => {
+                                                            setShowGroupActions(false);
+                                                            if (window.confirm(language === 'fr' ? 'Quitter ce groupe ?' : 'Leave this group?')) {
+                                                                onLeaveGroup(selectedGroupId!);
+                                                                setSelectedGroupId(null);
+                                                            }
+                                                        }}
+                                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 rounded-xl text-red-400/70 hover:text-red-400 transition-all text-sm font-bold"
+                                                    >
+                                                        <LogOut size={16} />
+                                                        {language === 'fr' ? 'Quitter le groupe' : 'Leave group'}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
+
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="relative">
@@ -838,74 +885,7 @@ export const Social: React.FC<SocialProps> = (props) => {
                                     </div>
                                 </div>
 
-                                {/* Group Privacy Settings — only visible to creator */}
-                                {groups.find(g => g.id === selectedGroupId)?.creatorId === myUid && (
-                                    <div className="glass-panel-3d rounded-2xl p-4 space-y-3">
-                                        <button
-                                            onClick={() => setIsGroupPrivacyExpanded(!isGroupPrivacyExpanded)}
-                                            className="w-full flex items-center justify-between group"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <Shield size={14} className="text-purple-400" />
-                                                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest group-hover:text-white/60 transition-colors">
-                                                    {language === 'fr' ? 'Confidentialité du groupe' : 'Group Privacy'}
-                                                </span>
-                                            </div>
-                                            <ChevronLeft size={14} className={`text-white/20 transition-transform duration-300 ${isGroupPrivacyExpanded ? '-rotate-90' : 'rotate-180'}`} />
-                                        </button>
-
-                                        {isGroupPrivacyExpanded && (
-                                            <div className="space-y-3 pt-2 animate-fade-in">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <Globe size={14} className="text-cyan-400" />
-                                                        <div>
-                                                            <p className="text-xs font-bold text-white">
-                                                                {language === 'fr' ? 'Visible dans les classements' : 'Show in global rankings'}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => {
-                                                            const g = groups.find(g => g.id === selectedGroupId);
-                                                            const newVal = !(g?.showInGlobalRanking !== false);
-                                                            onUpdateGroupSettings(selectedGroupId!, { showInGlobalRanking: newVal });
-                                                        }}
-                                                        className={`w-10 h-5 rounded-full transition-colors relative ${(groups.find(g => g.id === selectedGroupId)?.showInGlobalRanking !== false) ? 'bg-emerald-500' : 'bg-white/10'
-                                                            }`}
-                                                    >
-                                                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${(groups.find(g => g.id === selectedGroupId)?.showInGlobalRanking !== false) ? 'left-5' : 'left-0.5'
-                                                            }`} />
-                                                    </button>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        {(groups.find(g => g.id === selectedGroupId)?.memberListPublic)
-                                                            ? <Eye size={14} className="text-emerald-400" />
-                                                            : <EyeOff size={14} className="text-red-400" />}
-                                                        <div>
-                                                            <p className="text-xs font-bold text-white">
-                                                                {language === 'fr' ? 'Liste des membres publique' : 'Public member list'}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => {
-                                                            const g = groups.find(g => g.id === selectedGroupId);
-                                                            const newVal = !(g?.memberListPublic === true);
-                                                            onUpdateGroupSettings(selectedGroupId!, { memberListPublic: newVal });
-                                                        }}
-                                                        className={`w-10 h-5 rounded-full transition-colors relative ${(groups.find(g => g.id === selectedGroupId)?.memberListPublic === true) ? 'bg-emerald-500' : 'bg-white/10'
-                                                            }`}
-                                                    >
-                                                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${(groups.find(g => g.id === selectedGroupId)?.memberListPublic === true) ? 'left-5' : 'left-0.5'
-                                                            }`} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                {/* Group Privacy Settings removed - defaulting to public */}
 
                                 {loadingGroup ? (
                                     <div className="flex justify-center py-20"><Loader2 className="animate-spin text-white/20" size={40} /></div>

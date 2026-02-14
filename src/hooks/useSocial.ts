@@ -165,10 +165,8 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
 
         const updateMyStatus = async () => {
             const statusRef = doc(db, "live_status", authUser.uid);
-            // Respect photo privacy setting — if disabled, don't share photo with friends
-            const sharedPhotoURL = myProfile.photoVisibleToFriends !== false
-                ? (myProfile.customPhotoURL || myProfile.photoURL || authUser.photoURL || '')
-                : '';
+            // Always share photo (privacy logic removed requested by user)
+            const sharedPhotoURL = myProfile.customPhotoURL || myProfile.photoURL || authUser.photoURL || '';
             await setDoc(statusRef, {
                 displayName: myProfile.username || myProfile.displayName || authUser.displayName || 'Anonymous',
                 photoURL: sharedPhotoURL,

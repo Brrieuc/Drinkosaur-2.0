@@ -191,11 +191,9 @@ export const StatsModal: React.FC<StatsModalProps> = ({ drinks, user, onClose })
     }, [drinks, user]);
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center animate-fade-in" onClick={onClose}>
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
+        <div className="modal-overlay">
             <div
-                className="relative w-full max-w-lg bg-gradient-to-b from-[#1a1a2e] to-[#0d0d1a] rounded-t-[40px] border-t border-white/10 shadow-[0_-10px_80px_rgba(0,0,0,0.7)] overflow-hidden animate-slide-up"
-                onClick={(e) => e.stopPropagation()}
+                className="modal-container w-full max-w-lg rounded-[40px] relative"
                 style={{ maxHeight: '85vh' }}
             >
                 {/* Glow decoration */}

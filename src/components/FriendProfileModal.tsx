@@ -134,13 +134,24 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
             .sort((a, b) => b.timestamp - a.timestamp);
     }, [friendDrinks]);
 
+    // Body scroll lock
+    useEffect(() => {
+        document.body.classList.add('modal-open');
+        return () => {
+            const hasOtherModals = document.querySelectorAll('.modal-overlay').length > 1;
+            if (!hasOtherModals) {
+                document.body.classList.remove('modal-open');
+            }
+        };
+    }, []);
+
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl animate-fade-in">
+        <div className="modal-overlay">
             {showChart && (
                 <BacChartModal drinks={friendDrinks} user={friendProfile} onClose={() => setShowChart(false)} />
             )}
 
-            <div className="w-full max-w-lg bg-[#0f0f13] border border-white/10 rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-slide-up relative">
+            <div className="modal-container w-full max-w-lg rounded-[40px] relative">
 
                 {/* Close Button */}
                 <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-white/10 rounded-full hover:bg-white/20 text-white transition-colors z-[110]">

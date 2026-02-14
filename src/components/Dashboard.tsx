@@ -29,6 +29,8 @@ interface DashboardProps {
   awardsLoading?: boolean;
   awardsMonth?: { month: number; year: number };
   onFetchGroupAwards?: (groupId: string, month: number, year: number) => void;
+  onClaimAward?: (groupId: string, award: ComputedAward) => Promise<boolean>;
+  appLaunch?: { month: number; year: number };
   myUid?: string;
 }
 
@@ -49,6 +51,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   awardsLoading = false,
   awardsMonth = { month: 0, year: 2026 },
   onFetchGroupAwards,
+  onClaimAward,
+  appLaunch = { month: 1, year: 2026 },
   myUid = ''
 }) => {
   const [showChartModal, setShowChartModal] = useState(false);
@@ -141,6 +145,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
   }, [drinks, status.currentBac]);
 
+  // Body scroll lock for all modals
+  React.useEffect(() => {
+    const isAnyModalOpen = showChartModal || showStats || showNotifications || showShareModal;
+    if (isAnyModalOpen) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => document.body.classList.remove('modal-open');
+  }, [showChartModal, showStats, showNotifications, showShareModal]);
+
   return (
     <div className="w-full h-full flex flex-col p-6 animate-fade-in relative overflow-y-auto overflow-x-hidden scroll-smooth pb-32 no-scrollbar">
 
@@ -175,6 +190,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
           awardsLoading={awardsLoading}
           awardsMonth={awardsMonth}
           onFetchGroupAwards={(groupId, month, year) => onFetchGroupAwards?.(groupId, month, year)}
+          onClaimAward={(groupId, award) => onClaimAward?.(groupId, award) || Promise.resolve(false)}
+          appLaunch={appLaunch}
           myUid={myUid}
         />
       )}
