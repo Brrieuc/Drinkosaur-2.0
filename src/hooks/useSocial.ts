@@ -12,6 +12,7 @@ export interface FriendRequest {
     fromPhoto: string;
     to: string;
     timestamp: number;
+    fromDrinkosaurPassConfig?: any;
 }
 
 export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDrinks: Drink[] = []) => {
@@ -116,7 +117,8 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
                             gender: p.gender || 'male',
                             drinkingSpeed: p.drinkingSpeed || 'average',
                             // Ensure photo is fetched from source of truth, respecting privacy
-                            photoURL: (p.photoVisibleToFriends !== false) ? (p.customPhotoURL || p.photoURL || undefined) : undefined
+                            photoURL: (p.photoVisibleToFriends !== false) ? (p.customPhotoURL || p.photoURL || undefined) : undefined,
+                            drinkosaurPassConfig: p.drinkosaurPassConfig
                         };
                     }
                 } catch (e) {
@@ -162,7 +164,8 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
                 weightKg: myProfile.weightKg || 70,
                 gender: myProfile.gender || 'male',
                 drinkingSpeed: myProfile.drinkingSpeed || 'average',
-                drinks: myDrinks.filter(d => d.timestamp > Date.now() - 18 * 60 * 60 * 1000)
+                drinks: myDrinks.filter(d => d.timestamp > Date.now() - 18 * 60 * 60 * 1000),
+                drinkosaurPassConfig: myProfile.drinkosaurPassConfig || null
             }, { merge: true });
         };
 
@@ -220,6 +223,7 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
             from: authUser!.uid,
             fromName: myProfile?.username || authUser!.displayName || 'Anonymous',
             fromPhoto: myProfile?.customPhotoURL || authUser!.photoURL || '',
+            fromDrinkosaurPassConfig: myProfile?.drinkosaurPassConfig || null,
             to: targetUid,
             timestamp: Date.now()
         });

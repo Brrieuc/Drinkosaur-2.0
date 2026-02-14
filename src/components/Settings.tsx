@@ -6,7 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { ImageCropper } from './ImageCropper';
 import { TrophyHall } from './TrophyHall';
 import heic2any from 'heic2any';
-import { DrinkosaurPass } from './DrinkosaurPass';
+import { DrinkosaurPass, ProfilePhoto } from './DrinkosaurPass';
 import { Drink } from '../types';
 
 interface SettingsProps {
@@ -532,12 +532,14 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                   </span>
                 </div>
               ) : null}
-              <img
-                src={customPhotoURL || authUser?.photoURL || 'https://via.placeholder.com/150'}
-                alt="Avatar"
-                className={`w-full h-full object-cover transition-transform group-hover:scale-110 ${(isUploading || isConverting) ? 'opacity-30 blur-sm' : ''}`}
+              <ProfilePhoto
+                photoURL={customPhotoURL || authUser?.photoURL || undefined}
+                effect={user.drinkosaurPassConfig?.profileEffect}
+                size="w-40 h-40"
+                className={`transition-transform group-hover:scale-110 ${(isUploading || isConverting) ? 'opacity-30 blur-sm' : ''}`}
+                containerClassName="rounded-[48px] overflow-hidden"
               />
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center z-30">
                 <Camera className="w-10 h-10 text-white/0 group-hover:text-white/100 transition-all scale-50 group-hover:scale-100" />
               </div>
             </div>

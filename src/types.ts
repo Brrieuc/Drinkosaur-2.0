@@ -91,6 +91,7 @@ export interface FriendStatus {
   weightKg: number;
   gender: 'male' | 'female';
   drinkingSpeed: 'slow' | 'average' | 'fast';
+  drinkosaurPassConfig?: DrinkosaurPassConfig;
 }
 
 export interface BacStatus {

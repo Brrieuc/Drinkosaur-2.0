@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { UserProfile, Drink, WonAward, PassStat, PassStatType, DrinkosaurPassConfig } from '../types';
-import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2, Zap, Monitor, Lightbulb, Sparkles } from 'lucide-react';
+import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2, Zap, Monitor, Lightbulb, Sparkles, Lock } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { AWARD_DEFINITIONS } from '../constants/awards';
 import { AWARD_IMAGES } from '../constants/awardsImages';
@@ -94,7 +94,7 @@ const GlitchEffect: React.FC = () => (
 
 
 
-const NeonEffect: React.FC = () => (
+export const NeonEffect: React.FC = () => (
     <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
         <div className="neon-ring" style={{ animation: 'neon-flicker-3d 4s infinite' }} />
         <div className="absolute inset-[-20%] bg-fuchsia-500/30 blur-2xl rounded-full animate-pulse" />
@@ -103,7 +103,7 @@ const NeonEffect: React.FC = () => (
     </div>
 );
 
-const DivineEffect: React.FC = () => (
+export const DivineEffect: React.FC = () => (
     <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
         {/* Amber Glass Glow */}
         <div className="absolute inset-0 rounded-full border-4 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.4),inset_0_0_30px_rgba(245,158,11,0.2)]"></div>
@@ -137,11 +137,51 @@ const DivineEffect: React.FC = () => (
     </div>
 );
 
+export const ProfileEffect: React.FC<{ effect?: string }> = ({ effect }) => {
+    switch (effect) {
+        case 'fire': return <FireEffect />;
+        case 'electric': return <ElectricEffect />;
+        case 'glitch': return <GlitchEffect />;
+        case 'neon': return <NeonEffect />;
+        case 'divine': return <DivineEffect />;
+        default: return null;
+    }
+};
+
+export const ProfilePhoto: React.FC<{
+    photoURL?: string;
+    effect?: string;
+    size?: string;
+    borderColor?: string;
+    className?: string;
+    containerClassName?: string;
+}> = ({ photoURL, effect, size = 'w-12 h-12', borderColor = 'white', className = '', containerClassName = '' }) => {
+    return (
+        <div className={`relative ${size} ${containerClassName}`}>
+            {effect && <ProfileEffect effect={effect} />}
+            <div className={`w-full h-full rounded-full overflow-hidden relative z-20 ${effect === 'glitch' ? 'glitch-container' : ''} ${className}`}>
+                <img
+                    src={photoURL || 'https://via.placeholder.com/150'}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                />
+                {/* Glossy Overlay for depth */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none opacity-50" />
+            </div>
+            {/* Visual Border */}
+            <div className="absolute inset-0 border-2 rounded-full z-30 pointer-events-none opacity-50 shadow-inner" style={{ borderColor: borderColor }} />
+        </div>
+    );
+};
+
 export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards, drinks, onSave, onClose, language, isReadOnly }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [blobUrl, setBlobUrl] = useState<string | null>(null);
     const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
+    const [isBadgeSelectorOpen, setIsBadgeSelectorOpen] = useState(false);
+    const [activeBadgeSlot, setActiveBadgeSlot] = useState<number | null>(null);
     const passRef = useRef<HTMLDivElement>(null);
 
     // Preload profile image as Blob to bypass CORS during export
@@ -164,17 +204,8 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                 const blob = await response.blob();
                 if (isMounted) setBlobUrl(URL.createObjectURL(blob));
             } catch (e) {
-                // 2. Fallback: Try fetching via CORS proxy (wsrv.nl)
-                try {
-                    const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
-                    const response = await fetch(proxyUrl);
-                    if (!response.ok) throw new Error('Proxy fetch failed');
-                    const blob = await response.blob();
-                    if (isMounted) setBlobUrl(URL.createObjectURL(blob));
-                } catch (proxyError) {
-                    console.warn('All profile image loading attempts failed, falling back to direct URL (Export might fail)', proxyError);
-                    if (isMounted) setBlobUrl(url);
-                }
+                console.warn('Cross-origin photo fetch failed, export quality might be lower', e);
+                // Fallback will use the direct URL in getSecureImgUrl
             }
         })();
 
@@ -414,25 +445,20 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
 
                     {/* Profile Photo */}
                     <div className="flex justify-center">
-                        <div className="w-40 h-40 rounded-full border-8 border-white/10 shadow-2xl overflow-visible relative bg-black/20 group">
-                            {config.profileEffect === 'fire' && <FireEffect />}
-                            {config.profileEffect === 'electric' && <ElectricEffect />}
-                            {/* For Glitch, we render the mask separately, but the effect component handles the layers */}
-                            {config.profileEffect === 'glitch' && <GlitchEffect />}
-                            {config.profileEffect === 'neon' && <NeonEffect />}
-                            {config.profileEffect === 'divine' && <DivineEffect />}
+                        <div className="relative group">
+                            {isEditing && (
+                                <div className="absolute -top-1 -right-1 z-30 bg-blue-600 p-1.5 rounded-full shadow-lg border-2 border-[#1a1a2e] animate-bounce">
+                                    <Sparkles size={10} className="text-white" />
+                                </div>
+                            )}
 
-                            <div className={`w-full h-full rounded-full overflow-hidden relative z-20 ${config.profileEffect === 'glitch' ? 'glitch-container' : ''}`}>
-                                <img
-                                    src={blobUrl || getSecureImgUrl(user.customPhotoURL || user.photoURL)}
-                                    alt="Profile"
-                                    className={`w-full h-full object-cover ${config.profileEffect === 'glitch' ? 'brightness-125 contrast-125 grayscale-[0.3]' : ''}`}
-                                    // Only add CORS attributes if we successfully loaded a blob.
-                                    // If falling back to remote URL, avoid crossOrigin to prevent broken image icon (display priority).
-                                    {...((blobUrl?.startsWith('blob:') || blobUrl?.startsWith('data:')) ? { crossOrigin: "anonymous" } : {})}
-                                    referrerPolicy="no-referrer"
-                                />
-                            </div>
+                            <ProfilePhoto
+                                photoURL={blobUrl || undefined}
+                                effect={config.profileEffect}
+                                size="w-32 h-32"
+                                borderColor={config.backgroundColor || 'rgba(139, 92, 246, 0.5)'}
+                                className="shadow-[0_0_30px_rgba(0,0,0,0.5)]"
+                            />
                         </div>
                     </div>
 
@@ -452,26 +478,16 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                             return (
                                 <div key={i} className="flex flex-col items-center gap-1 w-28">
                                     <div
-                                        className={`w-24 h-24 rounded-3xl border border-white/10 flex items-center justify-center p-0 relative transition-transform active:scale-95 ${badge ? 'bg-white/5 cursor-pointer hover:bg-white/10' : 'bg-white/5'}`}
-                                        onClick={() => badge && setSelectedDetailId(badgeId)}
+                                        className={`w-24 h-24 rounded-3xl border border-white/10 flex items-center justify-center p-0 relative transition-transform active:scale-95 ${badge ? 'bg-white/5 cursor-pointer hover:bg-white/10' : 'bg-white/5'} ${isEditing ? 'ring-2 ring-blue-500/20 hover:ring-blue-500/50' : ''}`}
+                                        onClick={() => {
+                                            if (isEditing) {
+                                                setActiveBadgeSlot(i);
+                                                setIsBadgeSelectorOpen(true);
+                                            } else if (badge) {
+                                                setSelectedDetailId(badgeId);
+                                            }
+                                        }}
                                     >
-                                        {isEditing && (
-                                            <select
-                                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                                value={badgeId || ''}
-                                                onChange={(e) => {
-                                                    const newBadges = [...config.selectedBadges];
-                                                    newBadges[i] = e.target.value;
-                                                    setConfig({ ...config, selectedBadges: newBadges });
-                                                }}
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <option value="">None</option>
-                                                {wonAwards.map(w => (
-                                                    <option key={w.awardId} value={w.awardId}>{w.value} - {w.groupName}</option>
-                                                ))}
-                                            </select>
-                                        )}
                                         {badge ? (
                                             <img
                                                 src={AWARD_IMAGES[badgeId] || getSecureImgUrl(def?.imageUrl)}
@@ -667,6 +683,91 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                 </div>
                             );
                         })()}
+                    </div>
+                )}
+
+                {/* Badge Selection Modal (4x4 Grid) */}
+                {isBadgeSelectorOpen && activeBadgeSlot !== null && (
+                    <div className="absolute inset-0 z-[60] bg-[#0a0a0f]/98 backdrop-blur-xl flex flex-col animate-in fade-in slide-in-from-bottom duration-300">
+                        <div className="p-6 flex items-center justify-between border-b border-white/10">
+                            <div>
+                                <h3 className="text-lg font-black text-white uppercase tracking-tighter">
+                                    {language === 'fr' ? 'Choisir un Badge' : 'Choose a Badge'}
+                                </h3>
+                                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                                    {language === 'fr' ? `Emplacement ${activeBadgeSlot + 1}` : `Slot ${activeBadgeSlot + 1}`}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setIsBadgeSelectorOpen(false)}
+                                className="p-2 bg-white/5 rounded-full text-white/40 hover:text-white"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
+                            <div className="grid grid-cols-4 gap-3">
+                                {/* Clear Slot Option */}
+                                <button
+                                    onClick={() => {
+                                        const newBadges = [...config.selectedBadges];
+                                        newBadges[activeBadgeSlot] = '';
+                                        setConfig({ ...config, selectedBadges: newBadges });
+                                        setIsBadgeSelectorOpen(false);
+                                    }}
+                                    className="aspect-square rounded-2xl bg-white/5 border border-dashed border-white/20 flex items-center justify-center flex-col gap-1 hover:bg-white/10 transition-all group"
+                                >
+                                    <X size={16} className="text-white/20 group-hover:text-white/40" />
+                                    <span className="text-[8px] font-black text-white/20 uppercase">Effacer</span>
+                                </button>
+
+                                {wonAwards.map((won) => {
+                                    const def = AWARD_DEFINITIONS.find(a => a.id === won.awardId);
+                                    const isSelected = config.selectedBadges.includes(won.awardId);
+
+                                    return (
+                                        <button
+                                            key={`${won.awardId}-${won.groupId}`}
+                                            onClick={() => {
+                                                const newBadges = [...config.selectedBadges];
+                                                newBadges[activeBadgeSlot] = won.awardId;
+                                                setConfig({ ...config, selectedBadges: newBadges });
+                                                setIsBadgeSelectorOpen(false);
+                                            }}
+                                            className={`aspect-square rounded-2xl flex items-center justify-center p-2 relative transition-all group overflow-hidden border ${isSelected ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                                        >
+                                            <img
+                                                src={AWARD_IMAGES[won.awardId] || getSecureImgUrl(def?.imageUrl)}
+                                                className="w-full h-full object-contain drop-shadow-lg relative z-10"
+                                                alt={won.awardId}
+                                            />
+                                            {isSelected && (
+                                                <div className="absolute inset-0 bg-blue-600/10 z-0" />
+                                            )}
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 z-20">
+                                                <span className="text-[8px] font-black text-white text-center leading-tight p-1 px-2 mb-[-60%]">
+                                                    {won.value}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+
+                                {/* Placeholders for 4x4 if needed or just padding */}
+                                {[...Array(Math.max(0, 15 - wonAwards.length))].map((_, i) => (
+                                    <div key={i} className="aspect-square rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center">
+                                        <Lock size={12} className="text-white/5" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-white/5 border-t border-white/10 text-center">
+                            <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">
+                                {language === 'fr' ? 'Badge gagné dans vos groupes' : 'Badges won in your groups'}
+                            </p>
+                        </div>
                     </div>
                 )}
             </div>

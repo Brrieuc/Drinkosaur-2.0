@@ -9,6 +9,7 @@ import {
     UserPlus, Loader2, AlertTriangle, Trash2, Check, X, LogOut,
     Bell, Trophy, Medal, RefreshCw, Sparkles, Share2, Users, Plus, ChevronLeft, Edit2, Shield, Globe, Eye, EyeOff, Clock
 } from 'lucide-react';
+import { ProfilePhoto } from './DrinkosaurPass';
 
 interface SocialProps {
     friends: FriendStatus[];
@@ -541,7 +542,12 @@ export const Social: React.FC<SocialProps> = (props) => {
                                                 onClick={() => handleAdd(s.username)}
                                                 className="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 text-left"
                                             >
-                                                <img src={s.photoURL || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-full border border-white/10" />
+                                                <ProfilePhoto
+                                                    photoURL={s.photoURL}
+                                                    effect={s.drinkosaurPassConfig?.profileEffect}
+                                                    size="w-10 h-10"
+                                                    borderColor="rgba(255,255,255,0.1)"
+                                                />
                                                 <div className="flex-1 min-w-0">
                                                     <div className="font-bold text-sm truncate text-white">@{s.username}</div>
                                                     <div className="text-[10px] text-emerald-400 font-bold uppercase">{t.commonFriends(s.commonCount)}</div>
@@ -566,7 +572,12 @@ export const Social: React.FC<SocialProps> = (props) => {
                                 <div className="space-y-3">
                                     {requests.map((req) => (
                                         <div key={req.id} className="glass-panel-3d p-4 rounded-3xl flex items-center gap-4 bg-blue-500/5 border-blue-500/20">
-                                            <img src={req.fromPhoto || 'https://via.placeholder.com/150'} className="w-12 h-12 rounded-full border-2 border-white/10 object-cover" />
+                                            <ProfilePhoto
+                                                photoURL={req.fromPhoto}
+                                                effect={req.fromDrinkosaurPassConfig?.profileEffect}
+                                                size="w-12 h-12"
+                                                borderColor="rgba(255,255,255,0.1)"
+                                            />
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="font-bold truncate text-white">@{req.fromName}</h4>
                                                 <p className="text-[10px] text-white/30 uppercase font-black">Want to be friends</p>
@@ -601,8 +612,12 @@ export const Social: React.FC<SocialProps> = (props) => {
                                                 {rank === 1 ? <Medal size={24} className="text-amber-400" /> : rank === 2 ? <Medal size={24} className="text-slate-300" /> : rank === 3 ? <Medal size={24} className="text-amber-700" /> : rank}
                                             </div>
                                             <div className="relative">
-                                                <div className="absolute inset-0 rounded-full animate-pulse opacity-20" style={{ backgroundColor: player.color }} />
-                                                <img src={player.photoURL || 'https://via.placeholder.com/150'} loading="lazy" className="w-12 h-12 rounded-full border-2 relative z-10 shadow-lg object-cover" style={{ borderColor: player.color }} />
+                                                <ProfilePhoto
+                                                    photoURL={player.photoURL}
+                                                    effect={player.drinkosaurPassConfig?.profileEffect}
+                                                    size="w-12 h-12"
+                                                    borderColor={player.color}
+                                                />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <h3 className={`font-bold truncate text-left ${isMe ? 'text-blue-400' : 'text-white'}`}>
@@ -642,7 +657,13 @@ export const Social: React.FC<SocialProps> = (props) => {
                                                         >
                                                             <div className="w-8 flex justify-center items-center font-black text-lg italic text-white/10">•</div>
                                                             <div className="relative">
-                                                                <img src={player.photoURL || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-full border-2 border-white/10 relative z-10 grayscale-[0.5]" />
+                                                                <ProfilePhoto
+                                                                    photoURL={player.photoURL}
+                                                                    effect={player.drinkosaurPassConfig?.profileEffect}
+                                                                    size="w-10 h-10"
+                                                                    borderColor="rgba(255,255,255,0.1)"
+                                                                    className="grayscale-[0.5]"
+                                                                />
                                                             </div>
                                                             <div className="flex-1 min-w-0 text-left">
                                                                 <h3 className={`font-bold truncate text-sm italic ${isMe ? 'text-blue-400' : 'text-white/60'}`}>
@@ -838,8 +859,12 @@ export const Social: React.FC<SocialProps> = (props) => {
                                                 >
                                                     <div className="w-8 flex justify-center items-center font-black text-lg italic text-white/20">{rank === 1 ? <Medal size={24} className="text-amber-400" /> : rank === 2 ? <Medal size={24} className="text-slate-300" /> : rank === 3 ? <Medal size={24} className="text-amber-700" /> : rank}</div>
                                                     <div className="relative">
-                                                        <div className="absolute inset-0 rounded-full animate-pulse opacity-20" style={{ backgroundColor: player.color }} />
-                                                        <img src={player.photoURL || 'https://via.placeholder.com/150'} loading="lazy" className="w-12 h-12 rounded-full border-2 relative z-10 shadow-lg object-cover" style={{ borderColor: player.color }} />
+                                                        <ProfilePhoto
+                                                            photoURL={player.photoURL}
+                                                            effect={player.drinkosaurPassConfig?.profileEffect}
+                                                            size="w-12 h-12"
+                                                            borderColor={player.color}
+                                                        />
                                                     </div>
                                                     <div className="flex-1 min-w-0 text-left">
                                                         <h3 className="font-bold truncate text-white italic">@{player.displayName}</h3>
@@ -1045,7 +1070,12 @@ export const Social: React.FC<SocialProps> = (props) => {
                                                                     onClick={() => setSelectedFriendIds(prev => isSelected ? prev.filter(id => id !== friend.uid) : [...prev, friend.uid])}
                                                                     className={`w-full p-4 rounded-2xl flex items-center gap-3 transition-all border ${isSelected ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
                                                                 >
-                                                                    <img src={friend.photoURL || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-full border border-white/10 object-cover" />
+                                                                    <ProfilePhoto
+                                                                        photoURL={friend.photoURL}
+                                                                        effect={friend.drinkosaurPassConfig?.profileEffect}
+                                                                        size="w-10 h-10"
+                                                                        borderColor="rgba(255,255,255,0.1)"
+                                                                    />
                                                                     <span className="flex-1 text-left font-bold truncate text-white italic">@{friend.displayName}</span>
                                                                     <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isSelected ? 'bg-blue-500' : 'bg-white/10'}`}>{isSelected && <Check size={16} className="text-white" />}</div>
                                                                 </button>

@@ -22,6 +22,7 @@ export interface LiveUser {
     gender?: 'male' | 'female';
     drinkingSpeed?: 'slow' | 'average' | 'fast';
     lastUpdate?: number;
+    drinkosaurPassConfig?: any;
 }
 
 export interface LiveGroupRanking {
@@ -40,6 +41,7 @@ export interface MonthlyUserStat {
     isFriend: boolean;
     isMe: boolean;
     visibility: LeaderboardVisibility;
+    drinkosaurPassConfig?: any;
 }
 
 export interface MonthlyGroupStat {
@@ -172,7 +174,8 @@ export const useGlobalStats = () => {
                     weightKg: profile.weightKg,
                     gender: profile.gender,
                     drinkingSpeed: profile.drinkingSpeed,
-                    lastUpdate: Date.now()
+                    lastUpdate: Date.now(),
+                    drinkosaurPassConfig: profile.drinkosaurPassConfig
                 });
             }
 
