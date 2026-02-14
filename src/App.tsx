@@ -46,6 +46,7 @@ const App: React.FC = () => {
     status: any;
     profile: UserProfile;
     drinks: Drink[];
+    isFriend?: boolean;
   } | null>(null);
 
   // Social Hook
@@ -112,12 +113,48 @@ const App: React.FC = () => {
       setSelectedFriend({
         status: friendStatus,
         profile: data.profile,
-        drinks: data.drinks
+        drinks: data.drinks,
+        isFriend: true
       });
     } catch (err) {
       console.error(err);
       setToast({ msg: 'Error loading friend profile', type: 'warning' });
     }
+  };
+
+  const handleSelectGlobalUser = async (user: any) => {
+    if (user.uid === authUser?.uid) return;
+
+    const existingFriend = friends.find(f => f.uid === user.uid);
+    if (existingFriend) {
+      handleSelectFriend(user.uid);
+      return;
+    }
+
+    let p: UserProfile | null = null;
+    try {
+      const d = await fetchFriendData(user.uid);
+      p = d.profile;
+    } catch (e) { console.warn(e); }
+
+    setSelectedFriend({
+      status: {
+        uid: user.uid,
+        displayName: user.displayName || user.username,
+        photoURL: user.photoURL,
+        currentBac: user.currentBac || 0,
+        statusMessage: user.statusMessage || '',
+        color: user.color || '#fff'
+      },
+      profile: p || {
+        uid: user.uid,
+        username: user.username,
+        weightKg: 70, gender: 'male', isSetup: true, drinkingSpeed: 'average', language: 'en',
+        allowGlobalRequests: true
+      } as UserProfile,
+      drinks: [],
+      isFriend: false
+    });
   };
 
   const { signIn, signInAnonymous, signInWithEmail, signUpWithEmail, loading: authLoading, error: authError } = useAuth();
@@ -491,15 +528,6 @@ const App: React.FC = () => {
                 onCancelRequest={cancelRequest}
                 appLaunch={appLaunch}
               />
-              {selectedFriend && (
-                <FriendProfileModal
-                  friend={selectedFriend.status}
-                  friendDrinks={selectedFriend.drinks}
-                  friendProfile={selectedFriend.profile}
-                  onClose={() => setSelectedFriend(null)}
-                  language={user.language}
-                />
-              )}
             </>
           )}
 
@@ -537,6 +565,7 @@ const App: React.FC = () => {
               onFetchMonthly={() => fetchMonthlyStats(authUser?.uid || '')}
               language={user.language}
               myUid={authUser?.uid || ''}
+              onSelectUser={handleSelectGlobalUser}
             />
           )}
 
@@ -546,6 +575,23 @@ const App: React.FC = () => {
 
           {view === AppView.HISTORY && (
             <DrinkList drinks={drinks} onRemove={handleRemoveDrink} language={user.language} />
+          )}
+
+          {selectedFriend && (
+            <FriendProfileModal
+              friend={selectedFriend.status}
+              friendDrinks={selectedFriend.drinks}
+              friendProfile={selectedFriend.profile}
+              onClose={() => setSelectedFriend(null)}
+              language={user.language}
+              isFriend={selectedFriend.isFriend !== false}
+              onAddFriend={() => {
+                if (selectedFriend.profile.uid) {
+                  addFriendByUid(selectedFriend.profile.uid);
+                  setToast({ msg: user.language === 'fr' ? 'Demande envoyée !' : 'Friend request sent!', type: 'success' });
+                }
+              }}
+            />
           )}
         </main>
 

@@ -25,6 +25,7 @@ interface GlobalDashboardProps {
     onFetchMonthly: () => void;
     language: 'en' | 'fr';
     myUid: string;
+    onSelectUser: (user: LiveUser | MonthlyUserStat) => void;
 }
 
 export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
@@ -35,7 +36,8 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
     onFetchLive,
     onFetchMonthly,
     language,
-    myUid
+    myUid,
+    onSelectUser
 }) => {
     const [tab, setTab] = useState<GlobeTab>('live');
     const isFrench = language === 'fr';
@@ -235,7 +237,8 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                                 return (
                                     <div
                                         key={user.uid}
-                                        className={`rounded-2xl p-4 flex items-center gap-3 border bg-gradient-to-r ${style.bg} ${style.border} ${isMe ? 'ring-1 ring-amber-400/40' : ''} transition-all`}
+                                        onClick={() => onSelectUser(user)}
+                                        className={`rounded-2xl p-4 flex items-center gap-3 border bg-gradient-to-r ${style.bg} ${style.border} ${isMe ? 'ring-1 ring-amber-400/40' : 'cursor-pointer hover:brightness-110 active:scale-[0.98]'} transition-all`}
                                     >
                                         {/* Rank */}
                                         <div className="w-8 text-center shrink-0">
@@ -387,7 +390,8 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                             return (
                                 <div
                                     key={user.uid}
-                                    className={`rounded-2xl p-3.5 flex items-center gap-3 border bg-gradient-to-r ${style.bg} ${style.border} ${isMe ? 'ring-1 ring-amber-400/40' : ''}`}
+                                    onClick={() => onSelectUser(user)}
+                                    className={`rounded-2xl p-3.5 flex items-center gap-3 border bg-gradient-to-r ${style.bg} ${style.border} ${isMe ? 'ring-1 ring-amber-400/40' : 'cursor-pointer hover:brightness-110 active:scale-[0.98]'}`}
                                 >
                                     <div className="w-7 text-center shrink-0">
                                         {style.icon ? (

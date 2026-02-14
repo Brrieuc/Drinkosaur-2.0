@@ -40,6 +40,7 @@ export interface UserProfile {
   badgesPublic?: boolean;            // Whether badges are visible to non-friends (default: true)
   groupListVisibility?: GroupListVisibility; // How user appears in public group member lists (default: 'visible')
   drinkosaurPassConfig?: DrinkosaurPassConfig;
+  allowGlobalRequests?: boolean; // If true, allows friend requests from global leaderboard
   bestRanking?: number;
 }
 

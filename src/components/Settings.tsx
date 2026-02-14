@@ -1,7 +1,6 @@
-
 import React, { useState, useRef } from 'react';
 import { UserProfile, WonAward, LeaderboardVisibility } from '../types';
-import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Calendar, Trophy, HelpCircle } from 'lucide-react';
+import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Calendar, Trophy, HelpCircle, UserPlus } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { ImageCropper } from './ImageCropper';
 import { TrophyHall } from './TrophyHall';
@@ -32,6 +31,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   const [customPhotoURL, setCustomPhotoURL] = useState(user.customPhotoURL || '');
   const [birthDate, setBirthDate] = useState(user.birthDate || '');
   const [leaderboardVisibility, setLeaderboardVisibility] = useState<LeaderboardVisibility>(user.leaderboardVisibility || 'friends_only');
+  const [allowGlobalRequests, setAllowGlobalRequests] = useState(user.allowGlobalRequests !== false);
   const [isPrivacyExpanded, setIsPrivacyExpanded] = useState(false);
   const [showPass, setShowPass] = useState(false);
 
@@ -682,6 +682,31 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                     className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${leaderboardVisibility === 'public' ? 'bg-cyan-500' : 'bg-white/10'}`}
                   >
                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${leaderboardVisibility === 'public' ? 'left-7' : 'left-1'}`} />
+                  </button>
+                </div>
+
+                {/* Allow Global Friend Requests */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <UserPlus size={18} className={allowGlobalRequests ? 'text-emerald-400' : 'text-white/30'} />
+                    <div>
+                      <p className="text-sm font-bold text-white">
+                        {language === 'fr' ? 'Demandes d\'amis du classement' : 'Leaderboard Friend Requests'}
+                      </p>
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider font-bold mt-0.5">
+                        {language === 'fr' ? 'Autoriser les inconnus du classement à vous ajouter' : 'Allow strangers from leaderboard to add you'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newVal = !allowGlobalRequests;
+                      setAllowGlobalRequests(newVal);
+                      onSave({ allowGlobalRequests: newVal });
+                    }}
+                    className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${allowGlobalRequests ? 'bg-emerald-500' : 'bg-white/10'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${allowGlobalRequests ? 'left-7' : 'left-1'}`} />
                   </button>
                 </div>
 
