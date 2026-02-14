@@ -980,8 +980,8 @@ export const Social: React.FC<SocialProps> = (props) => {
 
                         {/* PENDING INVITES MODAL */}
                         {showPendingInvites && createPortal(
-                            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in text-white font-sans">
-                                <div className="w-full max-w-md bg-[#0a0a0a] rounded-[40px] p-8 border border-white/10 shadow-2xl relative animate-scale-up max-h-[85vh] flex flex-col">
+                            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in text-white font-sans pointer-events-auto">
+                                <div className="w-full max-w-md bg-[#0a0a0a] rounded-[40px] p-8 border border-white/10 shadow-2xl relative animate-scale-up max-h-[85vh] flex flex-col modal-container pointer-events-auto">
                                     <div className="flex justify-between items-center mb-6 shrink-0">
                                         <h3 className="font-black text-xl italic text-white flex items-center gap-2">
                                             <Clock size={24} className="text-white/40" />
@@ -1103,8 +1103,8 @@ export const Social: React.FC<SocialProps> = (props) => {
 
                         {/* --- INVITE TO GROUP MODAL --- */}
                         {isInvitingToGroup && selectedGroupId && createPortal(
-                            <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in text-white font-sans">
-                                <div className="w-full max-w-md bg-[#0a0a0a] rounded-[40px] p-8 border border-white/10 shadow-2xl animate-scale-up max-h-[85vh] flex flex-col">
+                            <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in text-white font-sans pointer-events-auto">
+                                <div className="w-full max-w-md bg-[#0a0a0a] rounded-[40px] p-8 border border-white/10 shadow-2xl animate-scale-up max-h-[85vh] flex flex-col modal-container pointer-events-auto">
                                     <div className="flex justify-between items-center mb-6 shrink-0">
                                         <h3 className="text-2xl font-black text-white">{t.addMembers}</h3>
                                         <button onClick={() => { setIsInvitingToGroup(false); setSelectedFriendIds([]); setInviteFilter(''); }} className="p-2 bg-white/5 rounded-full text-white/40 hover:bg-white/10 transition-colors"><X size={24} /></button>
