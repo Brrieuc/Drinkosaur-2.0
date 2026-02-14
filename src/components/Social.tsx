@@ -1100,8 +1100,8 @@ export const Social: React.FC<SocialProps> = (props) => {
 
                         {/* --- INVITE TO GROUP MODAL --- */}
                         {isInvitingToGroup && selectedGroupId && (
-                            <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end animate-fade-in">
-                                <div className="w-full bg-[#0a0a0a] rounded-t-[40px] p-8 border-t border-white/10 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto no-scrollbar">
+                            <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in">
+                                <div className="w-full max-w-md bg-[#0a0a0a] rounded-[40px] p-8 border border-white/10 shadow-2xl animate-scale-up max-h-[85vh] overflow-y-auto no-scrollbar">
                                     <div className="flex justify-between items-center mb-8">
                                         <h3 className="text-2xl font-black text-white">{t.addMembers}</h3>
                                         <button onClick={() => { setIsInvitingToGroup(false); setSelectedFriendIds([]); }} className="p-2 bg-white/5 rounded-full text-white/40"><X size={24} /></button>
