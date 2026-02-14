@@ -634,44 +634,49 @@ export const Social: React.FC<SocialProps> = (props) => {
                         )}
 
                         {/* --- SENT REQUESTS MODAL --- */}
-                        {showSentRequests && (
-                            <div className="modal-overlay nested-modal-overlay">
-                                <div className="modal-container w-full max-w-md rounded-[40px] relative">
-                                    <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
+                        {showSentRequests && createPortal(
+                            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in text-white font-sans pointer-events-auto">
+                                <div className="w-full max-w-md bg-[#0a0a0a] rounded-[40px] p-8 border border-white/10 shadow-2xl relative animate-scale-up max-h-[85vh] flex flex-col modal-container pointer-events-auto">
+                                    <div className="p-0 mb-6 flex items-center justify-between shrink-0">
                                         <h3 className="text-xl font-black italic uppercase tracking-tighter text-white flex items-center gap-3">
                                             <Clock className="text-blue-400" /> {t.sentRequests}
                                         </h3>
-                                        <button onClick={() => setShowSentRequests(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/40 hover:text-white">
-                                            <X size={20} />
+                                        <button onClick={() => setShowSentRequests(false)} className="p-2 bg-white/5 rounded-full text-white/40 hover:bg-white/10 transition-colors">
+                                            <X size={24} />
                                         </button>
                                     </div>
-                                    <div className="p-6 overflow-y-auto no-scrollbar space-y-4">
+                                    <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 min-h-0">
                                         {outgoingRequests.length === 0 ? (
-                                            <p className="text-center text-white/30 text-xs font-bold py-10 uppercase tracking-widest">{t.noSentRequests}</p>
+                                            <div className="text-center py-10 text-white/30 font-medium border border-dashed border-white/10 rounded-2xl uppercase tracking-widest text-[10px]">
+                                                {t.noSentRequests}
+                                            </div>
                                         ) : (
-                                            outgoingRequests.map((req) => (
-                                                <div key={req.id} className="flex items-center gap-4 bg-white/5 p-4 rounded-[28px] border border-white/5">
-                                                    <ProfilePhoto
-                                                        photoURL={req.toPhoto}
-                                                        size="w-12 h-12"
-                                                        borderColor="rgba(255,255,255,0.1)"
-                                                    />
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-[10px] text-white/30 uppercase font-black tracking-widest leading-none mb-1">{t.waitingFor}</p>
-                                                        <h4 className="font-bold truncate text-white">@{req.toName || 'Utilisateur'}</h4>
+                                            <div className="space-y-3">
+                                                {outgoingRequests.map((req) => (
+                                                    <div key={req.id} className="flex items-center gap-4 bg-white/5 p-4 rounded-[32px] border border-white/5 hover:bg-white/10 transition-all">
+                                                        <ProfilePhoto
+                                                            photoURL={req.toPhoto}
+                                                            size="w-12 h-12"
+                                                            borderColor="rgba(255,255,255,0.1)"
+                                                        />
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-[10px] text-white/30 uppercase font-black tracking-widest leading-none mb-1">{t.waitingFor}</p>
+                                                            <h4 className="font-bold truncate text-white italic">@{req.toName || 'Utilisateur'}</h4>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => onCancelRequest(req.id)}
+                                                            className="px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95"
+                                                        >
+                                                            {t.cancel}
+                                                        </button>
                                                     </div>
-                                                    <button
-                                                        onClick={() => onCancelRequest(req.id)}
-                                                        className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95"
-                                                    >
-                                                        {t.cancel}
-                                                    </button>
-                                                </div>
-                                            ))
+                                                ))}
+                                            </div>
                                         )}
                                     </div>
                                 </div>
-                            </div>
+                            </div>,
+                            document.body
                         )}
 
                         {/* --- LEADERBOARD --- */}
@@ -1023,34 +1028,36 @@ export const Social: React.FC<SocialProps> = (props) => {
                         )}
 
                         {/* --- CREATE GROUP MODAL --- */}
-                        {isCreatingGroup && (
-                            <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end animate-fade-in">
-                                <div className="w-full bg-[#0a0a0a] rounded-t-[40px] p-8 border-t border-white/10 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto no-scrollbar">
-                                    <div className="flex justify-between items-center mb-8">
-                                        <h3 className="text-2xl font-black text-white">{t.createGroup}</h3>
-                                        <button onClick={() => setIsCreatingGroup(false)} className="p-2 bg-white/5 rounded-full text-white/40"><X size={24} /></button>
+                        {isCreatingGroup && createPortal(
+                            <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in text-white font-sans pointer-events-auto">
+                                <div className="w-full max-w-md bg-[#0a0a0a] rounded-[40px] p-8 border border-white/10 shadow-2xl relative animate-scale-up max-h-[85vh] flex flex-col modal-container pointer-events-auto">
+                                    <div className="flex justify-between items-center mb-6 shrink-0">
+                                        <h3 className="text-2xl font-black text-white italic">{t.createGroup}</h3>
+                                        <button onClick={() => setIsCreatingGroup(false)} className="p-2 bg-white/5 rounded-full text-white/40 hover:bg-white/10 transition-colors">
+                                            <X size={24} />
+                                        </button>
                                     </div>
-                                    <div className="space-y-6">
+                                    <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 min-h-0">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 text-left block">{t.groupName}</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 text-left block">Nom du groupe</label>
                                             <input
                                                 type="text"
                                                 value={newGroupName}
                                                 onChange={(e) => setNewGroupName(e.target.value)}
                                                 placeholder="Ex: Soirée Loft #202"
-                                                className="w-full bg-white/5 border border-white/10 p-5 rounded-3xl text-white font-bold outline-none focus:border-blue-500 transition-all shadow-inner"
+                                                className="w-full bg-white/5 border border-white/10 p-5 rounded-3xl text-white font-black outline-none focus:border-blue-500 transition-all shadow-inner placeholder:text-white/10 italic"
                                             />
                                         </div>
 
                                         {/* Icon Picker */}
-                                        <div className="space-y-2">
+                                        <div className="space-y-3">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 text-left block">Icône</label>
-                                            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                                            <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
                                                 {GROUP_ICONS.map(icon => (
                                                     <button
                                                         key={icon}
                                                         onClick={() => setNewGroupIcon(icon)}
-                                                        className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all flex-shrink-0 ${newGroupIcon === icon ? 'bg-white text-black scale-110 shadow-lg' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+                                                        className={`w-12 h-12 rounded-[20px] flex items-center justify-center text-xl transition-all flex-shrink-0 border ${newGroupIcon === icon ? 'bg-white text-black scale-105 shadow-xl border-white' : 'bg-white/5 text-white/60 hover:bg-white/10 border-white/5'}`}
                                                     >
                                                         {icon}
                                                     </button>
@@ -1059,18 +1066,27 @@ export const Social: React.FC<SocialProps> = (props) => {
                                         </div>
 
                                         <div className="space-y-4 text-left">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 block">{t.selectFriends}</label>
-                                            <div className="space-y-2">
-                                                {friends.length === 0 ? <p className="text-white/20 text-xs italic p-4 text-center">{t.empty}</p> : (
+                                            <div className="flex justify-between items-center ml-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">Membres ({selectedFriendIds.length})</label>
+                                            </div>
+                                            <div className="space-y-2 pb-4">
+                                                {friends.length === 0 ? (
+                                                    <p className="text-white/20 text-xs italic p-10 text-center border border-dashed border-white/10 rounded-3xl">Aucun ami à ajouter</p>
+                                                ) : (
                                                     friends.map(friend => {
                                                         const isSelected = selectedFriendIds.includes(friend.uid);
                                                         return (
                                                             <button
                                                                 key={friend.uid}
                                                                 onClick={() => setSelectedFriendIds(prev => isSelected ? prev.filter(id => id !== friend.uid) : [...prev, friend.uid])}
-                                                                className={`w-full p-4 rounded-2xl flex items-center gap-3 transition-all border ${isSelected ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                                                                className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all border ${isSelected ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
                                                             >
-                                                                <img src={friend.photoURL || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-full border border-white/10 object-cover" />
+                                                                <ProfilePhoto
+                                                                    photoURL={friend.photoURL}
+                                                                    effect={friend.drinkosaurPassConfig?.profileEffect}
+                                                                    size="w-10 h-10"
+                                                                    borderColor="rgba(255,255,255,0.1)"
+                                                                />
                                                                 <span className="flex-1 text-left font-bold truncate text-white italic">@{friend.displayName}</span>
                                                                 <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isSelected ? 'bg-blue-500' : 'bg-white/10'}`}>{isSelected && <Check size={16} className="text-white" />}</div>
                                                             </button>
@@ -1079,26 +1095,27 @@ export const Social: React.FC<SocialProps> = (props) => {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="flex gap-4 pt-4 pb-10">
-                                            <button onClick={() => setIsCreatingGroup(false)} className="flex-1 py-5 rounded-3xl font-black text-white/40 uppercase tracking-widest active:scale-95 transition-all">{t.cancel}</button>
-                                            <button
-                                                disabled={!newGroupName.trim() || selectedFriendIds.length === 0}
-                                                onClick={async () => {
-                                                    await onCreateGroup(newGroupName, selectedFriendIds, newGroupIcon);
-                                                    setIsCreatingGroup(false);
-                                                    setNewGroupName('');
-                                                    setSelectedFriendIds([]);
-                                                    setNewGroupIcon('🥂');
-                                                    setActiveTab(SocialTab.GROUPS);
-                                                }}
-                                                className="flex-[2] bg-white text-black py-5 rounded-3xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl disabled:opacity-20"
-                                            >
-                                                {t.create}
-                                            </button>
-                                        </div>
+                                    </div>
+                                    <div className="flex gap-4 pt-4 shrink-0 border-t border-white/5 mt-2">
+                                        <button onClick={() => setIsCreatingGroup(false)} className="flex-1 py-4 rounded-3xl font-black text-white/40 uppercase tracking-widest active:scale-95 transition-all text-xs hover:bg-white/5">Annuler</button>
+                                        <button
+                                            disabled={!newGroupName.trim() || selectedFriendIds.length === 0}
+                                            onClick={async () => {
+                                                await onCreateGroup(newGroupName, selectedFriendIds, newGroupIcon);
+                                                setIsCreatingGroup(false);
+                                                setNewGroupName('');
+                                                setSelectedFriendIds([]);
+                                                setNewGroupIcon('🥂');
+                                                setActiveTab(SocialTab.GROUPS);
+                                            }}
+                                            className="flex-[2] bg-white text-black py-4 rounded-3xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl disabled:opacity-20 text-xs"
+                                        >
+                                            {t.create}
+                                        </button>
                                     </div>
                                 </div>
-                            </div>
+                            </div>,
+                            document.body
                         )}
 
                         {/* --- INVITE TO GROUP MODAL --- */}

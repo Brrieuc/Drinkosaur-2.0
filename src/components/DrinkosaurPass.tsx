@@ -1,5 +1,5 @@
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { UserProfile, Drink, WonAward, PassStat, PassStatType, DrinkosaurPassConfig } from '../types';
 import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2, Zap, Monitor, Lightbulb, Sparkles, Lock } from 'lucide-react';
 import { toPng } from 'html-to-image';
@@ -418,31 +418,31 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
         };
     }, []);
 
-    return (
-        <div className="modal-overlay nested-modal-overlay">
-            <div className="modal-container w-full max-w-md rounded-[32px] relative overflow-x-hidden">
+    return createPortal(
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/80 backdrop-blur-3xl animate-fade-in pointer-events-auto">
+            <div className="w-full max-w-md bg-[#0a0a0a] rounded-[40px] border border-white/10 shadow-2xl relative animate-scale-up max-h-[90vh] flex flex-col modal-container pointer-events-auto overflow-hidden">
 
                 {/* Header Controls */}
-                <div className="absolute top-4 right-4 z-20 flex gap-2">
+                <div className="absolute top-6 right-6 z-[60] flex gap-2">
                     {!isEditing && (
                         <>
                             <button onClick={handleExport} disabled={isExporting} className="p-2 bg-emerald-500 hover:bg-emerald-400 rounded-full text-white transition-colors shadow-lg active:scale-95 disabled:opacity-50">
-                                {isExporting ? <Loader2 size={20} className="animate-spin" /> : <Share2 size={20} />}
+                                {isExporting ? <Loader2 size={24} className="animate-spin" /> : <Share2 size={24} />}
                             </button>
                             {!isReadOnly && (
-                                <button onClick={() => setIsEditing(true)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
-                                    <Edit2 size={20} />
+                                <button onClick={() => setIsEditing(true)} className="p-2 bg-white/5 rounded-full text-white/40 hover:bg-white/10 transition-colors shadow-lg">
+                                    <Edit2 size={24} />
                                 </button>
                             )}
                         </>
                     )}
                     {isEditing && (
-                        <button onClick={handleSaveConfig} className="p-2 bg-blue-600 hover:bg-blue-500 rounded-full text-white transition-colors">
-                            <Save size={20} />
+                        <button onClick={handleSaveConfig} className="p-2 bg-blue-600 hover:bg-blue-500 rounded-full text-white transition-colors shadow-lg">
+                            <Save size={24} />
                         </button>
                     )}
-                    <button onClick={onClose} className="p-2 bg-white/10 hover:bg-red-500/20 hover:text-red-400 rounded-full text-white/50 transition-colors">
-                        <X size={20} />
+                    <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/40 hover:bg-red-500/20 hover:text-red-400 transition-colors shadow-lg">
+                        <X size={24} />
                     </button>
                 </div>
 
@@ -664,9 +664,9 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                 </div>
 
                 {/* Detail Overlay (When Badge Clicked) */}
-                {selectedDetailId && (
-                    <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-8 animate-in fade-in zoom-in duration-200" onClick={() => setSelectedDetailId(null)}>
-                        <button className="absolute top-4 right-4 p-2 bg-white/10 rounded-full text-white/70 hover:bg-white/20">
+                {selectedDetailId && createPortal(
+                    <div className="fixed inset-0 z-[400] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-8 animate-fade-in" onClick={() => setSelectedDetailId(null)}>
+                        <button className="absolute top-6 right-6 p-2 bg-white/5 rounded-full text-white/40 hover:bg-white/10 transition-colors shadow-lg">
                             <X size={24} />
                         </button>
 
@@ -700,94 +700,99 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                 </div>
                             );
                         })()}
-                    </div>
+                    </div>,
+                    document.body
                 )}
 
                 {/* Badge Selection Modal (4x4 Grid) */}
-                {isBadgeSelectorOpen && activeBadgeSlot !== null && (
-                    <div className="absolute inset-0 z-[60] bg-[#0a0a0f]/98 backdrop-blur-xl flex flex-col animate-in fade-in slide-in-from-bottom duration-300">
-                        <div className="p-6 flex items-center justify-between border-b border-white/10">
-                            <div>
-                                <h3 className="text-lg font-black text-white uppercase tracking-tighter">
-                                    {language === 'fr' ? 'Choisir un Badge' : 'Choose a Badge'}
-                                </h3>
-                                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
-                                    {language === 'fr' ? `Emplacement ${activeBadgeSlot + 1}` : `Slot ${activeBadgeSlot + 1}`}
+                {isBadgeSelectorOpen && activeBadgeSlot !== null && createPortal(
+                    <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-3xl flex items-center justify-center p-4 animate-fade-in pointer-events-auto">
+                        <div className="w-full max-w-md bg-[#0a0a0a] rounded-[40px] border border-white/10 shadow-2xl relative animate-scale-up max-h-[80vh] flex flex-col modal-container pointer-events-auto overflow-hidden">
+                            <div className="p-6 flex items-center justify-between border-b border-white/10 bg-white/[0.02]">
+                                <div>
+                                    <h3 className="text-lg font-black text-white uppercase tracking-tighter italic">
+                                        {language === 'fr' ? 'Choisir un Badge' : 'Choose a Badge'}
+                                    </h3>
+                                    <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-1">
+                                        {language === 'fr' ? `Emplacement ${activeBadgeSlot + 1}` : `Slot ${activeBadgeSlot + 1}`}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setIsBadgeSelectorOpen(false)}
+                                    className="p-2 bg-white/5 rounded-full text-white/40 hover:bg-white/10 transition-colors shadow-lg"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
+                                <div className="grid grid-cols-4 gap-3">
+                                    {/* Clear Slot Option */}
+                                    <button
+                                        onClick={() => {
+                                            const newBadges = [...config.selectedBadges];
+                                            newBadges[activeBadgeSlot] = '';
+                                            setConfig({ ...config, selectedBadges: newBadges });
+                                            setIsBadgeSelectorOpen(false);
+                                        }}
+                                        className="aspect-square rounded-2xl bg-white/5 border border-dashed border-white/20 flex items-center justify-center flex-col gap-1 hover:bg-white/10 transition-all group"
+                                    >
+                                        <X size={16} className="text-white/20 group-hover:text-white/40" />
+                                        <span className="text-[8px] font-black text-white/20 uppercase">Effacer</span>
+                                    </button>
+
+                                    {wonAwards.map((won) => {
+                                        const def = AWARD_DEFINITIONS.find(a => a.id === won.awardId);
+                                        const isSelected = config.selectedBadges.includes(won.awardId);
+
+                                        return (
+                                            <button
+                                                key={`${won.awardId}-${won.groupId}`}
+                                                onClick={() => {
+                                                    const newBadges = [...config.selectedBadges];
+                                                    newBadges[activeBadgeSlot] = won.awardId;
+                                                    setConfig({ ...config, selectedBadges: newBadges });
+                                                    setIsBadgeSelectorOpen(false);
+                                                }}
+                                                className={`aspect-square rounded-2xl flex items-center justify-center p-2 relative transition-all group overflow-hidden border ${isSelected ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                                            >
+                                                <img
+                                                    src={AWARD_IMAGES[won.awardId] || getSecureImgUrl(def?.imageUrl)}
+                                                    className="w-full h-full object-contain drop-shadow-lg relative z-10"
+                                                    alt={won.awardId}
+                                                />
+                                                {isSelected && (
+                                                    <div className="absolute inset-0 bg-blue-600/10 z-0" />
+                                                )}
+                                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 z-20">
+                                                    <span className="text-[8px] font-black text-white text-center leading-tight p-1 px-2 mb-[-60%]">
+                                                        {won.value}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+
+                                    {/* Placeholders for 4x4 if needed or just padding */}
+                                    {[...Array(Math.max(0, 15 - wonAwards.length))].map((_, i) => (
+                                        <div key={i} className="aspect-square rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center">
+                                            <Lock size={12} className="text-white/5" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="p-4 bg-white/5 border-t border-white/10 text-center">
+                                <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">
+                                    {language === 'fr' ? 'Badge gagné dans vos groupes' : 'Badges won in your groups'}
                                 </p>
                             </div>
-                            <button
-                                onClick={() => setIsBadgeSelectorOpen(false)}
-                                className="p-2 bg-white/5 rounded-full text-white/40 hover:text-white"
-                            >
-                                <X size={20} />
-                            </button>
                         </div>
-
-                        <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
-                            <div className="grid grid-cols-4 gap-3">
-                                {/* Clear Slot Option */}
-                                <button
-                                    onClick={() => {
-                                        const newBadges = [...config.selectedBadges];
-                                        newBadges[activeBadgeSlot] = '';
-                                        setConfig({ ...config, selectedBadges: newBadges });
-                                        setIsBadgeSelectorOpen(false);
-                                    }}
-                                    className="aspect-square rounded-2xl bg-white/5 border border-dashed border-white/20 flex items-center justify-center flex-col gap-1 hover:bg-white/10 transition-all group"
-                                >
-                                    <X size={16} className="text-white/20 group-hover:text-white/40" />
-                                    <span className="text-[8px] font-black text-white/20 uppercase">Effacer</span>
-                                </button>
-
-                                {wonAwards.map((won) => {
-                                    const def = AWARD_DEFINITIONS.find(a => a.id === won.awardId);
-                                    const isSelected = config.selectedBadges.includes(won.awardId);
-
-                                    return (
-                                        <button
-                                            key={`${won.awardId}-${won.groupId}`}
-                                            onClick={() => {
-                                                const newBadges = [...config.selectedBadges];
-                                                newBadges[activeBadgeSlot] = won.awardId;
-                                                setConfig({ ...config, selectedBadges: newBadges });
-                                                setIsBadgeSelectorOpen(false);
-                                            }}
-                                            className={`aspect-square rounded-2xl flex items-center justify-center p-2 relative transition-all group overflow-hidden border ${isSelected ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
-                                        >
-                                            <img
-                                                src={AWARD_IMAGES[won.awardId] || getSecureImgUrl(def?.imageUrl)}
-                                                className="w-full h-full object-contain drop-shadow-lg relative z-10"
-                                                alt={won.awardId}
-                                            />
-                                            {isSelected && (
-                                                <div className="absolute inset-0 bg-blue-600/10 z-0" />
-                                            )}
-                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 z-20">
-                                                <span className="text-[8px] font-black text-white text-center leading-tight p-1 px-2 mb-[-60%]">
-                                                    {won.value}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-
-                                {/* Placeholders for 4x4 if needed or just padding */}
-                                {[...Array(Math.max(0, 15 - wonAwards.length))].map((_, i) => (
-                                    <div key={i} className="aspect-square rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center">
-                                        <Lock size={12} className="text-white/5" />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="p-4 bg-white/5 border-t border-white/10 text-center">
-                            <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">
-                                {language === 'fr' ? 'Badge gagné dans vos groupes' : 'Badges won in your groups'}
-                            </p>
-                        </div>
-                    </div>
+                    </div>,
+                    document.body
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

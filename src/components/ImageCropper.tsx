@@ -1,5 +1,5 @@
-
 import React, { useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
 import { X, Check, Loader2 } from 'lucide-react';
 
@@ -67,10 +67,10 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({ image, onCropComplet
         }
     };
 
-    return (
-        <div className="fixed inset-0 z-[300] bg-black flex flex-col">
+    return createPortal(
+        <div className="fixed inset-0 z-[500] bg-black flex flex-col pointer-events-auto">
             <div className="flex justify-between items-center p-6 text-white z-10">
-                <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
+                <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/40 hover:bg-white/10 transition-colors">
                     <X size={24} />
                 </button>
                 <h3 className="font-bold text-lg">Crop Photo</h3>
@@ -110,6 +110,7 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({ image, onCropComplet
                     className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-blue-600"
                 />
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

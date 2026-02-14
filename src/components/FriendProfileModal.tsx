@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Clock, Zap, History, Lock, UserPlus } from 'lucide-react';
 import { Drink, UserProfile, WonAward } from '../types';
 import { BacChartModal } from './BacChartModal';
@@ -157,20 +158,20 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
         };
     }, []);
 
-    return (
-        <div className="modal-overlay">
+    return createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in text-white font-sans pointer-events-auto">
             {showChart && (
                 <BacChartModal drinks={friendDrinks} user={friendProfile} onClose={() => setShowChart(false)} />
             )}
 
-            <div className="modal-container w-full max-w-lg rounded-[40px] relative">
+            <div className="w-full max-w-lg bg-[#0a0a0a] rounded-[40px] border border-white/10 shadow-2xl relative animate-scale-up max-h-[90vh] flex flex-col modal-container pointer-events-auto">
 
                 {/* Close Button */}
-                <button onClick={onClose} className={`absolute top-6 right-6 p-2 bg-white/10 rounded-full hover:bg-white/20 text-white transition-colors ${showPass ? 'z-0 pointer-events-none opacity-0' : 'z-[110]'}`}>
-                    <X size={20} />
+                <button onClick={onClose} className={`absolute top-6 right-6 p-2 bg-white/5 rounded-full text-white/40 hover:bg-white/10 transition-colors shadow-lg ${showPass ? 'z-0 pointer-events-none opacity-0' : 'z-[110]'}`}>
+                    <X size={24} />
                 </button>
 
-                <div className="flex-1 overflow-y-auto no-scrollbar p-6">
+                <div className="flex-1 overflow-y-auto no-scrollbar p-6 pt-10">
                     {/* Header with Friend Info */}
                     <div className="flex flex-col items-center mb-6">
                         <div className="relative mb-4">
@@ -183,7 +184,7 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                                 </div>
                             )}
                         </div>
-                        <h2 className="text-2xl font-black text-white">@{friend.displayName}</h2>
+                        <h2 className="text-2xl font-black text-white italic">@{friend.displayName}</h2>
                         <div className="mt-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full animate-pulse`} style={{ backgroundColor: fullStatus.color }} />
                             <span className="text-[10px] font-black uppercase tracking-widest text-white/70">{fullStatus.statusMessage}</span>
@@ -445,6 +446,7 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

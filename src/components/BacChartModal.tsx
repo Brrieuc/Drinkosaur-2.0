@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer, CartesianGrid, Label } from 'recharts';
+import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Drink, UserProfile } from '../types';
 import { generateBacTrend } from '../services/bacService';
@@ -98,12 +99,12 @@ export const BacChartModal: React.FC<BacChartModalProps> = ({ drinks, user, onCl
     };
   }, []);
 
-  return (
-    <div className="modal-overlay nested-modal-overlay">
-      <div className="modal-container w-full max-w-2xl rounded-[40px] relative">
+  return createPortal(
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-3xl animate-fade-in pointer-events-auto">
+      <div className="w-full max-w-2xl bg-[#0a0a0a] rounded-[40px] border border-white/10 shadow-2xl relative animate-scale-up max-h-[90vh] flex flex-col modal-container pointer-events-auto overflow-hidden">
 
         {/* Header */}
-        <div className="flex items-center justify-between p-5 md:p-6 border-b border-white/5 bg-white/5">
+        <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/[0.02]">
           <div className="flex flex-col min-w-0">
             <h3 className="text-xl font-black italic uppercase tracking-tighter text-white truncate">{t.title}</h3>
             <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest leading-none mt-1">Real-time BAC Forecast</p>
@@ -121,8 +122,8 @@ export const BacChartModal: React.FC<BacChartModalProps> = ({ drinks, user, onCl
             </button>
           </div>
 
-          <button onClick={onClose} className="p-2.5 bg-white/5 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-white/40 transition-all border border-white/5 ml-2">
-            <X size={20} />
+          <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/40 hover:bg-white/10 transition-colors">
+            <X size={24} />
           </button>
         </div>
 
@@ -213,6 +214,7 @@ export const BacChartModal: React.FC<BacChartModalProps> = ({ drinks, user, onCl
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
