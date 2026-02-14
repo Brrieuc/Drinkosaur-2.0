@@ -979,34 +979,34 @@ export const Social: React.FC<SocialProps> = (props) => {
                         )}
 
                         {/* PENDING INVITES MODAL */}
-                        {showPendingInvites && (
-                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-                                <div className="bg-[#1a1a2e] w-full max-w-md rounded-[32px] overflow-hidden border border-white/10 shadow-2xl relative animate-scale-up">
-                                    <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
+                        {showPendingInvites && createPortal(
+                            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in text-white font-sans">
+                                <div className="w-full max-w-md bg-[#0a0a0a] rounded-[40px] p-8 border border-white/10 shadow-2xl relative animate-scale-up max-h-[85vh] flex flex-col">
+                                    <div className="flex justify-between items-center mb-6 shrink-0">
                                         <h3 className="font-black text-xl italic text-white flex items-center gap-2">
-                                            <Clock size={20} className="text-white/40" />
+                                            <Clock size={24} className="text-white/40" />
                                             {language === 'fr' ? 'Invitations en attente' : 'Pending Invites'}
                                         </h3>
-                                        <button onClick={() => setShowPendingInvites(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/40 hover:text-white">
-                                            <X size={20} />
+                                        <button onClick={() => setShowPendingInvites(false)} className="p-2 bg-white/5 rounded-full text-white/40 hover:bg-white/10 transition-colors">
+                                            <X size={24} />
                                         </button>
                                     </div>
-                                    <div className="p-6 max-h-[60vh] overflow-y-auto no-scrollbar">
+                                    <div className="flex-1 overflow-y-auto no-scrollbar min-h-0 space-y-4">
                                         {loadingPendingInvites ? (
                                             <div className="flex justify-center py-10">
                                                 <Loader2 className="text-blue-400 animate-spin" size={32} />
                                             </div>
                                         ) : pendingInvites.length === 0 ? (
-                                            <div className="text-center py-10 text-white/30 font-medium">
+                                            <div className="text-center py-10 text-white/30 font-medium border border-dashed border-white/10 rounded-2xl">
                                                 {language === 'fr' ? 'Aucune invitation en attente.' : 'No pending invites.'}
                                             </div>
                                         ) : (
                                             <div className="space-y-3">
                                                 {pendingInvites.map(user => (
-                                                    <div key={user.uid} className="flex items-center gap-4 bg-white/10 p-4 rounded-3xl border border-white/10 shadow-lg">
-                                                        <img src={user.customPhotoURL || user.photoURL || 'https://via.placeholder.com/150'} className="w-12 h-12 rounded-full object-cover border-2 border-white/20" />
+                                                    <div key={user.uid} className="flex items-center gap-4 bg-white/5 p-4 rounded-3xl border border-white/5 shadow-lg">
+                                                        <img src={user.customPhotoURL || user.photoURL || 'https://via.placeholder.com/150'} className="w-12 h-12 rounded-full object-cover border-2 border-white/10" />
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="font-black text-white text-lg truncate">@{user.username || user.displayName || 'Utilisateur'}</div>
+                                                            <div className="font-black text-white text-lg truncate">@{user.displayName || user.username || 'Utilisateur'}</div>
                                                             <div className="text-[10px] text-white/50 uppercase tracking-widest font-bold flex items-center gap-1">
                                                                 <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                                                                 {language === 'fr' ? 'Invitation envoyée' : 'Invite Sent'}
@@ -1018,7 +1018,8 @@ export const Social: React.FC<SocialProps> = (props) => {
                                         )}
                                     </div>
                                 </div>
-                            </div>
+                            </div>,
+                            document.body
                         )}
 
                         {/* --- CREATE GROUP MODAL --- */}
