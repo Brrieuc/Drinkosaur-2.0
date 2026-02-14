@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { UserProfile, Drink, WonAward, PassStat, PassStatType, DrinkosaurPassConfig } from '../types';
-import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2, Zap, Monitor, Lightbulb } from 'lucide-react';
+import { X, Edit2, Save, Trophy, Flame, Beer, GlassWater, Hash, Clock, Star, TrendingUp, PaintBucket, LayoutGrid, Share2, Loader2, Zap, Monitor, Lightbulb, Sparkles } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { AWARD_DEFINITIONS } from '../constants/awards';
 import { AWARD_IMAGES } from '../constants/awardsImages';
@@ -53,20 +53,6 @@ const FireEffect: React.FC = () => (
                     }}
                 />
             ))}
-            {/* Embers */}
-            {[...Array(10)].map((_, i) => (
-                <div
-                    key={`ember-${i}`}
-                    className="fire-ember"
-                    style={{
-                        left: `${Math.random() * 100}%`,
-                        bottom: '20%',
-                        '--x': `${(Math.random() - 0.5) * 40}px`,
-                        animationDelay: `${Math.random() * 3}s`,
-                        animationDuration: `${1 + Math.random() * 2}s`
-                    } as React.CSSProperties}
-                />
-            ))}
         </div>
 
         <svg style={{ position: 'absolute', width: 0, height: 0 }}>
@@ -87,8 +73,7 @@ const ElectricEffect: React.FC = () => (
 
         {/* Plasma Core */}
         <div className="electric-arc" />
-        <div className="electric-arc" style={{ animationDirection: 'reverse', animationDuration: '3s', borderColor: '#a855f7', inset: '-5%' }} />
-        <div className="electric-arc" style={{ animationDuration: '1.5s', borderColor: '#ffffff', opacity: 0.4, inset: '-2%' }} />
+        <div className="electric-arc" style={{ animationDirection: 'reverse', animationDuration: '3s', borderColor: '#a855f7' }} />
 
         {/* Lightning flashes */}
         <div className="electric-bolt border-l-2 border-cyan-300 transform rotate-45" style={{ animationDelay: '0.2s', filter: 'drop-shadow(0 0 5px cyan)' }} />
@@ -103,7 +88,6 @@ const GlitchEffect: React.FC = () => (
         <div className="glitch-layer bg-blue-500/30" style={{ transform: 'translate(2px, 0)', animation: 'glitch-rgb-shift 2s infinite steps(2, start)' }}></div>
         <div className="absolute inset-0 bg-gradient-to-tr from-green-500/20 to-purple-500/20 mix-blend-overlay animate-pulse"></div>
         <div className="absolute inset-0 border-2 border-green-400/50 rounded-full shadow-[0_0_15px_rgba(74,222,128,0.4)]" />
-        <div className="glitch-scanlines" />
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
     </div>
 );
@@ -113,21 +97,51 @@ const GlitchEffect: React.FC = () => (
 const NeonEffect: React.FC = () => (
     <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
         <div className="neon-ring" style={{ animation: 'neon-flicker-3d 4s infinite' }} />
-        <div className="neon-scanner" />
-        <div className="absolute inset-[-30%] bg-fuchsia-500/10 blur-3xl rounded-full animate-pulse" />
+        <div className="absolute inset-[-20%] bg-fuchsia-500/30 blur-2xl rounded-full animate-pulse" />
         {/* Inner Light Reflection */}
-        <div className="absolute inset-0 rounded-full shadow-[inset_0_0_25px_#d946ef] opacity-60 mix-blend-overlay"></div>
+        <div className="absolute inset-0 rounded-full shadow-[inset_0_0_20px_#d946ef] opacity-50 Mix-blend-overlay"></div>
     </div>
 );
 
+const DivineEffect: React.FC = () => (
+    <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
+        {/* Amber Glass Glow */}
+        <div className="absolute inset-0 rounded-full border-4 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.4),inset_0_0_30px_rgba(245,158,11,0.2)]"></div>
+        <div className="absolute inset-0 rounded-full bg-gradient-to-t from-amber-500/10 to-transparent mix-blend-overlay"></div>
+
+        {/* Fast Rising Tiny Bubbles (Carbonation) */}
+        <div className="absolute inset-0 rounded-full overflow-hidden">
+            {[...Array(20)].map((_, i) => (
+                <div
+                    key={`carb-${i}`}
+                    className="divine-bubble"
+                    style={{
+                        left: `${Math.random() * 100}%`,
+                        bottom: '-10%',
+                        width: `${Math.random() * 3 + 1}px`,
+                        height: `${Math.random() * 3 + 1}px`,
+                        animationDuration: `${0.8 + Math.random() * 1.5}s`,
+                        animationDelay: `${Math.random() * 2}s`
+                    }}
+                />
+            ))}
+        </div>
+
+        {/* Subtle Foam Head (Creamy Top) */}
+        <div className="absolute top-[-5%] left-[10%] right-[10%] h-[15%] rounded-[100%] bg-gradient-to-b from-white via-[#fffbeb] to-transparent blur-[4px] opacity-80"></div>
+
+        {/* Condensation / Dew Drops on Glass */}
+        <div className="absolute top-[20%] right-[15%] w-1 h-1 bg-white/60 rounded-full blur-[0.5px]"></div>
+        <div className="absolute top-[25%] right-[18%] w-1.5 h-1.5 bg-white/40 rounded-full blur-[0.5px]"></div>
+        <div className="absolute bottom-[30%] left-[20%] w-1 h-1 bg-white/50 rounded-full blur-[0.5px]"></div>
+    </div>
+);
 
 export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards, drinks, onSave, onClose, language, isReadOnly }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [blobUrl, setBlobUrl] = useState<string | null>(null);
-
     const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
-    const [activeBadgeSlot, setActiveBadgeSlot] = useState<number | null>(null); // Track which slot is being edited
     const passRef = useRef<HTMLDivElement>(null);
 
     // Preload profile image as Blob to bypass CORS during export
@@ -405,8 +419,8 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                             {config.profileEffect === 'electric' && <ElectricEffect />}
                             {/* For Glitch, we render the mask separately, but the effect component handles the layers */}
                             {config.profileEffect === 'glitch' && <GlitchEffect />}
-
                             {config.profileEffect === 'neon' && <NeonEffect />}
+                            {config.profileEffect === 'divine' && <DivineEffect />}
 
                             <div className={`w-full h-full rounded-full overflow-hidden relative z-20 ${config.profileEffect === 'glitch' ? 'glitch-container' : ''}`}>
                                 <img
@@ -439,14 +453,25 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                 <div key={i} className="flex flex-col items-center gap-1 w-28">
                                     <div
                                         className={`w-24 h-24 rounded-3xl border border-white/10 flex items-center justify-center p-0 relative transition-transform active:scale-95 ${badge ? 'bg-white/5 cursor-pointer hover:bg-white/10' : 'bg-white/5'}`}
-                                        onClick={() => {
-                                            if (isEditing) {
-                                                setActiveBadgeSlot(i);
-                                            } else if (badge) {
-                                                setSelectedDetailId(badgeId);
-                                            }
-                                        }}
+                                        onClick={() => badge && setSelectedDetailId(badgeId)}
                                     >
+                                        {isEditing && (
+                                            <select
+                                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                                value={badgeId || ''}
+                                                onChange={(e) => {
+                                                    const newBadges = [...config.selectedBadges];
+                                                    newBadges[i] = e.target.value;
+                                                    setConfig({ ...config, selectedBadges: newBadges });
+                                                }}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <option value="">None</option>
+                                                {wonAwards.map(w => (
+                                                    <option key={w.awardId} value={w.awardId}>{w.value} - {w.groupName}</option>
+                                                ))}
+                                            </select>
+                                        )}
                                         {badge ? (
                                             <img
                                                 src={AWARD_IMAGES[badgeId] || getSecureImgUrl(def?.imageUrl)}
@@ -594,6 +619,12 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                 >
                                     <Lightbulb size={12} /> Néon
                                 </button>
+                                <button
+                                    onClick={() => setConfig({ ...config, profileEffect: 'divine' })}
+                                    className={`px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${config.profileEffect === 'divine' ? 'bg-amber-500/20 border-amber-500 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 'bg-white/5 border-white/10 text-white/40'}`}
+                                >
+                                    <Sparkles size={12} /> Divin
+                                </button>
                             </div>
                         </div>
                     )}
@@ -636,78 +667,6 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                 </div>
                             );
                         })()}
-                    </div>
-                )}
-
-                {/* Badge Selector Modal (Grid View) */}
-                {activeBadgeSlot !== null && (
-                    <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col p-6 animate-in fade-in zoom-in duration-200">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-white uppercase tracking-wider">Select Badge</h3>
-                            <button
-                                onClick={() => setActiveBadgeSlot(null)}
-                                className="p-2 bg-white/10 rounded-full text-white/70 hover:bg-white/20"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto no-scrollbar grid grid-cols-4 gap-4 pb-20">
-                            {/* Empty Option */}
-                            <div
-                                className="aspect-square rounded-2xl border-2 border-white/10 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white/5 transition-colors"
-                                onClick={() => {
-                                    const newBadges = [...config.selectedBadges];
-                                    newBadges[activeBadgeSlot] = '';
-                                    setConfig({ ...config, selectedBadges: newBadges });
-                                    setActiveBadgeSlot(null);
-                                }}
-                            >
-                                <div className="w-10 h-10 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center">
-                                    <X size={16} className="text-white/30" />
-                                </div>
-                                <span className="text-[10px] font-bold text-white/40 uppercase">None</span>
-                            </div>
-
-                            {/* Won Awards */}
-                            {wonAwards.map((award) => {
-                                const def = AWARD_DEFINITIONS.find(a => a.id === award.awardId);
-                                const isSelected = config.selectedBadges.includes(award.awardId);
-                                const isActive = config.selectedBadges[activeBadgeSlot] === award.awardId;
-
-                                // User asked for "Nom du dinosaure (Beerosaur...)"
-                                const dinoName = (language === 'fr' ? def?.name_fr : def?.name) || award.groupName;
-
-                                return (
-                                    <div
-                                        key={award.awardId}
-                                        className={`aspect-square rounded-2xl border-2 flex flex-col items-center justify-center p-2 cursor-pointer transition-all ${isActive ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/10 hover:bg-white/5'} ${isSelected && !isActive ? 'opacity-50 grayscale' : ''}`}
-                                        onClick={() => {
-                                            const newBadges = [...config.selectedBadges];
-                                            newBadges[activeBadgeSlot] = award.awardId;
-                                            setConfig({ ...config, selectedBadges: newBadges });
-                                            setActiveBadgeSlot(null);
-                                        }}
-                                    >
-                                        <div className="flex-1 w-full flex items-center justify-center relative">
-                                            <img
-                                                src={AWARD_IMAGES[award.awardId] || getSecureImgUrl(def?.imageUrl)}
-                                                className="w-full h-full object-contain drop-shadow-lg"
-                                                alt={dinoName}
-                                            />
-                                            {isActive && (
-                                                <div className="absolute top-0 right-0 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
-                                                    <X size={10} className="text-white transform rotate-45" style={{ transform: 'none' /* Override X rotate */ }}><span className="text-[10px]">✓</span></X>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <span className="text-[9px] font-bold text-white/60 uppercase tracking-wide text-center mt-1 truncate w-full">
-                                            {dinoName}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
                     </div>
                 )}
             </div>
