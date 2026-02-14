@@ -108,9 +108,16 @@ const calculateLongestDrunkDuration = (drinks: Drink[], profile: UserProfile): n
     return maxDurationMs / (1000 * 60 * 60); // Convert to hours
 };
 
-/** Count drinks by sub-category */
-const countByCategory = (drinks: Drink[], keywords: string[]): number => {
-    return drinks.filter(d => matchesDrinkCategory(d.name, keywords)).length;
+/** Calculate volume by sub-category in liters */
+const volumeByCategory = (drinks: Drink[], keywords: string[]): number => {
+    return drinks
+        .filter(d => matchesDrinkCategory(d.name, keywords))
+        .reduce((sum, d) => sum + d.volumeMl, 0) / 1000;
+};
+
+/** Calculate total volume of filtered drinks in liters */
+const totalVolumeLiters = (drinks: Drink[], filterFn: (d: Drink) => boolean): number => {
+    return drinks.filter(filterFn).reduce((sum, d) => sum + d.volumeMl, 0) / 1000;
 };
 
 /** Calculate total alcohol consumed (in grams) for "least drinks" comparison */
@@ -164,16 +171,16 @@ const computeMonthlyAwards = (
 
             switch (awardDef.category as AwardCategory) {
                 case 'most_rum':
-                    value = countByCategory(member.monthlyDrinks, RUM_KEYWORDS);
-                    displayValue = `${value} ${language === 'fr' ? 'verres' : 'drinks'}`;
+                    value = volumeByCategory(member.monthlyDrinks, RUM_KEYWORDS);
+                    displayValue = `${value.toFixed(2)}L`;
                     break;
                 case 'most_shots':
                     value = member.monthlyDrinks.filter(isShot).length;
                     displayValue = `${value} shots`;
                     break;
                 case 'most_vodka':
-                    value = countByCategory(member.monthlyDrinks, VODKA_KEYWORDS);
-                    displayValue = `${value} ${language === 'fr' ? 'verres' : 'drinks'}`;
+                    value = volumeByCategory(member.monthlyDrinks, VODKA_KEYWORDS);
+                    displayValue = `${value.toFixed(2)}L`;
                     break;
                 case 'most_party_days':
                     value = countUniqueDays(member.monthlyDrinks);
@@ -190,24 +197,24 @@ const computeMonthlyAwards = (
                     displayValue = `${value.toFixed(1)}h`;
                     break;
                 case 'most_wine':
-                    value = member.monthlyDrinks.filter(isWine).length;
-                    displayValue = `${value} ${language === 'fr' ? 'verres' : 'glasses'}`;
+                    value = totalVolumeLiters(member.monthlyDrinks, isWine);
+                    displayValue = `${value.toFixed(2)}L`;
                     break;
                 case 'most_chugs':
                     value = member.monthlyDrinks.filter(d => d.isChug).length;
                     displayValue = `${value} ${language === 'fr' ? 'cul-sec' : 'chugs'}`;
                     break;
                 case 'most_champagne':
-                    value = member.monthlyDrinks.filter(isChampagne).length;
-                    displayValue = `${value} ${language === 'fr' ? 'coupes' : 'glasses'}`;
+                    value = totalVolumeLiters(member.monthlyDrinks, isChampagne);
+                    displayValue = `${value.toFixed(2)}L`;
                     break;
                 case 'most_beer':
-                    value = member.monthlyDrinks.filter(isBeer).length;
-                    displayValue = `${value} ${language === 'fr' ? 'bières' : 'beers'}`;
+                    value = totalVolumeLiters(member.monthlyDrinks, isBeer);
+                    displayValue = `${value.toFixed(2)}L`;
                     break;
                 case 'most_gin':
-                    value = countByCategory(member.monthlyDrinks, GIN_KEYWORDS);
-                    displayValue = `${value} ${language === 'fr' ? 'verres' : 'drinks'}`;
+                    value = volumeByCategory(member.monthlyDrinks, GIN_KEYWORDS);
+                    displayValue = `${value.toFixed(2)}L`;
                     break;
                 case 'least_drinks':
                     value = totalAlcoholGrams(member.monthlyDrinks);
@@ -216,12 +223,12 @@ const computeMonthlyAwards = (
                         : `${value.toFixed(0)}g ${language === 'fr' ? 'd\'alcool pur' : 'pure alcohol'}`;
                     break;
                 case 'most_tequila':
-                    value = countByCategory(member.monthlyDrinks, TEQUILA_KEYWORDS);
-                    displayValue = `${value} ${language === 'fr' ? 'verres' : 'drinks'}`;
+                    value = volumeByCategory(member.monthlyDrinks, TEQUILA_KEYWORDS);
+                    displayValue = `${value.toFixed(2)}L`;
                     break;
                 case 'most_whisky':
-                    value = countByCategory(member.monthlyDrinks, WHISKY_KEYWORDS);
-                    displayValue = `${value} ${language === 'fr' ? 'verres' : 'drinks'}`;
+                    value = volumeByCategory(member.monthlyDrinks, WHISKY_KEYWORDS);
+                    displayValue = `${value.toFixed(2)}L`;
                     break;
             }
 
