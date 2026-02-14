@@ -61,11 +61,6 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
         // Don't go into the future
         if (newYear > now.getFullYear() || (newYear === now.getFullYear() && newMonth > now.getMonth())) return;
 
-        // If current month, only allow if it's the last day
-        if (newYear === now.getFullYear() && newMonth === now.getMonth()) {
-            const lastDayDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            if (now.getDate() < lastDayDate.getDate()) return;
-        }
 
         setRevealedIndex(-1);
         setIsRevealing(false);
@@ -215,12 +210,20 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
                     if (!def) return null;
                     const isMyAward = selectedAward.recipientUid === myUid;
                     const claimed = isAwardClaimed(selectedAward);
+                    const now = new Date();
+                    const isCurrentMonthView = selectedMonth.month === now.getMonth() && selectedMonth.year === now.getFullYear();
                     return createPortal(
                         <div className="fixed inset-0 z-[300] flex items-center justify-center p-8 backdrop-blur-2xl animate-fade-in pointer-events-auto bg-black/60" onClick={() => setSelectedAward(null)}>
                             <div className="bg-[#0a0a0a] border border-white/10 rounded-[40px] p-8 max-w-sm w-full relative animate-scale-up modal-container pointer-events-auto shadow-2xl shadow-black" onClick={e => e.stopPropagation()}>
                                 <button onClick={() => setSelectedAward(null)} className="absolute top-6 right-6 p-2 bg-white/5 rounded-full text-white/40 hover:bg-white/10 transition-colors">
                                     <X size={20} />
                                 </button>
+                                {isCurrentMonthView && (
+                                    <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                                        {language === 'fr' ? 'Classement en direct' : 'Live Leaderboard'}
+                                    </div>
+                                )}
                                 <div className="flex flex-col items-center text-center gap-6">
                                     <div className="relative">
                                         <div className="absolute inset-0 bg-amber-500/20 blur-3xl rounded-full" />
@@ -240,13 +243,34 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
                                         </div>
                                     </div>
                                     {isMyAward && (
-                                        <button
-                                            onClick={(e) => handleClaim(e, selectedAward)}
-                                            disabled={claimed || isClaiming}
-                                            className="w-full py-5 bg-white text-black rounded-3xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-20"
-                                        >
-                                            {isClaiming ? <Loader2 className="animate-spin mx-auto" size={16} /> : (claimed ? (language === 'fr' ? 'Badge Récupéré' : 'Badge Claimed') : (language === 'fr' ? 'Récupérer le badge' : 'Claim Badge'))}
-                                        </button>
+                                        <div className="w-full">
+                                            <button
+                                                onClick={(e) => handleClaim(e, selectedAward)}
+                                                disabled={claimed || isClaiming || isCurrentMonthView}
+                                                className={`w-full py-5 rounded-3xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all
+                                                    ${claimed ? 'bg-white/5 text-white/20 border border-white/10'
+                                                        : isCurrentMonthView ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30'
+                                                            : 'bg-white text-black'}`}
+                                            >
+                                                {isClaiming ? (
+                                                    <Loader2 className="animate-spin mx-auto" size={16} />
+                                                ) : claimed ? (
+                                                    (language === 'fr' ? 'Badge Récupéré' : 'Badge Claimed')
+                                                ) : isCurrentMonthView ? (
+                                                    (language === 'fr' ? 'En cours...' : 'In progress...')
+                                                ) : (
+                                                    (language === 'fr' ? 'Récupérer le badge' : 'Claim Badge')
+                                                )}
+                                            </button>
+
+                                            {isCurrentMonthView && (
+                                                <p className="mt-4 text-[10px] font-bold text-amber-500/50 uppercase tracking-widest">
+                                                    {language === 'fr'
+                                                        ? 'Revenez le mois prochain pour récupérer ce badge !'
+                                                        : 'Come back next month to claim this badge!'}
+                                                </p>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>
