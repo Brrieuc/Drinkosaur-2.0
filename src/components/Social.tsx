@@ -458,17 +458,26 @@ export const Social: React.FC<SocialProps> = (props) => {
                 className="transition-transform duration-200 ease-out"
                 style={{ transform: `translateY(${pullOffset}px)` }}
             >
-                <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center justify-between mb-10 px-1">
                     <button
                         onClick={onOpenGlobal}
-                        className="p-3 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 active:scale-95 transition-all group"
-                        aria-label="Global Dashboard"
+                        className="flex items-center gap-2.5 px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl active:scale-95 transition-all group"
                     >
-                        <Globe size={24} className="text-cyan-400 group-hover:scale-110 transition-transform" />
+                        <span className="text-[11px] font-black uppercase tracking-widest text-white/40 group-hover:text-cyan-400 transition-colors">
+                            {language === 'fr' ? 'Global' : 'Global'}
+                        </span>
+                        <Globe size={18} className="text-cyan-400 group-hover:rotate-12 transition-transform" />
                     </button>
-                    <h2 className="text-3xl font-extrabold tracking-tight flex items-center gap-3 text-white">
-                        <Users className="text-blue-400" /> {t.title}
-                    </h2>
+
+                    <div className="flex items-center gap-2">
+                        <Users size={20} className="text-blue-400" />
+                        <h2 className="text-xl font-black uppercase tracking-tighter text-white/90">
+                            {t.title}
+                        </h2>
+                    </div>
+
+                    {/* Spacer for symmetry if needed, or just leave it */}
+                    <div className="w-10 sm:w-20 hidden md:block" />
                 </div>
 
                 {/* --- TABS --- */}
