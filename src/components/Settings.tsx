@@ -30,7 +30,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   const [username, setUsername] = useState(user.username || '');
   const [customPhotoURL, setCustomPhotoURL] = useState(user.customPhotoURL || '');
   const [birthDate, setBirthDate] = useState(user.birthDate || '');
-  const [leaderboardVisibility, setLeaderboardVisibility] = useState<LeaderboardVisibility>(user.leaderboardVisibility || 'friends_only');
+  const [leaderboardVisibility, setLeaderboardVisibility] = useState<LeaderboardVisibility>(user.leaderboardVisibility || 'public');
   const [allowGlobalRequests, setAllowGlobalRequests] = useState(user.allowGlobalRequests !== false);
   const [isPrivacyExpanded, setIsPrivacyExpanded] = useState(false);
   const [showPass, setShowPass] = useState(false);

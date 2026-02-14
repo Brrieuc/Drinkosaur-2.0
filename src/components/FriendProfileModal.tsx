@@ -234,9 +234,28 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                                 <h3 className="text-xl font-black text-white">{t.privateProfile}</h3>
                                 <p className="text-sm text-white/40 px-6 max-w-xs mx-auto leading-relaxed">
                                     {isFrench
-                                        ? "Ajoutez cet utilisateur en ami pour voir sa sphère et ses statistiques."
-                                        : "Add this user as a friend to see their sphere and statistics."}
+                                        ? "Le taux d'alcoolémie et la sphère sont privés. Vous pouvez cependant consulter le Drinkopass ci-dessous."
+                                        : "BAC level and sphere are private. You can still view their Drinkopass below."}
                                 </p>
+                            </div>
+
+                            {/* Drinkopass Button for Non-Friends */}
+                            <div className="flex justify-center mb-4">
+                                <button
+                                    onClick={() => setShowPass(true)}
+                                    className="w-48 relative h-14 rounded-2xl overflow-hidden group shadow-xl active:scale-95 transition-all border border-white/10"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-br from-purple-900 to-indigo-900 z-0">
+                                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30 mix-blend-overlay"></div>
+                                    </div>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-2 text-center">
+                                        <h3 className="text-xl font-black italic uppercase tracking-tighter text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.5)]" style={{ fontFamily: 'Impact, sans-serif' }}>
+                                            DRINKOPASS
+                                        </h3>
+                                        <span className="text-[7px] font-black uppercase tracking-widest text-white/40">{isFrench ? 'Voir la carte' : 'View Pass'}</span>
+                                    </div>
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent translate-y-full group-hover:translate-y-[-100%] transition-transform duration-1000 z-20 pointer-events-none"></div>
+                                </button>
                             </div>
 
                             {/* Add Friend Button - Check Privacy Setting */}

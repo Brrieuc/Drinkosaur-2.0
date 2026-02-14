@@ -87,7 +87,7 @@ function canSeeIdentity(
         case 'friends_of_friends': return isFriend || isFriendOfFriend;
         case 'friends_only': return isFriend;
         case 'hidden': return false;
-        default: return isFriend; // default to friends_only
+        default: return true; // Change default to true (public by default for identity)
     }
 }
 
@@ -146,7 +146,7 @@ export const useGlobalStats = () => {
                 totalNotSoberCount++;
                 totalBacSum += bac.currentBac;
 
-                const visibility = profile.leaderboardVisibility || 'friends_only';
+                const visibility = profile.leaderboardVisibility || 'public';
 
                 // Skip users who chose 'hidden'
                 if (visibility === 'hidden') continue;
@@ -156,7 +156,7 @@ export const useGlobalStats = () => {
                 const isFoF = friendsOfFriends.has(uid);
                 const showIdentity = canSeeIdentity(visibility, isFriend, isFoF, isMe);
 
-                const displayPhoto = showIdentity && profile.photoVisibleToFriends !== false
+                const displayPhoto = showIdentity
                     ? (profile.customPhotoURL || profile.photoURL || '')
                     : '';
 
@@ -299,7 +299,7 @@ export const useGlobalStats = () => {
 
             const toStatUser = (uid: string, count: number): MonthlyUserStat | null => {
                 const p = profilesMap[uid];
-                const visibility = p?.leaderboardVisibility || 'friends_only';
+                const visibility = p?.leaderboardVisibility || 'public';
 
                 // Skip hidden users
                 if (visibility === 'hidden') return null;
@@ -308,7 +308,7 @@ export const useGlobalStats = () => {
                 const isFriend = myFriends.has(uid);
                 const isFoF = friendsOfFriends.has(uid);
                 const showIdentity = canSeeIdentity(visibility, isFriend, isFoF, isMe);
-                const displayPhoto = showIdentity && p?.photoVisibleToFriends !== false
+                const displayPhoto = showIdentity
                     ? (p?.customPhotoURL || p?.photoURL || '')
                     : '';
 
@@ -320,6 +320,7 @@ export const useGlobalStats = () => {
                     isFriend,
                     isMe,
                     visibility,
+                    drinkosaurPassConfig: p?.drinkosaurPassConfig
                 };
             };
 

@@ -150,9 +150,6 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
         return false;
     };
 
-    const isAnonymous = (user: LiveUser | MonthlyUserStat): boolean => {
-        return user.username === '???';
-    };
 
     // ─── LIVE TAB ────────────────────────────────────────────
     const renderLive = () => {
@@ -232,13 +229,12 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                             {reLiveStats.topUsers.map((user, idx) => {
                                 const style = getRankStyle(idx);
                                 const isMe = user.uid === myUid;
-                                const anonymous = isAnonymous(user);
                                 const showBac = canSeeBac(user);
                                 return (
                                     <div
                                         key={user.uid}
                                         onClick={() => onSelectUser(user)}
-                                        className={`rounded-2xl p-4 flex items-center gap-3 border bg-gradient-to-r ${style.bg} ${style.border} ${isMe ? 'ring-1 ring-amber-400/40' : 'cursor-pointer hover:brightness-110 active:scale-[0.98]'} transition-all`}
+                                        className={`rounded-2xl p-4 flex items-center gap-3 border bg-gradient-to-r ${style.bg} ${style.border} ${isMe ? 'ring-1 ring-amber-400/40' : ''} cursor-pointer hover:brightness-110 active:scale-[0.98] transition-all`}
                                     >
                                         {/* Rank */}
                                         <div className="w-8 text-center shrink-0">
@@ -251,11 +247,7 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
 
                                         {/* Avatar */}
                                         <div className="relative shrink-0">
-                                            {anonymous ? (
-                                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
-                                                    <Lock size={16} className="text-white/20" />
-                                                </div>
-                                            ) : user.photoURL ? (
+                                            {user.photoURL ? (
                                                 <ProfilePhoto
                                                     photoURL={user.photoURL}
                                                     effect={user.drinkosaurPassConfig?.profileEffect}
@@ -264,21 +256,19 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                                                 />
                                             ) : (
                                                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white/40 text-sm font-black border border-white/10">
-                                                    {user.username.charAt(0).toUpperCase()}
+                                                    {(user.username || 'A').charAt(0).toUpperCase()}
                                                 </div>
                                             )}
-                                            {!anonymous && (
-                                                <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#0a0a15]" style={{ backgroundColor: user.color }} />
-                                            )}
+                                            <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#0a0a15]" style={{ backgroundColor: user.color }} />
                                         </div>
 
                                         {/* Info */}
                                         <div className="flex-1 min-w-0">
-                                            <p className={`text-sm font-black truncate ${isMe ? 'text-amber-400' : anonymous ? 'text-white/30 italic' : 'text-white'}`}>
-                                                {anonymous ? t.anonymous : `@${user.username}`}
+                                            <p className={`text-sm font-black truncate ${isMe ? 'text-amber-400' : 'text-white'}`}>
+                                                @{user.username || 'joueur'}
                                                 {isMe && <span className="ml-1 text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full font-black">{isFrench ? 'VOUS' : 'YOU'}</span>}
                                             </p>
-                                            {!anonymous && showBac && (
+                                            {showBac && (
                                                 <p className="text-[10px] text-white/30 font-bold mt-0.5">{user.statusMessage}</p>
                                             )}
                                         </div>
@@ -386,7 +376,6 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                         {users.map((user, idx) => {
                             const style = getRankStyle(idx);
                             const isMe = user.uid === myUid;
-                            const anonymous = isAnonymous(user);
                             return (
                                 <div
                                     key={user.uid}
@@ -400,11 +389,7 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                                             <span className="text-xs font-black text-white/30">#{idx + 1}</span>
                                         )}
                                     </div>
-                                    {anonymous ? (
-                                        <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 shrink-0">
-                                            <Lock size={14} className="text-white/20" />
-                                        </div>
-                                    ) : user.photoURL ? (
+                                    {user.photoURL ? (
                                         <ProfilePhoto
                                             photoURL={user.photoURL}
                                             effect={user.drinkosaurPassConfig?.profileEffect}
@@ -413,12 +398,12 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                                         />
                                     ) : (
                                         <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white/40 text-xs font-black border border-white/10 shrink-0">
-                                            {user.username.charAt(0).toUpperCase()}
+                                            {(user.username || 'A').charAt(0).toUpperCase()}
                                         </div>
                                     )}
                                     <div className="flex-1 min-w-0">
-                                        <p className={`text-sm font-bold truncate ${isMe ? 'text-amber-400' : anonymous ? 'text-white/30 italic' : 'text-white'}`}>
-                                            {anonymous ? t.anonymous : `@${user.username}`}
+                                        <p className={`text-sm font-bold truncate ${isMe ? 'text-amber-400' : 'text-white'}`}>
+                                            @{user.username || 'joueur'}
                                         </p>
                                     </div>
                                     <div className="text-right shrink-0">
