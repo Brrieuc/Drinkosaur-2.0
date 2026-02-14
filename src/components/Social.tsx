@@ -138,14 +138,14 @@ export const Social: React.FC<SocialProps> = (props) => {
 
     // Body scroll lock for all modals
     useEffect(() => {
-        const isAnyModalOpen = showSentRequests || isCreatingGroup || isInvitingToGroup || showAwardsModal || showPendingInvites || !!selectedGroupId;
+        const isAnyModalOpen = showSentRequests || isCreatingGroup || isInvitingToGroup || showAwardsModal || showPendingInvites;
         if (isAnyModalOpen) {
             document.body.classList.add('modal-open');
         } else {
             document.body.classList.remove('modal-open');
         }
         return () => document.body.classList.remove('modal-open');
-    }, [showSentRequests, isCreatingGroup, isInvitingToGroup, showAwardsModal, showPendingInvites, selectedGroupId]);
+    }, [showSentRequests, isCreatingGroup, isInvitingToGroup, showAwardsModal, showPendingInvites]);
 
     // Live update for ranking
     const [tick, setTick] = useState(0);
