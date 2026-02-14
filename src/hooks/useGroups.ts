@@ -1,6 +1,6 @@
 /// <reference path="../firebase.d.ts" />
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { db, doc, updateDoc, arrayUnion, query, where, collection, getDocs, onSnapshot, arrayRemove, addDoc, getDoc } from '../firebase';
 import { useAuth } from './useAuth';
 import { FriendGroup, FriendStatus } from '../types';
@@ -52,7 +52,7 @@ export const useGroups = () => {
         };
     }, [authUser]);
 
-    const createGroup = async (name: string, friendIds: string[], icon?: string) => {
+    const createGroup = useCallback(async (name: string, friendIds: string[], icon?: string) => {
         if (!authUser) throw new Error("Not logged in");
         if (!name.trim()) throw new Error("Group name required");
 
@@ -69,57 +69,54 @@ export const useGroups = () => {
 
         const docRef = await addDoc(collection(db, "groups"), groupData);
         return docRef.id;
-    };
+    }, [authUser]);
 
-    const acceptGroupInvite = async (groupId: string) => {
+    const acceptGroupInvite = useCallback(async (groupId: string) => {
         if (!authUser) return;
         const groupRef = doc(db, "groups", groupId);
         await updateDoc(groupRef, {
             memberIds: arrayUnion(authUser.uid),
             pendingInviteIds: arrayRemove(authUser.uid)
         });
-    };
+    }, [authUser]);
 
-    const declineGroupInvite = async (groupId: string) => {
+    const declineGroupInvite = useCallback(async (groupId: string) => {
         if (!authUser) return;
         const groupRef = doc(db, "groups", groupId);
         await updateDoc(groupRef, {
             pendingInviteIds: arrayRemove(authUser.uid)
         });
-    };
+    }, [authUser]);
 
-    const leaveGroup = async (groupId: string) => {
+    const leaveGroup = useCallback(async (groupId: string) => {
         if (!authUser) return;
         const groupRef = doc(db, "groups", groupId);
         await updateDoc(groupRef, {
             memberIds: arrayRemove(authUser.uid)
         });
+    }, [authUser]);
 
-        // Optional: Delete group if last member left? 
-        // Or keep it. Usually it's better to keep or check if members.length === 0.
-    };
-
-    const inviteMemberToGroup = async (groupId: string, friendIds: string[]) => {
+    const inviteMemberToGroup = useCallback(async (groupId: string, friendIds: string[]) => {
         if (!authUser) return;
         const groupRef = doc(db, "groups", groupId);
         await updateDoc(groupRef, {
             pendingInviteIds: arrayUnion(...friendIds)
         });
-    };
+    }, [authUser]);
 
-    const updateGroupIcon = async (groupId: string, icon: string) => {
+    const updateGroupIcon = useCallback(async (groupId: string, icon: string) => {
         if (!authUser) return;
         const groupRef = doc(db, "groups", groupId);
         await updateDoc(groupRef, { icon });
-    };
+    }, [authUser]);
 
-    const updateGroupSettings = async (groupId: string, settings: { showInGlobalRanking?: boolean; memberListPublic?: boolean }) => {
+    const updateGroupSettings = useCallback(async (groupId: string, settings: { showInGlobalRanking?: boolean; memberListPublic?: boolean }) => {
         if (!authUser) return;
         const groupRef = doc(db, "groups", groupId);
         await updateDoc(groupRef, settings);
-    };
+    }, [authUser]);
 
-    const fetchGroupMembersStatus = async (groupId: string): Promise<FriendStatus[]> => {
+    const fetchGroupMembersStatus = useCallback(async (groupId: string): Promise<FriendStatus[]> => {
         const groupSnap = await getDoc(doc(db, "groups", groupId));
         if (!groupSnap.exists()) return [];
 
@@ -137,7 +134,23 @@ export const useGroups = () => {
         });
 
         return statuses.sort((a, b) => b.currentBac - a.currentBac);
-    };
+    }, []);
+
+    const fetchGroupPendingInvites = useCallback(async (groupId: string): Promise<any[]> => {
+        const groupSnap = await getDoc(doc(db, "groups", groupId));
+        if (!groupSnap.exists()) return [];
+
+        const pendingIds = groupSnap.data().pendingInviteIds as string[];
+        if (!pendingIds || pendingIds.length === 0) return [];
+
+        const q = query(collection(db, "users"), where("__name__", "in", pendingIds.slice(0, 30)));
+        const snapshot = await getDocs(q);
+        const users: any[] = [];
+        snapshot.forEach((doc: any) => {
+            users.push({ uid: doc.id, ...doc.data() });
+        });
+        return users;
+    }, []);
 
     return {
         groups,
@@ -151,20 +164,6 @@ export const useGroups = () => {
         fetchGroupMembersStatus,
         updateGroupIcon,
         updateGroupSettings,
-        fetchGroupPendingInvites: async (groupId: string): Promise<any[]> => {
-            const groupSnap = await getDoc(doc(db, "groups", groupId));
-            if (!groupSnap.exists()) return [];
-
-            const pendingIds = groupSnap.data().pendingInviteIds as string[];
-            if (!pendingIds || pendingIds.length === 0) return [];
-
-            const q = query(collection(db, "users"), where("__name__", "in", pendingIds.slice(0, 30)));
-            const snapshot = await getDocs(q);
-            const users: any[] = [];
-            snapshot.forEach((doc: any) => {
-                users.push({ uid: doc.id, ...doc.data() });
-            });
-            return users;
-        }
+        fetchGroupPendingInvites
     };
 };
