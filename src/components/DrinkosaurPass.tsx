@@ -53,6 +53,20 @@ const FireEffect: React.FC = () => (
                     }}
                 />
             ))}
+            {/* Embers */}
+            {[...Array(10)].map((_, i) => (
+                <div
+                    key={`ember-${i}`}
+                    className="fire-ember"
+                    style={{
+                        left: `${Math.random() * 100}%`,
+                        bottom: '20%',
+                        '--x': `${(Math.random() - 0.5) * 40}px`,
+                        animationDelay: `${Math.random() * 3}s`,
+                        animationDuration: `${1 + Math.random() * 2}s`
+                    } as React.CSSProperties}
+                />
+            ))}
         </div>
 
         <svg style={{ position: 'absolute', width: 0, height: 0 }}>
@@ -73,7 +87,8 @@ const ElectricEffect: React.FC = () => (
 
         {/* Plasma Core */}
         <div className="electric-arc" />
-        <div className="electric-arc" style={{ animationDirection: 'reverse', animationDuration: '3s', borderColor: '#a855f7' }} />
+        <div className="electric-arc" style={{ animationDirection: 'reverse', animationDuration: '3s', borderColor: '#a855f7', inset: '-5%' }} />
+        <div className="electric-arc" style={{ animationDuration: '1.5s', borderColor: '#ffffff', opacity: 0.4, inset: '-2%' }} />
 
         {/* Lightning flashes */}
         <div className="electric-bolt border-l-2 border-cyan-300 transform rotate-45" style={{ animationDelay: '0.2s', filter: 'drop-shadow(0 0 5px cyan)' }} />
@@ -88,6 +103,7 @@ const GlitchEffect: React.FC = () => (
         <div className="glitch-layer bg-blue-500/30" style={{ transform: 'translate(2px, 0)', animation: 'glitch-rgb-shift 2s infinite steps(2, start)' }}></div>
         <div className="absolute inset-0 bg-gradient-to-tr from-green-500/20 to-purple-500/20 mix-blend-overlay animate-pulse"></div>
         <div className="absolute inset-0 border-2 border-green-400/50 rounded-full shadow-[0_0_15px_rgba(74,222,128,0.4)]" />
+        <div className="glitch-scanlines" />
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
     </div>
 );
@@ -97,9 +113,10 @@ const GlitchEffect: React.FC = () => (
 const NeonEffect: React.FC = () => (
     <div className="absolute inset-0 z-50 pointer-events-none overflow-visible">
         <div className="neon-ring" style={{ animation: 'neon-flicker-3d 4s infinite' }} />
-        <div className="absolute inset-[-20%] bg-fuchsia-500/30 blur-2xl rounded-full animate-pulse" />
+        <div className="neon-scanner" />
+        <div className="absolute inset-[-30%] bg-fuchsia-500/10 blur-3xl rounded-full animate-pulse" />
         {/* Inner Light Reflection */}
-        <div className="absolute inset-0 rounded-full shadow-[inset_0_0_20px_#d946ef] opacity-50 Mix-blend-overlay"></div>
+        <div className="absolute inset-0 rounded-full shadow-[inset_0_0_25px_#d946ef] opacity-60 mix-blend-overlay"></div>
     </div>
 );
 
@@ -658,9 +675,8 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                 const isSelected = config.selectedBadges.includes(award.awardId);
                                 const isActive = config.selectedBadges[activeBadgeSlot] === award.awardId;
 
-                                // Group Name or Display Name
-                                // User asked for "Nom du dinosaure (Beerosaur...)" which is typically the groupName
-                                const dinoName = award.groupName;
+                                // User asked for "Nom du dinosaure (Beerosaur...)"
+                                const dinoName = (language === 'fr' ? def?.name_fr : def?.name) || award.groupName;
 
                                 return (
                                     <div
