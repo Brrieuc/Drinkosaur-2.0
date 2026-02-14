@@ -18,6 +18,103 @@ interface AddDrinkProps {
 type DrinkType = 'beer' | 'wine' | 'cocktail' | 'shot';
 type Step = 'type' | 'brand' | 'glass' | 'pour' | 'confirm' | 'timestamp';
 
+const GlassView = React.memo(({ glassId, alcoholVol, mixerVol = 0, color1, color2 = 'transparent', interactive = false, onInteract = () => { } }: any) => {
+    const glass = GLASS_SHAPES.find(g => g.id === glassId) || GLASS_SHAPES[0];
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Map physical volume % to visual height % (Accounting for glass shape)
+    const getVisualHeightPercent = useCallback((volPercent: number) => {
+        const p = Math.max(0, Math.min(1, volPercent / 100));
+        let h = p;
+        if (glass.fillType === 'cone') h = Math.pow(p, 1 / 3); // V = (1/3)πr²h -> h ~ V^(1/3)
+        if (glass.fillType === 'bowl') h = Math.pow(p, 1 / 2); // Paraboloid approx -> h ~ V^(1/2)
+        return h * 100;
+    }, [glass]);
+
+    const handleInteraction = (e: any) => {
+        if (!interactive || !containerRef.current) return;
+
+        // Prevent scrolling on touch
+        if (e.cancelable) e.preventDefault();
+
+        const rect = containerRef.current.getBoundingClientRect();
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        // Interaction area is the glass region inside padding
+        const padding = 20;
+        const usableHeight = rect.height - (padding * 2);
+        const relativeY = (rect.bottom - padding) - clientY;
+
+        // Visual height ratio (0 to 1)
+        const visualRatio = Math.max(0, Math.min(1, relativeY / usableHeight));
+
+        // Convert visual height back to physical volume ratio
+        let volRatio = visualRatio;
+        if (glass.fillType === 'cone') volRatio = Math.pow(visualRatio, 3);
+        if (glass.fillType === 'bowl') volRatio = Math.pow(visualRatio, 2);
+
+        onInteract(volRatio * glass.capacity);
+    };
+
+    const totalVol = alcoholVol + mixerVol;
+    const alcVisualH = getVisualHeightPercent((alcoholVol / glass.capacity) * 100);
+    const totalVisualH = getVisualHeightPercent((totalVol / glass.capacity) * 100);
+
+    // Map viewBox coordinates
+    const drawH = (glass.liquidBottom - glass.liquidTop);
+    const alcOffset = (alcVisualH / 100) * drawH;
+    const totalOffset = (totalVisualH / 100) * drawH;
+
+    return (
+        <div
+            ref={containerRef}
+            className="relative w-64 h-80 mx-auto cursor-ns-resize touch-none select-none flex items-center justify-center p-5"
+            onMouseDown={handleInteraction}
+            onMouseMove={(e) => e.buttons === 1 && handleInteraction(e)}
+            onTouchStart={handleInteraction}
+            onTouchMove={handleInteraction}
+        >
+            <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible drop-shadow-2xl">
+                <defs>
+                    <clipPath id={`glass-clip-${glassId}`}>
+                        <path d={glass.mask || glass.path} />
+                    </clipPath>
+                </defs>
+
+                {/* Glass Body Background */}
+                <path d={glass.path} fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+
+                {/* Liquid Layer 1: Alcohol */}
+                <rect
+                    x="0"
+                    y={glass.liquidBottom - alcOffset}
+                    width="100"
+                    height={alcOffset}
+                    fill={color1}
+                    clipPath={`url(#glass-clip-${glassId})`}
+                    opacity={0.8}
+                />
+
+                {/* Liquid Layer 2: Mixer */}
+                <rect
+                    x="0"
+                    y={glass.liquidBottom - totalOffset}
+                    width="100"
+                    height={totalOffset - alcOffset}
+                    fill={color2}
+                    clipPath={`url(#glass-clip-${glassId})`}
+                    opacity={0.8}
+                />
+
+                {/* Glass Highlights & Reflections */}
+                <path d={glass.path} fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" />
+                <rect x="30" y="10" width="2" height="40" fill="white" opacity="0.1" rx="1" />
+                <rect x="70" y="15" width="1" height="20" fill="white" opacity="0.05" rx="0.5" />
+            </svg>
+        </div>
+    );
+});
+
 export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = 'en' }) => {
     // -- State --
     const [step, setStep] = useState<Step>('type');
@@ -43,6 +140,14 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
 
     // Search
     const [searchTerm, setSearchTerm] = useState('');
+
+    const handleVolumeInteract = useCallback((val: number) => {
+        if (drinkType === 'cocktail' && selectedMixer) {
+            setMixerVolume(Math.max(0, val - alcoholVolume));
+        } else {
+            setAlcoholVolume(val);
+        }
+    }, [drinkType, selectedMixer, alcoholVolume]);
 
     // Translations
     const t = {
@@ -188,100 +293,7 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
         setStep('type');
     };
 
-    // GlassView Component with accurate interaction and better aesthetics
-    const GlassView = ({ glassId, alcoholVol, mixerVol = 0, color1, color2 = 'transparent', interactive = false, onInteract = () => { } }: any) => {
-        const glass = GLASS_SHAPES.find(g => g.id === glassId) || GLASS_SHAPES[0];
-        const containerRef = useRef<HTMLDivElement>(null);
 
-        // Map physical volume % to visual height % (Accounting for glass shape)
-        const getVisualHeightPercent = useCallback((volPercent: number) => {
-            const p = Math.max(0, Math.min(1, volPercent / 100));
-            let h = p;
-            if (glass.fillType === 'cone') h = Math.pow(p, 1 / 3); // V = (1/3)πr²h -> h ~ V^(1/3)
-            if (glass.fillType === 'bowl') h = Math.pow(p, 1 / 2); // Paraboloid approx -> h ~ V^(1/2)
-            return h * 100;
-        }, [glass]);
-
-        const handleInteraction = (e: any) => {
-            if (!interactive || !containerRef.current) return;
-            const rect = containerRef.current.getBoundingClientRect();
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-            // Interaction area is the glass region inside padding
-            const padding = 20;
-            const usableHeight = rect.height - (padding * 2);
-            const relativeY = (rect.bottom - padding) - clientY;
-
-            // Visual height ratio (0 to 1)
-            const visualRatio = Math.max(0, Math.min(1, relativeY / usableHeight));
-
-            // Convert visual height back to physical volume ratio
-            let volRatio = visualRatio;
-            if (glass.fillType === 'cone') volRatio = Math.pow(visualRatio, 3);
-            if (glass.fillType === 'bowl') volRatio = Math.pow(visualRatio, 2);
-
-            onInteract(volRatio * glass.capacity);
-        };
-
-        const totalVol = alcoholVol + mixerVol;
-        const alcVisualH = getVisualHeightPercent((alcoholVol / glass.capacity) * 100);
-        const totalVisualH = getVisualHeightPercent((totalVol / glass.capacity) * 100);
-
-        // Map viewBox coordinates
-        const drawH = (glass.liquidBottom - glass.liquidTop);
-        const alcOffset = (alcVisualH / 100) * drawH;
-        const totalOffset = (totalVisualH / 100) * drawH;
-
-        return (
-            <div
-                ref={containerRef}
-                className="relative w-64 h-80 mx-auto cursor-ns-resize touch-none select-none flex items-center justify-center p-5"
-                onMouseDown={handleInteraction}
-                onMouseMove={(e) => e.buttons === 1 && handleInteraction(e)}
-                onTouchMove={handleInteraction}
-            >
-                <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible drop-shadow-2xl">
-                    <defs>
-                        <clipPath id={`glass-clip-${glassId}`}>
-                            <path d={glass.mask || glass.path} />
-                        </clipPath>
-                    </defs>
-
-                    {/* Glass Body Background */}
-                    <path d={glass.path} fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
-
-                    {/* Liquid Layer 1: Alcohol */}
-                    <rect
-                        x="0"
-                        y={glass.liquidBottom - alcOffset}
-                        width="100"
-                        height={alcOffset}
-                        fill={color1}
-                        clipPath={`url(#glass-clip-${glassId})`}
-                        className="transition-all duration-150"
-                        opacity={0.8}
-                    />
-
-                    {/* Liquid Layer 2: Mixer */}
-                    <rect
-                        x="0"
-                        y={glass.liquidBottom - totalOffset}
-                        width="100"
-                        height={totalOffset - alcOffset}
-                        fill={color2}
-                        clipPath={`url(#glass-clip-${glassId})`}
-                        className="transition-all duration-150"
-                        opacity={0.8}
-                    />
-
-                    {/* Glass Highlights & Reflections */}
-                    <path d={glass.path} fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" />
-                    <rect x="30" y="10" width="2" height="40" fill="white" opacity="0.1" rx="1" />
-                    <rect x="70" y="15" width="1" height="20" fill="white" opacity="0.05" rx="0.5" />
-                </svg>
-            </div>
-        );
-    };
 
 
     return (
@@ -535,13 +547,7 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
                                 color1={selectedItem.color}
                                 color2={selectedMixer?.color || 'transparent'}
                                 interactive={true}
-                                onInteract={(val: number) => {
-                                    if (drinkType === 'cocktail' && selectedMixer) {
-                                        setMixerVolume(Math.max(0, val - alcoholVolume));
-                                    } else {
-                                        setAlcoholVolume(val);
-                                    }
-                                }}
+                                onInteract={handleVolumeInteract}
                             />
 
                             {drinkType === 'cocktail' && !selectedMixer && !selectedItem.defaultVolume && (
