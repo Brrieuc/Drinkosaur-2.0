@@ -321,9 +321,9 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
                     {step === 'type' && (
                         <button
                             onClick={() => setStep('timestamp')}
-                            className={`p-2 rounded-full transition-colors ${customTimestamp ? 'bg-blue-500 text-white' : 'hover:bg-white/10 text-white/70'}`}
+                            className={`p-3 rounded-2xl transition-all active:scale-95 ${customTimestamp ? 'bg-blue-500 text-white shadow-lg shadow-blue-900/40' : 'bg-white/5 hover:bg-white/10 text-white/70'}`}
                         >
-                            <Clock size={20} />
+                            <Clock size={24} />
                         </button>
                     )}
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 text-white/70">
