@@ -11,6 +11,8 @@ export interface FriendRequest {
     fromName: string;
     fromPhoto: string;
     to: string;
+    toName?: string;
+    toPhoto?: string;
     timestamp: number;
     fromDrinkosaurPassConfig?: any;
 }
@@ -21,6 +23,7 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
     const [detailsCache, setDetailsCache] = useState<Record<string, Partial<FriendStatus>>>({});
     const [friendIds, setFriendIds] = useState<string[]>([]);
     const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
+    const [outgoingRequests, setOutgoingRequests] = useState<FriendRequest[]>([]);
     const [loading, setLoading] = useState(true);
 
     // 1. Fetch friend list (IDs) from user profile
@@ -53,9 +56,22 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
             setIncomingRequests(reqs);
         });
 
+        const outgoingQuery = query(
+            collection(db, "friend_requests"),
+            where("from", "==", authUser.uid)
+        );
+        const unsubOutgoing = onSnapshot(outgoingQuery, (snap: any) => {
+            const reqs: FriendRequest[] = [];
+            snap.forEach((doc: any) => {
+                reqs.push({ id: doc.id, ...doc.data() } as FriendRequest);
+            });
+            setOutgoingRequests(reqs);
+        });
+
         return () => {
             unsubscribe();
             unsubRequests();
+            unsubOutgoing();
         };
     }, [authUser]);
 
@@ -218,6 +234,10 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
             throw new Error("Request already sent");
         }
 
+        // Fetch target info to store in request (for outgoing view)
+        const targetSnap = await getDoc(doc(db, "users", targetUid));
+        const targetData = targetSnap.data();
+
         // Create the request
         await addDoc(reqsRef, {
             from: authUser!.uid,
@@ -225,6 +245,8 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
             fromPhoto: myProfile?.customPhotoURL || authUser!.photoURL || '',
             fromDrinkosaurPassConfig: myProfile?.drinkosaurPassConfig || null,
             to: targetUid,
+            toName: targetData?.username || targetData?.displayName || 'Utilisateur',
+            toPhoto: targetData?.customPhotoURL || targetData?.photoURL || '',
             timestamp: Date.now()
         });
     };
@@ -357,15 +379,26 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
         return { profile, drinks };
     };
 
+    const cancelRequest = async (requestId: string) => {
+        try {
+            await deleteDoc(doc(db, "friend_requests", requestId));
+        } catch (err) {
+            console.error("Error canceling request:", err);
+            throw err;
+        }
+    };
+
     return {
         friends,
         incomingRequests,
+        outgoingRequests,
         suggestions,
         getSuggestions,
         addFriendByUsername,
         addFriendByUid,
         respondToRequest,
         removeFriend,
+        cancelRequest,
         refreshSocial,
         fetchFriendData,
         loading

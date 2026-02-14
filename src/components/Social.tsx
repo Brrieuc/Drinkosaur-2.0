@@ -28,6 +28,8 @@ interface SocialProps {
     onFetchSuggestions: () => Promise<void>;
     loading: boolean;
     language: 'en' | 'fr';
+    outgoingRequests: FriendRequest[];
+    onCancelRequest: (requestId: string) => Promise<void>;
 
     // Group Props
     groups: FriendGroup[];
@@ -90,7 +92,9 @@ export const Social: React.FC<SocialProps> = (props) => {
         awardsMonth,
         onFetchGroupAwards,
         onFetchGroupInvites,
-        onOpenGlobal
+        onOpenGlobal,
+        outgoingRequests,
+        onCancelRequest
     } = props;
 
     const [searchUsername, setSearchUsername] = useState('');
@@ -129,6 +133,7 @@ export const Social: React.FC<SocialProps> = (props) => {
 
     const [isSoberExpanded, setIsSoberExpanded] = useState(false);
     const [isGroupPrivacyExpanded, setIsGroupPrivacyExpanded] = useState(false);
+    const [showSentRequests, setShowSentRequests] = useState(false);
 
 
 
@@ -164,6 +169,9 @@ export const Social: React.FC<SocialProps> = (props) => {
         inviteTitle: language === 'fr' ? 'Rejoins-moi sur Drinkosaur !' : 'Join me on Drinkosaur!',
         inviteBody: (username: string) => language === 'fr' ? `Santé ! Ajoute-moi sur Drinkosaur pour suivre mon taux d'alcool en direct : @${username}` : `Cheers! Add me on Drinkosaur to follow my BAC live: @${username}`,
         inviteSuccess: language === 'fr' ? 'Lien d\'invitation copié !' : 'Invite link copied!',
+        sentRequests: language === 'fr' ? 'Demandes envoyées' : 'Sent Requests',
+        noSentRequests: language === 'fr' ? 'Aucune demande envoyée.' : 'No sent requests.',
+        waitingFor: language === 'fr' ? 'En attente de' : 'Waiting for',
         guestSocialTitle: language === 'fr' ? 'Mode Social Verrouillé' : 'Social Mode Locked',
         guestSocialDesc: language === 'fr' ? 'Pour ajouter des amis et voir leur alcoolémie en direct, vous devez être connecté avec un compte Google.' : 'To add friends and see their live BAC, you must be logged in with a Google account.',
         guestSocialButton: language === 'fr' ? 'Se connecter maintenant' : 'Sign in now',
@@ -498,7 +506,20 @@ export const Social: React.FC<SocialProps> = (props) => {
 
                 {activeTab === SocialTab.FRIENDS ? (
                     <div className="animate-fade-in">
-                        <p className="text-white/50 text-sm mb-6">{t.addDesc}</p>
+                        <div className="flex items-center justify-between mb-6">
+                            <p className="text-white/50 text-sm">{t.addDesc}</p>
+                            {outgoingRequests.length > 0 && (
+                                <button
+                                    onClick={() => setShowSentRequests(true)}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-all active:scale-95 group"
+                                >
+                                    <Clock size={12} className="text-blue-400" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-white/60 group-hover:text-white">
+                                        {t.sentRequests} ({outgoingRequests.length})
+                                    </span>
+                                </button>
+                            )}
+                        </div>
 
                         {/* --- ADD FRIEND FORM --- */}
                         <form onSubmit={handleAdd} className="relative mb-10">
@@ -599,6 +620,47 @@ export const Social: React.FC<SocialProps> = (props) => {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- SENT REQUESTS MODAL --- */}
+                        {showSentRequests && (
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-fade-in">
+                                <div className="w-full max-w-md glass-panel-3d rounded-[40px] overflow-hidden flex flex-col max-h-[80vh] animate-slide-up">
+                                    <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
+                                        <h3 className="text-xl font-black italic uppercase tracking-tighter text-white flex items-center gap-3">
+                                            <Clock className="text-blue-400" /> {t.sentRequests}
+                                        </h3>
+                                        <button onClick={() => setShowSentRequests(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/40 hover:text-white">
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                    <div className="p-6 overflow-y-auto no-scrollbar space-y-4">
+                                        {outgoingRequests.length === 0 ? (
+                                            <p className="text-center text-white/30 text-xs font-bold py-10 uppercase tracking-widest">{t.noSentRequests}</p>
+                                        ) : (
+                                            outgoingRequests.map((req) => (
+                                                <div key={req.id} className="flex items-center gap-4 bg-white/5 p-4 rounded-[28px] border border-white/5">
+                                                    <ProfilePhoto
+                                                        photoURL={req.toPhoto}
+                                                        size="w-12 h-12"
+                                                        borderColor="rgba(255,255,255,0.1)"
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-[10px] text-white/30 uppercase font-black tracking-widest leading-none mb-1">{t.waitingFor}</p>
+                                                        <h4 className="font-bold truncate text-white">@{req.toName || 'Utilisateur'}</h4>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => onCancelRequest(req.id)}
+                                                        className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95"
+                                                    >
+                                                        {t.cancel}
+                                                    </button>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}

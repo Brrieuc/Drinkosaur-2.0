@@ -151,7 +151,9 @@ export const ProfilePhoto: React.FC<{
     className?: string;
     containerClassName?: string;
     rounded?: string;
-}> = ({ photoURL, effect, size = 'w-12 h-12', borderColor = 'white', className = '', containerClassName = '', rounded = 'rounded-full' }) => {
+    crossOrigin?: "anonymous" | "use-credentials" | "";
+    referrerPolicy?: React.HTMLAttributeReferrerPolicy;
+}> = ({ photoURL, effect, size = 'w-12 h-12', borderColor = 'white', className = '', containerClassName = '', rounded = 'rounded-full', crossOrigin, referrerPolicy }) => {
     return (
         <div className={`relative ${size} ${containerClassName}`}>
             {effect && <ProfileEffect effect={effect} />}
@@ -161,8 +163,8 @@ export const ProfilePhoto: React.FC<{
                     alt="Profile"
                     className="w-full h-full object-cover"
                     loading="lazy"
-                    referrerPolicy="no-referrer"
-                    crossOrigin="anonymous"
+                    referrerPolicy={referrerPolicy}
+                    crossOrigin={crossOrigin}
                 />
                 {/* Glossy Overlay for depth */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none opacity-40 mix-blend-overlay" />
@@ -460,6 +462,8 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                 borderColor={config.backgroundColor || 'rgba(139, 92, 246, 0.5)'}
                                 className="shadow-[0_0_30px_rgba(0,0,0,0.5)]"
                                 rounded="rounded-[32px]"
+                                crossOrigin="anonymous"
+                                referrerPolicy="no-referrer"
                             />
                         </div>
                     </div>

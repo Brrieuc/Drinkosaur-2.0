@@ -52,6 +52,7 @@ const App: React.FC = () => {
   const {
     friends,
     incomingRequests,
+    outgoingRequests,
     addFriendByUsername,
     addFriendByUid,
     respondToRequest,
@@ -60,6 +61,7 @@ const App: React.FC = () => {
     suggestions,
     getSuggestions,
     fetchFriendData,
+    cancelRequest,
     loading: socialLoading
   } = useSocial(bacStatus, user as UserProfile, drinks);
 
@@ -485,6 +487,8 @@ const App: React.FC = () => {
                 onFetchGroupAwards={(groupId: string, month: number, year: number) => fetchGroupAwards(groupId, month, year, user.language)}
                 onClaimAward={(groupId: string, award: ComputedAward) => claimAward(authUser?.uid || '', groupId, award)}
                 onOpenGlobal={() => setView(AppView.GLOBE)}
+                outgoingRequests={outgoingRequests}
+                onCancelRequest={cancelRequest}
                 appLaunch={appLaunch}
               />
               {selectedFriend && (
