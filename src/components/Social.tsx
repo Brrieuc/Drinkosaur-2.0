@@ -7,8 +7,9 @@ import { ComputedAward } from '../constants/awards';
 import { AwardsModal } from './AwardsModal';
 import {
     UserPlus, Loader2, AlertTriangle, Trash2, Check, X, LogOut,
-    Bell, Trophy, Medal, RefreshCw, Sparkles, Share2, Users, Plus, ChevronLeft, Edit2, Globe, Clock
+    Bell, Trophy, Medal, RefreshCw, Sparkles, Share2, Users, Plus, ChevronLeft, Edit2, Globe, Clock, Search
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { ProfilePhoto } from './DrinkosaurPass';
 
 interface SocialProps {
@@ -124,6 +125,7 @@ export const Social: React.FC<SocialProps> = (props) => {
 
     // Invite to Group State
     const [isInvitingToGroup, setIsInvitingToGroup] = useState(false);
+    const [inviteFilter, setInviteFilter] = useState('');
     const [showIconPicker, setShowIconPicker] = useState(false);
     const [showAwardsModal, setShowAwardsModal] = useState(false);
     const [showGroupActions, setShowGroupActions] = useState(false);
@@ -1099,61 +1101,81 @@ export const Social: React.FC<SocialProps> = (props) => {
                         )}
 
                         {/* --- INVITE TO GROUP MODAL --- */}
-                        {isInvitingToGroup && selectedGroupId && (
-                            <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in">
-                                <div className="w-full max-w-md bg-[#0a0a0a] rounded-[40px] p-8 border border-white/10 shadow-2xl animate-scale-up max-h-[85vh] overflow-y-auto no-scrollbar">
-                                    <div className="flex justify-between items-center mb-8">
+                        {isInvitingToGroup && selectedGroupId && createPortal(
+                            <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in text-white font-sans">
+                                <div className="w-full max-w-md bg-[#0a0a0a] rounded-[40px] p-8 border border-white/10 shadow-2xl animate-scale-up max-h-[85vh] flex flex-col">
+                                    <div className="flex justify-between items-center mb-6 shrink-0">
                                         <h3 className="text-2xl font-black text-white">{t.addMembers}</h3>
-                                        <button onClick={() => { setIsInvitingToGroup(false); setSelectedFriendIds([]); }} className="p-2 bg-white/5 rounded-full text-white/40"><X size={24} /></button>
+                                        <button onClick={() => { setIsInvitingToGroup(false); setSelectedFriendIds([]); setInviteFilter(''); }} className="p-2 bg-white/5 rounded-full text-white/40 hover:bg-white/10 transition-colors"><X size={24} /></button>
                                     </div>
-                                    <div className="space-y-6">
-                                        <div className="space-y-4 text-left">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 block">{t.selectFriends}</label>
-                                            <div className="space-y-2">
-                                                {friends.filter(f => !groupRanking.some(member => member.uid === f.uid)).length === 0 ? (
-                                                    <p className="text-white/20 text-xs italic p-4 text-center">{t.empty}</p>
-                                                ) : (
-                                                    friends
-                                                        .filter(f => !groupRanking.some(member => member.uid === f.uid))
-                                                        .map(friend => {
-                                                            const isSelected = selectedFriendIds.includes(friend.uid);
-                                                            return (
-                                                                <button
-                                                                    key={friend.uid}
-                                                                    onClick={() => setSelectedFriendIds(prev => isSelected ? prev.filter(id => id !== friend.uid) : [...prev, friend.uid])}
-                                                                    className={`w-full p-4 rounded-2xl flex items-center gap-3 transition-all border ${isSelected ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
-                                                                >
-                                                                    <ProfilePhoto
-                                                                        photoURL={friend.photoURL}
-                                                                        effect={friend.drinkosaurPassConfig?.profileEffect}
-                                                                        size="w-10 h-10"
-                                                                        borderColor="rgba(255,255,255,0.1)"
-                                                                    />
-                                                                    <span className="flex-1 text-left font-bold truncate text-white italic">@{friend.displayName}</span>
-                                                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isSelected ? 'bg-blue-500' : 'bg-white/10'}`}>{isSelected && <Check size={16} className="text-white" />}</div>
-                                                                </button>
-                                                            );
-                                                        })
-                                                )}
-                                            </div>
+
+                                    {/* Search Input */}
+                                    <div className="relative mb-6 shrink-0">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">
+                                            <Search size={18} />
                                         </div>
-                                        <div className="flex gap-4 pt-4 pb-10">
-                                            <button onClick={() => { setIsInvitingToGroup(false); setSelectedFriendIds([]); }} className="flex-1 py-5 rounded-3xl font-black text-white/40 uppercase tracking-widest active:scale-95 transition-all">{t.cancel}</button>
-                                            <button
-                                                disabled={selectedFriendIds.length === 0}
-                                                onClick={async () => {
-                                                    await onInviteToGroup(selectedGroupId, selectedFriendIds);
-                                                    setIsInvitingToGroup(false);
-                                                    setSelectedFriendIds([]);
-                                                }}
-                                                className="flex-[2] bg-white text-black py-5 rounded-3xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl disabled:opacity-20"
-                                            >
-                                                {t.invite}
-                                            </button>
+                                        <input
+                                            type="text"
+                                            value={inviteFilter}
+                                            onChange={(e) => setInviteFilter(e.target.value)}
+                                            placeholder={language === 'fr' ? "Rechercher un ami..." : "Search for a friend..."}
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white placeholder:text-white/20 font-bold focus:outline-none focus:border-blue-500/50 transition-all"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-4 text-left flex-1 overflow-y-auto no-scrollbar min-h-0">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2 block sticky top-0 bg-[#0a0a0a] py-2 z-10">{t.selectFriends}</label>
+                                        <div className="space-y-2 pb-4">
+                                            {friends.filter(f => !groupRanking.some(member => member.uid === f.uid))
+                                                .filter(f => !inviteFilter || (f.displayName || '').toLowerCase().includes(inviteFilter.toLowerCase()))
+                                                .length === 0 ? (
+                                                <p className="text-white/20 text-xs italic p-10 text-center border border-dashed border-white/10 rounded-2xl">
+                                                    {inviteFilter ? (language === 'fr' ? 'Aucun ami trouvé' : 'No friends found') : t.empty}
+                                                </p>
+                                            ) : (
+                                                friends
+                                                    .filter(f => !groupRanking.some(member => member.uid === f.uid))
+                                                    .filter(f => !inviteFilter || (f.displayName || '').toLowerCase().includes(inviteFilter.toLowerCase()))
+                                                    .map(friend => {
+                                                        const isSelected = selectedFriendIds.includes(friend.uid);
+                                                        return (
+                                                            <button
+                                                                key={friend.uid}
+                                                                onClick={() => setSelectedFriendIds(prev => isSelected ? prev.filter(id => id !== friend.uid) : [...prev, friend.uid])}
+                                                                className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all border ${isSelected ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                                                            >
+                                                                <ProfilePhoto
+                                                                    photoURL={friend.photoURL}
+                                                                    effect={friend.drinkosaurPassConfig?.profileEffect}
+                                                                    size="w-10 h-10"
+                                                                    borderColor="rgba(255,255,255,0.1)"
+                                                                />
+                                                                <span className="flex-1 text-left font-bold truncate text-white italic">@{friend.displayName}</span>
+                                                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isSelected ? 'bg-blue-500' : 'bg-white/10'}`}>{isSelected && <Check size={16} className="text-white" />}</div>
+                                                            </button>
+                                                        );
+                                                    })
+                                            )}
                                         </div>
+                                    </div>
+                                    <div className="flex gap-4 pt-4 shrink-0 border-t border-white/5 mt-2">
+                                        <button onClick={() => { setIsInvitingToGroup(false); setSelectedFriendIds([]); setInviteFilter(''); }} className="flex-1 py-4 rounded-3xl font-black text-white/40 uppercase tracking-widest active:scale-95 transition-all text-xs hover:bg-white/5">{t.cancel}</button>
+                                        <button
+                                            disabled={selectedFriendIds.length === 0}
+                                            onClick={async () => {
+                                                await onInviteToGroup(selectedGroupId, selectedFriendIds);
+                                                setIsInvitingToGroup(false);
+                                                setSelectedFriendIds([]);
+                                                setInviteFilter('');
+                                            }}
+                                            className="flex-[2] bg-white text-black py-4 rounded-3xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl disabled:opacity-20 text-xs"
+                                        >
+                                            {t.invite} ({selectedFriendIds.length})
+                                        </button>
                                     </div>
                                 </div>
-                            </div>
+                            </div>,
+                            document.body
                         )}
 
                         {/* --- AWARDS MODAL --- */}
