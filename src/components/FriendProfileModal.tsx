@@ -166,7 +166,7 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
             <div className="modal-container w-full max-w-lg rounded-[40px] relative">
 
                 {/* Close Button */}
-                <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-white/10 rounded-full hover:bg-white/20 text-white transition-colors z-[110]">
+                <button onClick={onClose} className={`absolute top-6 right-6 p-2 bg-white/10 rounded-full hover:bg-white/20 text-white transition-colors ${showPass ? 'z-0 pointer-events-none opacity-0' : 'z-[110]'}`}>
                     <X size={20} />
                 </button>
 

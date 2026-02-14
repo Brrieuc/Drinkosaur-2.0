@@ -473,8 +473,8 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                 borderColor={config.backgroundColor || 'rgba(139, 92, 246, 0.5)'}
                                 className="shadow-[0_0_30px_rgba(0,0,0,0.5)]"
                                 rounded="rounded-[32px]"
-                                crossOrigin="anonymous"
-                                referrerPolicy="no-referrer"
+                                crossOrigin={blobUrl ? "anonymous" : undefined}
+                                referrerPolicy={blobUrl ? "no-referrer" : undefined}
                             />
                         </div>
                     </div>
