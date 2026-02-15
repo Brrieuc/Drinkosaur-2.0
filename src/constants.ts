@@ -115,6 +115,15 @@ export const SPIRIT_LIBRARY: DrinkReference[] = [
   { name: "Campari", abv: 25, type: 'spirit', color: '#DC2626', carbonated: false },
   { name: "Get 27", abv: 21, type: 'spirit', color: '#22C55E', carbonated: false },
   { name: "Baileys", abv: 17, type: 'spirit', color: '#E7E5E4', carbonated: false },
+
+  // Flask-Common Brands (Supermarket classics)
+  { name: "William Peel", abv: 40, type: 'spirit', color: '#B45309', carbonated: false },
+  { name: "Label 5", abv: 40, type: 'spirit', color: '#B45309', carbonated: false },
+  { name: "Poliakov", abv: 37.5, type: 'spirit', color: '#E0F2FE', carbonated: false },
+  { name: "Clan Campbell", abv: 40, type: 'spirit', color: '#B45309', carbonated: false },
+  { name: "Gordon's", abv: 37.5, type: 'spirit', color: '#ECFEFF', carbonated: false },
+  { name: "Grant's", abv: 40, type: 'spirit', color: '#B45309', carbonated: false },
+  { name: "Sir Edward's", abv: 40, type: 'spirit', color: '#B45309', carbonated: false },
 ];
 
 export const COCKTAIL_LIBRARY: DrinkReference[] = [
@@ -206,11 +215,16 @@ export const BEER_PRESETS = [
   { label: 'Litron', label_en: 'Liter', ml: 1000 },
 ];
 
-// Presets are originally in English, adding French mapping
 export const SHOT_SIZES = [
   { label: 'Small', label_fr: 'Petit', ml: 30 },
   { label: 'Standard', label_fr: 'Standard', ml: 40 },
   { label: 'Large', label_fr: 'Grand', ml: 50 },
+];
+
+export const FLASK_SIZES = [
+  { label: '20cl', ml: 200 },
+  { label: '35cl', ml: 350 },
+  { label: '50cl', ml: 500 },
 ];
 
 // GLASS DEFINITIONS

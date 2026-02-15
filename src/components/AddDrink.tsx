@@ -3,7 +3,7 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Drink } from '../types';
 import {
     BEER_LIBRARY, SPIRIT_LIBRARY, COCKTAIL_LIBRARY, GENERIC_BEERS, GENERIC_WINES,
-    BEER_PRESETS, SHOT_SIZES, GLASS_SHAPES, MIXERS,
+    BEER_PRESETS, SHOT_SIZES, FLASK_SIZES, GLASS_SHAPES, MIXERS,
     DrinkReference, MixerReference
 } from '../constants';
 import { Search, ChevronLeft, X, Zap, Clock, Check } from 'lucide-react';
@@ -15,7 +15,7 @@ interface AddDrinkProps {
     language?: 'en' | 'fr';
 }
 
-type DrinkType = 'beer' | 'wine' | 'cocktail' | 'shot';
+type DrinkType = 'beer' | 'wine' | 'cocktail' | 'shot' | 'flask';
 type Step = 'type' | 'brand' | 'glass' | 'pour' | 'confirm' | 'timestamp';
 
 const GlassView = React.memo(({ glassId, alcoholVol, mixerVol = 0, color1, color2 = 'transparent', interactive = false, onInteract = () => { } }: any) => {
@@ -165,6 +165,7 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
         wine: language === 'fr' ? 'Vin' : 'Wine',
         mix: language === 'fr' ? 'Cocktail' : 'Mix',
         shot: language === 'fr' ? 'Shot' : 'Shot',
+        flask: language === 'fr' ? 'Flasque' : 'Flask',
         commonTypes: language === 'fr' ? 'Types Communs' : 'Common Types',
         library: language === 'fr' ? 'Bibliothèque' : 'Library',
         search: language === 'fr' ? 'Rechercher...' : 'Search...',
@@ -188,8 +189,8 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
     const filteredLibrary = useMemo(() => {
         let lib: DrinkReference[] = [];
         if (drinkType === 'beer') lib = BEER_LIBRARY;
-        else if (drinkType === 'wine') return []; // Generic wines handling handled differently
         else if (drinkType === 'cocktail') lib = [...COCKTAIL_LIBRARY, ...SPIRIT_LIBRARY];
+        else if (drinkType === 'flask') lib = SPIRIT_LIBRARY;
         else lib = SPIRIT_LIBRARY;
 
         if (!searchTerm) return lib;
@@ -200,11 +201,14 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
 
     const handleTypeSelect = (type: DrinkType) => {
         setDrinkType(type);
-        if (type === 'wine') {
-            setStep('brand'); // Go to generic wine selection
-        } else {
-            setStep('brand');
-        }
+        setStep('brand');
+
+        // Default glasses
+        if (type === 'shot') setSelectedGlassId('shot');
+        else if (type === 'beer') setSelectedGlassId('pint');
+        else if (type === 'wine') setSelectedGlassId('wine_std');
+        else if (type === 'flask') setSelectedGlassId('tumbler');
+
         // Reset chug state default
         if (type === 'shot') setIsChug(true);
         else setIsChug(false);
@@ -214,10 +218,8 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
         setSelectedItem(item);
         setSearchTerm('');
 
-        if (drinkType === 'beer') {
-            setStep('pour'); // Beer goes straight to presets
-        } else if (drinkType === 'shot') {
-            setStep('pour'); // Shot goes to presets
+        if (drinkType === 'beer' || drinkType === 'shot' || drinkType === 'flask') {
+            setStep('pour');
         } else {
             setStep('glass'); // Wine & Cocktail go to glass select
         }
@@ -413,6 +415,10 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
                         <div className="text-6xl drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] transform group-hover:rotate-12 transition-transform">🥃</div>
                         <span className="text-xl font-bold text-emerald-100">{t.shot}</span>
                     </button>
+                    <button onClick={() => handleTypeSelect('flask')} className="group relative rounded-[32px] overflow-hidden bg-gradient-to-br from-indigo-500/20 to-purple-900/20 border border-indigo-500/30 flex flex-col items-center justify-center gap-4 hover:scale-[1.02] transition-transform shadow-[0_0_30px_rgba(99,102,241,0.1)] aspect-square">
+                        <div className="text-6xl drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] transform group-hover:-rotate-12 transition-transform">🧴</div>
+                        <span className="text-xl font-bold text-indigo-100">{t.flask}</span>
+                    </button>
                 </div>
             )}
 
@@ -521,7 +527,7 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
                         </div>
                     )}
 
-                    {(drinkType === 'wine' || drinkType === 'cocktail') && (
+                    {(drinkType === 'wine' || drinkType === 'cocktail' || drinkType === 'flask') && (
                         <div className="flex-1 flex flex-col items-center">
                             <div className="w-full mb-4 flex justify-between items-end bg-black/40 p-4 rounded-[24px] border border-white/5">
                                 <div className="text-left">
@@ -537,8 +543,24 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
                             </div>
 
                             <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em] mb-4">
-                                {drinkType === 'cocktail' && (!selectedMixer || selectedItem.defaultVolume) ? t.dragAdjust : t.dragMixer}
+                                {drinkType === 'cocktail' && (!selectedMixer || selectedItem.defaultVolume) ? t.dragAdjust :
+                                    drinkType === 'flask' ? t.dragAdjust : t.dragMixer}
                             </p>
+
+                            {/* Flask Volume Presets */}
+                            {drinkType === 'flask' && (
+                                <div className="flex flex-wrap justify-center gap-2 mb-6">
+                                    {FLASK_SIZES.map(f => (
+                                        <button
+                                            key={f.label}
+                                            onClick={() => setAlcoholVolume(f.ml)}
+                                            className={`px-4 py-2 rounded-xl font-black transition-all text-xs ${alcoholVolume === f.ml ? 'bg-indigo-500 text-white shadow-lg' : 'bg-white/5 text-white/40 border border-white/10'}`}
+                                        >
+                                            {f.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
 
                             <GlassView
                                 glassId={selectedGlassId}
@@ -576,7 +598,7 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
                                 </div>
                             )}
 
-                            {(drinkType === 'wine' || selectedMixer || selectedItem.defaultVolume) && (
+                            {(drinkType === 'wine' || drinkType === 'flask' || selectedMixer || (drinkType === 'cocktail' && selectedItem.defaultVolume)) && (
                                 <button
                                     onClick={() => finalizeDrink()}
                                     className="w-full py-6 mt-8 rounded-[32px] bg-gradient-to-br from-blue-500 to-indigo-700 text-white font-black text-2xl shadow-2xl shadow-blue-900/40 active:scale-95 transition-all flex items-center justify-center gap-3"
