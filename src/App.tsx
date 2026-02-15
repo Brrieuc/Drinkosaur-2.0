@@ -360,6 +360,8 @@ const App: React.FC = () => {
               }
             }}
             onUploadAvatar={uploadAvatar}
+            notificationPermission={notificationPermission}
+            onRequestNotification={requestPermission}
           />
         </div>
         {toast && <Toast message={toast.msg} type={toast.type} />}
@@ -457,6 +459,8 @@ const App: React.FC = () => {
             onComplete={() => {
               saveUser({ ...user, hasSeenTour: true });
             }}
+            onRequestNotifications={requestPermission}
+            notificationPermission={notificationPermission}
           />
         )}
 

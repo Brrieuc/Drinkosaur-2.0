@@ -1,13 +1,15 @@
 
 import React, { useState } from 'react';
-import { X, ChevronRight, LayoutDashboard, PlusCircle, Users, Activity, Download, Share } from 'lucide-react';
+import { X, ChevronRight, LayoutDashboard, PlusCircle, Users, Activity, Download, Share, Bell } from 'lucide-react';
 
 interface OnboardingTourProps {
     language: 'en' | 'fr';
     onComplete: () => void;
+    onRequestNotifications?: () => void;
+    notificationPermission?: NotificationPermission;
 }
 
-export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComplete }) => {
+export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComplete, onRequestNotifications, notificationPermission }) => {
     const [step, setStep] = useState(0);
 
     const steps = [
@@ -24,7 +26,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComp
             id: 'monitor',
             title: language === 'fr' ? 'Le Moniteur' : 'The Monitor',
             content: language === 'fr'
-                ? 'Suivez votre courbe d\'alcoolémie, votre pic prévu et l\'heure à laquelle vous serez sobre.'
+                ? 'Suivez votre courbe d\'alcoolémie, votre pic prévu et l\'heure à laquelle vous serez sober.'
                 : 'Follow your BAC curve, your projected peak, and the exact time you will be sober.',
             icon: <LayoutDashboard className="w-12 h-12 text-blue-500" />,
             color: 'from-blue-500 to-indigo-600'
@@ -51,19 +53,33 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComp
             id: 'install',
             title: language === 'fr' ? 'Installez l\'App' : 'Install the App',
             content: language === 'fr'
-                ? 'Pour une meilleure expérience, appuyez sur {icon} puis sur "Sur l\'écran d\'accueil". Cela débloque aussi les notifications !'
-                : 'For the best experience, tap {icon} then "Add to Home Screen". This also unlocks notifications!',
+                ? 'Pour une meilleure expérience, appuyez sur {icon} puis sur "Sur l\'écran d\'accueil".'
+                : 'For the best experience, tap {icon} then "Add to Home Screen".',
             icon: <Download className="w-12 h-12 text-purple-500" />,
             color: 'from-purple-500 to-violet-600'
         }
     ];
+
+    // Add Notifications step only if supported and not already granted
+    const notificationsSupported = (typeof window !== 'undefined' && 'Notification' in window);
+    if (notificationsSupported && notificationPermission !== 'granted') {
+        steps.push({
+            id: 'notifications',
+            title: language === 'fr' ? 'Restez informé' : 'Stay Informed',
+            content: language === 'fr'
+                ? 'Activez les notifications pour savoir quand vous dépassez le taux légal ou quand vos amis boivent trop !'
+                : 'Enable notifications to know when you reach a limit or when your friends drink too much!',
+            icon: <Bell className="w-12 h-12 text-blue-400" />,
+            color: 'from-blue-400 to-cyan-500'
+        });
+    }
 
     const currentStep = steps[step];
 
     const renderContent = (content: string) => {
         if (currentStep.id === 'install') {
             const parts = content.split('{icon}');
-            return (
+            return (parts.length > 1) ? (
                 <>
                     {parts[0]}
                     <span className="inline-flex items-center align-middle bg-white/10 p-1.5 rounded-lg mx-1">
@@ -71,9 +87,21 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComp
                     </span>
                     {parts[1]}
                 </>
-            );
+            ) : content;
         }
         return content;
+    };
+
+    const handleNext = () => {
+        if (currentStep.id === 'notifications' && onRequestNotifications) {
+            onRequestNotifications();
+        }
+
+        if (step < steps.length - 1) {
+            setStep(step + 1);
+        } else {
+            onComplete();
+        }
     };
 
     return (
@@ -112,10 +140,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComp
                 </div>
 
                 <button
-                    onClick={() => {
-                        if (step < steps.length - 1) setStep(step + 1);
-                        else onComplete();
-                    }}
+                    onClick={handleNext}
                     className={`w-full py-5 rounded-[24px] font-black text-white bg-gradient-to-br ${currentStep.color} shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 z-10`}
                 >
                     {step < steps.length - 1 ? (
@@ -124,7 +149,9 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComp
                             <ChevronRight size={20} />
                         </>
                     ) : (
-                        language === 'fr' ? 'C\'est parti !' : 'Let\'s go!'
+                        currentStep.id === 'notifications'
+                            ? (language === 'fr' ? 'Activer les notifications' : 'Enable Notifications')
+                            : (language === 'fr' ? 'C\'est parti !' : 'Let\'s go!')
                     )}
                 </button>
             </div>
