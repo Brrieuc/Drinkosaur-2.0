@@ -103,7 +103,6 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
     }, [friendIds]);
 
     // 2b. Auto-fetch missing details (drinks/profile) for accurate calculation
-    // 2b. Auto-fetch missing details (drinks/profile) for accurate calculation
     useEffect(() => {
         if (friendIds.length === 0) return;
 
@@ -152,7 +151,6 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
         fetchDetails();
     }, [friendIds, detailsCache]);
 
-    // Merge raw live status with cached full details
     // Merge raw live status with cached full details
     const friends = useMemo(() => {
         const language = myProfile?.language || 'fr';
