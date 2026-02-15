@@ -8,6 +8,7 @@ import {
   onSnapshot, deleteDoc, arrayRemove, addDoc
 } from "firebase/firestore";
 import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 
 const firebaseConfig = {
@@ -25,6 +26,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
+const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 const googleProvider = new GoogleAuthProvider();
 
 // Force account selection to refresh session handling
@@ -35,6 +37,7 @@ export {
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
   doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc,
   arrayUnion, onSnapshot, deleteDoc, arrayRemove, addDoc,
-  ref, uploadString, getDownloadURL
+  ref, uploadString, getDownloadURL,
+  messaging, getToken, onMessage
 };
 

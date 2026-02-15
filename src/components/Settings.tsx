@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { UserProfile, WonAward, LeaderboardVisibility } from '../types';
-import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Calendar, Trophy, HelpCircle, UserPlus } from 'lucide-react';
+import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Calendar, Trophy, HelpCircle, UserPlus, Bell } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { ImageCropper } from './ImageCropper';
 import { TrophyHall } from './TrophyHall';
@@ -16,11 +16,13 @@ interface SettingsProps {
   selectedBadges?: string[];
   onUpdateBadges?: (badges: string[]) => void;
   drinks?: Drink[];
+  notificationPermission?: NotificationPermission;
+  onRequestNotification?: () => void;
 }
 
 type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn' | 'errorWeight' | 'errorUsername' | 'birthDate' | 'birthDateDesc' | 'underageTitle' | 'underageMsg' | 'errorBirthDate' | 'privacy' | 'photoVisible' | 'photoVisibleDesc';
 
-export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar, wonAwards = [], selectedBadges = [], onUpdateBadges, drinks = [] }) => {
+export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar, wonAwards = [], selectedBadges = [], onUpdateBadges, drinks = [], notificationPermission, onRequestNotification }) => {
   const [showAdvanced, setShowAdvanced] = useState(!user.isSetup);
   const [showTrophyHall, setShowTrophyHall] = useState(false);
   const [weight, setWeight] = useState(user.weightKg || 70);
@@ -755,6 +757,29 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
             </div>
             <ChevronRight className="text-white/20 group-hover:text-sky-400/40 transition-colors" />
           </a>
+
+          {/* Notifications Button */}
+          <button
+            onClick={() => onRequestNotification?.()}
+            className="w-full glass-panel-3d p-6 rounded-[32px] flex items-center justify-between active:scale-[0.98] transition-all group hover:bg-white/5"
+          >
+            <div className="flex items-center gap-4">
+              <div className={`p-4 rounded-2xl transition-colors border ${notificationPermission === 'granted' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-blue-500/10 border-blue-500/20'}`}>
+                <Bell size={24} className={notificationPermission === 'granted' ? 'text-emerald-400' : 'text-blue-400'} />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-white leading-tight text-lg">
+                  {language === 'fr' ? 'Notifications Push' : 'Push Notifications'}
+                </p>
+                <p className="text-xs text-white/40 mt-1 uppercase tracking-wider font-bold">
+                  {notificationPermission === 'granted'
+                    ? (language === 'fr' ? 'Activées ✅' : 'Enabled ✅')
+                    : (language === 'fr' ? 'Cliquer pour activer' : 'Click to enable')}
+                </p>
+              </div>
+            </div>
+            {notificationPermission !== 'granted' && <ChevronRight className="text-white/20 group-hover:text-blue-400/40 transition-colors" />}
+          </button>
         </div>
 
         {/* Footer Credits */}

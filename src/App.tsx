@@ -21,6 +21,7 @@ import { useAwards } from './hooks/useAwards';
 import { ComputedAward } from './constants/awards';
 import { useAwardNotifications } from './hooks/useAwardNotifications';
 import { useGlobalStats } from './hooks/useGlobalStats';
+import { useNotifications } from './hooks/useNotifications';
 import { HelmetProvider } from 'react-helmet-async';
 
 const Toast = ({ message, type = 'success' }: { message: string, type?: 'success' | 'warning' }) => (
@@ -103,6 +104,8 @@ const App: React.FC = () => {
     fetchLiveStats,
     fetchMonthlyStats,
   } = useGlobalStats();
+
+  const { permission: notificationPermission, requestPermission } = useNotifications(user as UserProfile);
 
   const handleSelectFriend = async (uid: string) => {
     const friendStatus = friends.find(f => f.uid === uid);
@@ -485,6 +488,8 @@ const App: React.FC = () => {
                 }
                 setTimeout(() => setToast(null), 3000);
               }}
+              notificationPermission={notificationPermission}
+              onRequestNotification={requestPermission}
             />
           )}
 
