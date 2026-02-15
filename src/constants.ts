@@ -61,16 +61,25 @@ export const BEER_LIBRARY: DrinkReference[] = [
   { name: 'Kronenbourg', abv: 4.2, type: 'beer', color: '#FCD34D', carbonated: true },
   { name: 'Budweiser', abv: 5.0, type: 'beer', color: '#FEF08A', carbonated: true },
   { name: 'Corona', abv: 4.5, type: 'beer', color: '#FEF9C3', carbonated: true },
+  { name: 'Desperados', abv: 5.9, type: 'beer', color: '#FBBF24', carbonated: true },
+  { name: 'Jupiler', abv: 5.2, type: 'beer', color: '#FCD34D', carbonated: true },
 
-  // Triples & Fortes (Amber/Dark Gold)
+  // Spéciales & Fortes (Amber/Dark Gold)
   { name: 'Paix-Dieu', abv: 10.0, type: 'beer', color: '#F59E0B', carbonated: true },
   { name: 'Rince-Cochon', abv: 8.5, type: 'beer', color: '#FCD34D', carbonated: true },
   { name: 'La Chouffe', abv: 8.0, type: 'beer', color: '#F59E0B', carbonated: true },
   { name: 'Tripel Karmeliet', abv: 8.4, type: 'beer', color: '#fbbf24', carbonated: true },
   { name: 'Duvel', abv: 8.5, type: 'beer', color: '#FEF3C7', carbonated: true },
+  { name: 'La Goudale', abv: 7.2, type: 'beer', color: '#FBBF24', carbonated: true },
+  { name: '3 Monts', abv: 8.5, type: 'beer', color: '#FCD34D', carbonated: true },
+  { name: 'Pelforth Blonde', abv: 5.8, type: 'beer', color: '#FBBF24', carbonated: true },
+  { name: 'Pelforth Brune', abv: 6.5, type: 'beer', color: '#451a03', carbonated: true },
+  { name: 'Pelican', abv: 7.5, type: 'beer', color: '#FBBF24', carbonated: true },
+  { name: 'Delirium Tremens', abv: 8.5, type: 'beer', color: '#FEF3C7', carbonated: true },
+  { name: 'Grimbergen Blonde', abv: 6.7, type: 'beer', color: '#FBBF24', carbonated: true },
   { name: 'Chimay Bleue', abv: 9.0, type: 'beer', color: '#451a03', carbonated: true }, // Dark
   { name: 'Rochefort 10', abv: 11.3, type: 'beer', color: '#3E1F11', carbonated: true }, // Very Dark
-  { name: 'Guinness', abv: 4.2, type: 'beer', color: '#000000', carbonated: false }, // Creamy, not fizzy in same way, but handled as beer
+  { name: 'Guinness', abv: 4.2, type: 'beer', color: '#000000', carbonated: false }, // Creamy
 
   // IPAs (Orange)
   { name: 'Punk IPA', abv: 5.4, type: 'beer', color: '#F59E0B', carbonated: true },
