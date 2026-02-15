@@ -3,8 +3,8 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Drink } from '../types';
 import {
     BEER_LIBRARY, SPIRIT_LIBRARY, COCKTAIL_LIBRARY, GENERIC_BEERS, GENERIC_WINES,
-    BEER_PRESETS, SHOT_SIZES, FLASK_SIZES, GLASS_SHAPES, MIXERS,
-    DrinkReference, MixerReference
+    BEER_PRESETS, SHOT_SIZES, FLASK_SIZES, GLASS_SHAPES, MIXERS, MIX_PRESETS,
+    DrinkReference, MixerReference, MixPreset
 } from '../constants';
 import { Search, ChevronLeft, X, Zap, Clock, Check } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
@@ -180,7 +180,8 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
         chug: language === 'fr' ? 'Cul-sec / Shot' : 'Chug / Shot',
         today: language === 'fr' ? "Aujourd'hui" : "Today",
         yesterday: language === 'fr' ? "Hier" : "Yesterday",
-        confirmCustom: language === 'fr' ? "Confirmer l'heure" : "Confirm Time"
+        confirmCustom: language === 'fr' ? "Confirmer l'heure" : "Confirm Time",
+        favoriteMixes: language === 'fr' ? "Mélanges Favoris" : "Favorite Mixes"
     };
 
     // -- Helpers --
@@ -203,11 +204,14 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
         setDrinkType(type);
         setStep('brand');
 
-        // Default glasses
+        // Default glasses and volumes
         if (type === 'shot') setSelectedGlassId('shot');
         else if (type === 'beer') setSelectedGlassId('pint');
         else if (type === 'wine') setSelectedGlassId('wine_std');
-        else if (type === 'flask') setSelectedGlassId('tumbler');
+        else if (type === 'flask') {
+            setSelectedGlassId('tumbler');
+            setAlcoholVolume(250); // Default flask size as requested
+        }
 
         // Reset chug state default
         if (type === 'shot') setIsChug(true);
@@ -231,6 +235,20 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
         // Default start volumes
         if (drinkType === 'wine') setAlcoholVolume(125); // Std glass
         if (drinkType === 'cocktail') setAlcoholVolume(selectedItem?.defaultVolume || 50); // Use default or Std shot
+    };
+
+    const handleMixPresetSelect = (preset: MixPreset) => {
+        const spirit = SPIRIT_LIBRARY.find(s => s.name === preset.spiritName);
+        const mixer = MIXERS.find(m => m.name === preset.mixerName);
+
+        if (spirit && mixer) {
+            setSelectedItem(spirit);
+            setSelectedMixer(mixer);
+            setAlcoholVolume(preset.defaultAlcohol);
+            setMixerVolume(preset.defaultMixer);
+            setSelectedGlassId('tumbler');
+            setStep('pour');
+        }
     };
 
     const finalizeDrink = (volumeOverride?: number) => {
@@ -445,6 +463,24 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
                             </div>
 
                             <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 pb-32 min-h-0">
+                                {drinkType === 'cocktail' && !searchTerm && (
+                                    <div className="mb-8">
+                                        <div className="text-xs font-black text-white/30 mb-4 uppercase tracking-[0.2em]">{t.favoriteMixes}</div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {MIX_PRESETS.map((p, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => handleMixPresetSelect(p)}
+                                                    className="p-4 rounded-2xl bg-white/5 border border-white/10 text-left hover:bg-white/10 active:scale-95 transition-all flex flex-col gap-1"
+                                                >
+                                                    <span className="font-bold text-blue-400">{(language === 'fr' && p.name_fr) ? p.name_fr : p.name}</span>
+                                                    <span className="text-[10px] text-white/30 uppercase font-black">{p.spiritName} + {p.mixerName}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {drinkType === 'beer' && !searchTerm && (
                                     <div className="mb-6 flex-shrink-0">
                                         <div className="text-xs font-bold text-white/30 mb-2 uppercase tracking-wider">{t.commonTypes}</div>

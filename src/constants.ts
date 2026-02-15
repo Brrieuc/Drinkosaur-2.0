@@ -40,6 +40,7 @@ export interface DrinkReference {
 
 export interface MixerReference {
   name: string;
+  name_fr?: string;
   color: string;
   carbonated?: boolean;
 }
@@ -188,6 +189,27 @@ export const MIXERS: MixerReference[] = [
   { name: 'Soda Water', color: '#E0F2FE', carbonated: true },
   { name: 'Cranberry', color: '#BE123C', carbonated: false },
   { name: 'Ginger Beer', color: '#FEF3C7', carbonated: true },
+  { name: 'Apple Juice', name_fr: 'Jus de Pomme', color: '#B45309', carbonated: false },
+  { name: 'Pineapple Juice', name_fr: 'Jus d\'Ananas', color: '#FDE68A', carbonated: false },
+];
+
+export interface MixPreset {
+  name: string;
+  name_fr?: string;
+  spiritName: string;
+  mixerName: string;
+  defaultAlcohol: number;
+  defaultMixer: number;
+}
+
+export const MIX_PRESETS: MixPreset[] = [
+  { name: 'Vodka Red Bull', spiritName: 'Absolut', mixerName: 'Red Bull', defaultAlcohol: 50, defaultMixer: 150 },
+  { name: 'Jack Coca', spiritName: "Jack Daniel's", mixerName: 'Coca-Cola', defaultAlcohol: 50, defaultMixer: 150 },
+  { name: 'Captain Coca', spiritName: 'Captain Morgan', mixerName: 'Coca-Cola', defaultAlcohol: 50, defaultMixer: 150 },
+  { name: 'Vodka Pomme', name_fr: 'Vodka Pomme', spiritName: 'Absolut', mixerName: 'Apple Juice', defaultAlcohol: 50, defaultMixer: 150 },
+  { name: 'Vodka Orange', name_fr: 'Vodka Orange', spiritName: 'Absolut', mixerName: 'Orange Juice', defaultAlcohol: 50, defaultMixer: 150 },
+  { name: 'Gin Tonic', spiritName: 'Tanqueray', mixerName: 'Tonic Water', defaultAlcohol: 50, defaultMixer: 150 },
+  { name: 'Whisky Baby', name_fr: 'Whisky Baby', spiritName: "William Peel", mixerName: 'Coca-Cola', defaultAlcohol: 30, defaultMixer: 70 },
 ];
 
 export const GENERIC_BEERS: DrinkReference[] = [
@@ -223,6 +245,7 @@ export const SHOT_SIZES = [
 
 export const FLASK_SIZES = [
   { label: '20cl', ml: 200 },
+  { label: '25cl', ml: 250 },
   { label: '35cl', ml: 350 },
   { label: '50cl', ml: 500 },
 ];
