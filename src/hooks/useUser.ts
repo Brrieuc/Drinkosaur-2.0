@@ -48,7 +48,11 @@ export const useUser = () => {
                         };
                         console.log("Profile found & synced:", updatedProfile.username);
                         setUserProfile(updatedProfile);
-                        window.localStorage.setItem('drinkosaur_user', JSON.stringify(updatedProfile));
+                        try {
+                            window.localStorage.setItem('drinkosaur_user', JSON.stringify(updatedProfile));
+                        } catch (e) {
+                            console.warn("Storage Blocked:", e);
+                        }
                     } else {
                         console.log("No profile found, creating initial document...");
                         const newProfile: UserProfile = {
@@ -138,7 +142,11 @@ export const useUser = () => {
 
         // 3. Update State & Local Storage
         setUserProfile(mergedProfile);
-        window.localStorage.setItem('drinkosaur_user', JSON.stringify(mergedProfile));
+        try {
+            window.localStorage.setItem('drinkosaur_user', JSON.stringify(mergedProfile));
+        } catch (e) {
+            console.warn("Storage Blocked:", e);
+        }
 
         // 4. Update Firestore if auth
         if (authUser) {

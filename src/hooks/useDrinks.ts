@@ -32,7 +32,11 @@ export const useDrinks = () => {
                         const remoteData = docSnap.data();
                         if (remoteData.list) {
                             setDrinksState(remoteData.list);
-                            window.localStorage.setItem('drinkosaur_drinks', JSON.stringify(remoteData.list));
+                            try {
+                                window.localStorage.setItem('drinkosaur_drinks', JSON.stringify(remoteData.list));
+                            } catch (e) {
+                                console.warn("Storage Blocked:", e);
+                            }
                         }
                     } else {
                         // If no remote data, upload current local drinks to init it
@@ -55,7 +59,11 @@ export const useDrinks = () => {
         setDrinksState(newDrinks);
 
         // 2. Update Local Storage
-        window.localStorage.setItem('drinkosaur_drinks', JSON.stringify(newDrinks));
+        try {
+            window.localStorage.setItem('drinkosaur_drinks', JSON.stringify(newDrinks));
+        } catch (e) {
+            console.warn("Storage Blocked:", e);
+        }
 
         // 3. Update Firestore if auth
         if (authUser) {

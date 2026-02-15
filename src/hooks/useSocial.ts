@@ -85,9 +85,13 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
             return;
         }
 
+        // Firestore 'in' query limit is 30. We slice to avoid crashing.
+        // For larger lists, we would need to chunk listeners, but 30 is a safe start.
+        const chunk = friendIds.slice(0, 30);
+
         const statusQuery = query(
             collection(db, "live_status"),
-            where("__name__", "in", friendIds)
+            where("__name__", "in", chunk)
         );
 
         const unsubscribe = onSnapshot(statusQuery, (querySnapshot: any) => {
@@ -96,6 +100,9 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
                 statuses.push({ uid: doc.id, ...doc.data() } as FriendStatus);
             });
             setRawFriends(statuses);
+            setLoading(false);
+        }, (err) => {
+            console.error("Social Snapshot Error:", err);
             setLoading(false);
         });
 
