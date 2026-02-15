@@ -7,11 +7,14 @@ const VAPID_KEY = 'OP3oOA0c72CvJbFml_5P6SGEV6mF7teoKCAdfHCaMQ4';
 export const useNotifications = (userProfile: UserProfile | null) => {
     const [token, setToken] = useState<string | null>(null);
     const [permission, setPermission] = useState<NotificationPermission>(
-        typeof window !== 'undefined' ? Notification.permission : 'default'
+        (typeof window !== 'undefined' && 'Notification' in window) ? Notification.permission : 'default'
     );
 
     const requestPermission = async () => {
-        if (!messaging) return;
+        if (!messaging || !('Notification' in window)) {
+            console.warn('Push notifications are not supported by this browser.');
+            return;
+        }
 
         try {
             const status = await Notification.requestPermission();
@@ -64,7 +67,7 @@ export const useNotifications = (userProfile: UserProfile | null) => {
         const unsubscribe = onMessage(messaging, (payload) => {
             console.log('Foreground message received:', payload);
             // You could show a toast here if you want
-            if (payload.notification) {
+            if (payload.notification && 'Notification' in window) {
                 new Notification(payload.notification.title || 'Drinkosaur', {
                     body: payload.notification.body,
                     icon: '/drinkosaur.png'
