@@ -176,7 +176,24 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
         return (
             <div className="space-y-6 animate-fade-in">
                 {/* Hero Stats */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {/* Total Users */}
+                    <div className="glass-panel-3d rounded-[28px] p-5 relative overflow-hidden col-span-2 sm:col-span-1">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-[40px] pointer-events-none" />
+                        <div className="relative">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Users size={14} className="text-blue-400" />
+                                <span className="text-[9px] text-white/30 font-black uppercase tracking-widest">{isFrench ? 'Communauté' : 'Community'}</span>
+                            </div>
+                            <p className="text-4xl font-black text-blue-400 leading-none">
+                                {reLiveStats?.totalUsers || 0}
+                            </p>
+                            <p className="text-[10px] text-white/30 font-bold mt-2 uppercase tracking-wider leading-tight">
+                                {isFrench ? 'comptes créés' : 'accounts created'}
+                            </p>
+                        </div>
+                    </div>
+
                     {/* Total not sober */}
                     <div className="glass-panel-3d rounded-[28px] p-5 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-[40px] pointer-events-none" />

@@ -55,6 +55,7 @@ export interface MonthlyGroupStat {
 export interface GlobalLiveStats {
     totalNotSober: number;
     avgBacNotSober: number;
+    totalUsers: number;
     topUsers: LiveUser[];
     topGroups: LiveGroupRanking[];
 }
@@ -218,6 +219,7 @@ export const useGlobalStats = () => {
             setLiveStats({
                 totalNotSober: totalNotSoberCount,
                 avgBacNotSober: parseFloat(avgBac.toFixed(4)),
+                totalUsers: allUsers.length,
                 topUsers: liveUsers.slice(0, 10),
                 topGroups: groupRankings.slice(0, 3),
             });
