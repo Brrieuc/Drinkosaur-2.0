@@ -1,9 +1,11 @@
 /// <reference path="../firebase.d.ts" />
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { db, doc, updateDoc, arrayUnion, query, where, collection, getDocs, onSnapshot, arrayRemove, setDoc, addDoc, deleteDoc, getDoc } from '../firebase';
 import { useAuth } from './useAuth';
 import { FriendStatus, BacStatus, UserProfile, Drink } from '../types';
+import { calculateBac } from '../services/bacService';
+import { THEME_COLORS } from '../constants';
 
 export interface FriendRequest {
     id: string;
@@ -103,11 +105,10 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
     // 2b. Auto-fetch missing details (drinks/profile) for accurate calculation
     // 2b. Auto-fetch missing details (drinks/profile) for accurate calculation
     useEffect(() => {
-        if (rawFriends.length === 0) return;
+        if (friendIds.length === 0) return;
 
         // Fetch details for ALL friends not in cache yet
-        const uidsToFetch = rawFriends
-            .map(f => f.uid)
+        const uidsToFetch = friendIds
             .filter(uid => !detailsCache[uid]);
 
         if (uidsToFetch.length === 0) return;
@@ -128,6 +129,7 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
                         const d = drinksSnap.exists() ? (drinksSnap.data()?.list || []) as Drink[] : [];
 
                         updates[uid] = {
+                            displayName: p.username || p.displayName || 'Friend',
                             drinks: d,
                             weightKg: p.weightKg || 70,
                             gender: p.gender || 'male',
@@ -148,16 +150,67 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
         };
 
         fetchDetails();
-    }, [rawFriends, detailsCache]);
+    }, [friendIds, detailsCache]);
 
     // Merge raw live status with cached full details
-    const friends = rawFriends.map(f => {
-        const cached = detailsCache[f.uid];
-        if (cached) {
-            return { ...f, ...cached };
-        }
-        return f;
-    }).sort((a, b) => b.currentBac - a.currentBac);
+    // Merge raw live status with cached full details
+    const friends = useMemo(() => {
+        const language = myProfile?.language || 'fr';
+        return friendIds.map(uid => {
+            const live = rawFriends.find(f => f.uid === uid);
+            const cached = detailsCache[uid];
+
+            if (live) {
+                return { ...live, ...cached } as FriendStatus;
+            }
+
+            if (cached) {
+                // Recalculate BAC for offline friends if we have their details
+                let currentBac = 0;
+                let statusMessage = language === 'fr' ? 'Sobre' : 'Sober';
+                let color = THEME_COLORS.safe.split(' ')[0].replace('from-', ''); // Default safe color
+
+                if (cached.drinks && cached.drinks.length > 0) {
+                    const status = calculateBac(cached.drinks, {
+                        weightKg: cached.weightKg || 70,
+                        gender: cached.gender || 'male',
+                        drinkingSpeed: cached.drinkingSpeed || 'average'
+                    } as UserProfile);
+                    currentBac = status.currentBac;
+                    statusMessage = status.statusMessage;
+                    color = status.color;
+                }
+
+                return {
+                    uid,
+                    displayName: cached.displayName || 'Ami',
+                    photoURL: cached.photoURL,
+                    currentBac,
+                    statusMessage,
+                    color,
+                    lastUpdate: Date.now(),
+                    drinks: [],
+                    weightKg: 70,
+                    gender: 'male',
+                    drinkingSpeed: 'average',
+                    ...cached
+                } as FriendStatus;
+            }
+
+            return {
+                uid,
+                displayName: '...',
+                currentBac: 0,
+                statusMessage: '...',
+                color: '#666',
+                lastUpdate: Date.now(),
+                drinks: [],
+                weightKg: 70,
+                gender: 'male',
+                drinkingSpeed: 'average'
+            } as FriendStatus;
+        }).sort((a, b) => b.currentBac - a.currentBac);
+    }, [friendIds, rawFriends, detailsCache, myProfile?.language]);
 
     // 3. Update my own live status
     useEffect(() => {
