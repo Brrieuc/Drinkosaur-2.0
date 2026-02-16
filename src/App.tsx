@@ -244,7 +244,7 @@ const App: React.FC = () => {
   // -- SECURITY GATES (Must follow all hooks) --
   if (!authUser && !authLoading) {
     return (
-      <div className="relative w-full h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-8 overflow-hidden">
+      <div className="relative w-full h-screen bg-[#050505] text-white overflow-hidden">
         <Background />
 
         {/* SEO Metadata for unauthenticated users */}
@@ -265,8 +265,8 @@ const App: React.FC = () => {
           ]}
         />
 
-        <div className="relative z-10 w-full h-full overflow-y-auto no-scrollbar pt-20 pb-20 scroll-smooth">
-          <div className="w-full flex flex-col items-center gap-12 text-center animate-fade-in px-8">
+        <div className="relative z-10 w-full h-full overflow-y-auto no-scrollbar scroll-smooth">
+          <div className="min-h-full w-full flex flex-col items-center justify-center gap-12 text-center animate-fade-in py-20 px-8">
             <div className="flex flex-col items-center gap-6">
               <div className="w-32 h-32 bg-white/10 backdrop-blur-3xl rounded-[40px] flex items-center justify-center overflow-hidden shadow-[0_0_60px_rgba(59,130,246,0.5)] border-4 border-white/20 animate-float mb-4 relative group cursor-pointer hover:border-blue-400/50 transition-all">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-600/20 group-hover:opacity-100 opacity-0 transition-opacity" />
