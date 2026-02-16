@@ -19,8 +19,8 @@ export const SEO: React.FC<SEOProps> = ({
     canonical
 }) => {
     const siteTitle = 'Drinkosaur';
-    const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle;
-    const defaultDescription = "Drinkosaur vous aide à suivre votre consommation d'alcool et estimer votre taux d'alcoolémie en temps réel. Restez en sécurité.";
+    const fullTitle = title ? `${title} | ${siteTitle}` : 'Drinkosaur - Ethylotest & Calculateur d\'Alcoolémie';
+    const defaultDescription = "Drinkosaur est le meilleur calculateur d'alcoolémie et éthylotest en ligne gratuit. Suivez votre consommation d'alcool en temps réel.";
     const metaDescription = description || defaultDescription;
     const defaultImage = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj3GwalK-_8qkiqtJ9wxjVPg7C3VGn-slPe3XK-DNhm4iSq2f0VBeOEjanUW_uoncmzZu74szYMJhs_o8xYV0RU3g-HZTflVBgh9Tj8wSy43r1MiQrgyrp8HIQJyP6wBQu5bT5tFCrLhskSvzeL8flCHnZ6T-7kheSEkcwm6fQuSGZE-LKrBq6KbB_pg4k/s16000/drinkosaur.png";
     const metaImage = image || defaultImage;
