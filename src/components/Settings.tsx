@@ -1,12 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { UserProfile, WonAward, LeaderboardVisibility } from '../types';
-import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Calendar, Trophy, HelpCircle, UserPlus, Bell } from 'lucide-react';
+import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Calendar, Trophy, HelpCircle, UserPlus, Bell, FileText, Info } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { ImageCropper } from './ImageCropper';
 import { TrophyHall } from './TrophyHall';
 import heic2any from 'heic2any';
 import { DrinkosaurPass, ProfilePhoto } from './DrinkosaurPass';
 import { CharitySupport } from './CharitySupport';
+import { LegalModal } from './LegalModals';
 import { Drink } from '../types';
 
 interface SettingsProps {
@@ -37,6 +38,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   const [allowGlobalRequests, setAllowGlobalRequests] = useState(user.allowGlobalRequests !== false);
   const [isPrivacyExpanded, setIsPrivacyExpanded] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [activeLegalModal, setActiveLegalModal] = useState<'privacy' | 'terms' | 'about' | null>(null);
 
   // Pivot: Sync local state when user profile updates (e.g. initial load)
   React.useEffect(() => {
@@ -788,7 +790,38 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
             </div>
             {notificationPermission !== 'granted' && <ChevronRight className="text-white/20 group-hover:text-blue-400/40 transition-colors" />}
           </button>
+
+          {/* Legal Section */}
+          <div className="pt-8 grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setActiveLegalModal('privacy')}
+              className="px-4 py-3 bg-white/5 rounded-2xl border border-white/5 text-[10px] font-bold text-white/40 uppercase tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+            >
+              <Shield size={12} /> {language === 'fr' ? 'Confidentialité' : 'Privacy'}
+            </button>
+            <button
+              onClick={() => setActiveLegalModal('terms')}
+              className="px-4 py-3 bg-white/5 rounded-2xl border border-white/5 text-[10px] font-bold text-white/40 uppercase tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+            >
+              <FileText size={12} /> {language === 'fr' ? 'Conditions' : 'Terms'}
+            </button>
+            <button
+              onClick={() => setActiveLegalModal('about')}
+              className="col-span-2 px-4 py-3 bg-white/5 rounded-2xl border border-white/5 text-[10px] font-bold text-white/40 uppercase tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+            >
+              <Info size={12} /> {language === 'fr' ? 'À propos & Contact' : 'About & Contact'}
+            </button>
+          </div>
         </div>
+
+        {/* Legal Modals */}
+        {activeLegalModal && (
+          <LegalModal
+            type={activeLegalModal}
+            language={language}
+            onClose={() => setActiveLegalModal(null)}
+          />
+        )}
 
         {/* Footer Credits */}
         <div className="mt-12 mb-8 flex justify-center opacity-30">
