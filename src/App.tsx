@@ -25,7 +25,6 @@ import { ComputedAward } from './constants/awards';
 import { useAwardNotifications } from './hooks/useAwardNotifications';
 import { useGlobalStats } from './hooks/useGlobalStats';
 import { useNotifications } from './hooks/useNotifications';
-import { HelmetProvider } from 'react-helmet-async';
 
 const Toast = ({ message, type = 'success' }: { message: string, type?: 'success' | 'warning' }) => (
   <div className={`fixed top-6 left-1/2 transform -translate-x-1/2 z-[200] px-6 py-4 rounded-2xl backdrop-blur-xl border shadow-2xl animate-bounce-in flex items-center gap-3 ${type === 'warning' ? 'bg-red-500/20 border-red-500/30 text-red-100' : 'bg-emerald-500/20 border-emerald-500/30 text-emerald-100'
@@ -471,7 +470,7 @@ const App: React.FC = () => {
 
 
   return (
-    <HelmetProvider>
+    <>
       <div
         className="relative w-full h-screen text-white overflow-hidden flex flex-col font-sans selection:bg-fuchsia-500/30"
         style={{
@@ -680,7 +679,7 @@ const App: React.FC = () => {
           )
         }
       </div >
-    </HelmetProvider>
+    </>
   );
 };
 
