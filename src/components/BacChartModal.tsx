@@ -95,7 +95,7 @@ export const BacChartModal: React.FC<BacChartModalProps> = ({ drinks, user, onCl
     return () => {
       // Don't remove if parent modal is still open
       const hasOtherModals = document.querySelectorAll('.modal-overlay').length > 1;
-      if (!hasOtherModals) {
+      if (!hasOtherModals && document.body && document.body.classList) {
         document.body.classList.remove('modal-open');
       }
     };

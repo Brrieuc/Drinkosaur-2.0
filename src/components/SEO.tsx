@@ -49,7 +49,7 @@ export const SEO: React.FC<SEOProps> = ({
             <meta name="twitter:image" content={metaImage} />
 
             {/* FAQ Schema */}
-            {faq && (
+            {faq && Array.isArray(faq) && faq.length > 0 && (
                 <script type="application/ld+json">
                     {JSON.stringify({
                         "@context": "https://schema.org",

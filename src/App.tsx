@@ -250,14 +250,14 @@ const App: React.FC = () => {
         <SEO
           faq={[
             {
-              q: user.language === 'fr' ? "Qu'est-ce que Drinkosaur ?" : "What is Drinkosaur?",
-              a: user.language === 'fr'
+              q: user?.language === 'fr' ? "Qu'est-ce que Drinkosaur ?" : "What is Drinkosaur?",
+              a: user?.language === 'fr'
                 ? "Drinkosaur est un calculateur d'alcoolémie intelligent et gratuit qui vous aide à suivre votre consommation en temps réel."
                 : "Drinkosaur is a smart and free BAC calculator that helps you track your consumption in real-time."
             },
             {
-              q: user.language === 'fr' ? "Comment est calculé le taux d'alcoolémie ?" : "How is BAC calculated?",
-              a: user.language === 'fr'
+              q: user?.language === 'fr' ? "Comment est calculé le taux d'alcoolémie ?" : "How is BAC calculated?",
+              a: user?.language === 'fr'
                 ? "Le calcul est basé sur la formule de Widmark, prenant en compte le poids, le genre, et le type de boissons consommées."
                 : "The calculation is based on the Widmark formula, taking into account weight, gender, and the type of drinks consumed."
             }
@@ -368,7 +368,7 @@ const App: React.FC = () => {
 
             {/* Landing Page Content - Only visible in browser mode, hidden in PWA standalone */}
             {!isStandalone && (
-              <LandingPage language={user.language || 'fr'} />
+              <LandingPage language={user?.language || 'fr'} />
             )}
           </div>
         </div>
@@ -660,7 +660,7 @@ const App: React.FC = () => {
                 <div className="mx-1">
                   <button
                     onClick={() => setView(AppView.ADD_DRINK)}
-                    aria-label={navText.add}
+                    aria-label={navText?.add || 'Add'}
                     className="w-14 h-14 rounded-[20px] bg-gradient-to-br from-white to-gray-200 text-black flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.4)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10"
                   >
                     <PlusCircle size={28} className="text-black/80" strokeWidth={2.5} />
