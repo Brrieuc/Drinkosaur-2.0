@@ -30,12 +30,11 @@ try {
     console.error('Service Worker: Firebase scripts failed to load or initialize', e);
 }
 
-const CACHE_NAME = 'drinkosaur-v1';
+const CACHE_NAME = 'drinkosaur-v2';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
-    '/manifest.json',
-    'https://cdn.tailwindcss.com'
+    '/manifest.json'
 ];
 
 // PWA Logic: Install and Cache
@@ -48,14 +47,45 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
 
+// Cleanup old caches
 self.addEventListener('activate', (event) => {
-    event.waitUntil(clients.claim());
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheName !== CACHE_NAME) {
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => clients.claim())
+    );
 });
 
+// Network-First Strategy for HTML/JS, Cache-First for others
 self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
-        })
-    );
+    const isNavigation = event.request.mode === 'navigate';
+    const isScript = event.request.destination === 'script';
+
+    if (isNavigation || isScript) {
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    const copy = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+                    return response;
+                })
+                .catch(() => caches.match(event.request))
+        );
+    } else {
+        event.respondWith(
+            caches.match(event.request).then((response) => {
+                return response || fetch(event.request).then((res) => {
+                    const copy = res.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+                    return res;
+                });
+            })
+        );
+    }
 });

@@ -132,7 +132,9 @@ export const StatsModal: React.FC<StatsModalProps> = ({ drinks, user, onClose })
         const drinkDays = new Set<string>();
         drinks.forEach(d => {
             const date = new Date(d.timestamp);
-            drinkDays.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`);
+            if (drinkDays && typeof drinkDays.add === 'function') {
+                drinkDays.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`);
+            }
         });
 
         const dayStrings = Array.from(drinkDays).sort();
