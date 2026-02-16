@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { BacStatus, Drink, UserProfile, FriendGroup } from '../types';
+import { BacStatus, Drink, UserProfile, FriendGroup, AdminNotification } from '../types';
 import { Clock, Zap, AlertTriangle, TrendingUp, BarChart3, Inbox, Share } from 'lucide-react';
 import { BacChartModal } from './BacChartModal';
 import { StatsModal } from './StatsModal';
@@ -32,6 +32,11 @@ interface DashboardProps {
   onClaimAward?: (groupId: string, award: ComputedAward) => Promise<boolean>;
   appLaunch?: { month: number; year: number };
   myUid?: string;
+  // Admin Messages
+  adminMessages?: AdminNotification[];
+  onMarkAdminMessageRead?: (id: string) => void;
+  onDeleteAdminMessage?: (id: string) => void;
+  unreadAdminMessageCount?: number;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -53,7 +58,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onFetchGroupAwards,
   onClaimAward,
   appLaunch = { month: 1, year: 2026 },
-  myUid = ''
+  myUid = '',
+  adminMessages = [],
+  onMarkAdminMessageRead,
+  onDeleteAdminMessage,
+  unreadAdminMessageCount = 0
 }) => {
   const [showChartModal, setShowChartModal] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -61,7 +70,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showShareModal, setShowShareModal] = useState(false);
   const isFrench = language === 'fr';
 
-  const notificationCount = incomingRequests.length + groupInvites.length + unreadAwardCount;
+  const notificationCount = incomingRequests.length + groupInvites.length + unreadAwardCount + unreadAdminMessageCount;
 
   const t = {
     bacLevel: isFrench ? 'Taux Alcool' : 'BAC Level',
@@ -201,6 +210,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
           onClaimAward={(groupId, award) => onClaimAward?.(groupId, award) || Promise.resolve(false)}
           appLaunch={appLaunch}
           myUid={myUid}
+          adminMessages={adminMessages}
+          onMarkAdminMessageRead={onMarkAdminMessageRead}
+          onDeleteAdminMessage={onDeleteAdminMessage}
         />
       )}
 

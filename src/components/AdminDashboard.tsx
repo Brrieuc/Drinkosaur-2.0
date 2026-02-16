@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { UserProfile, Drink } from '../types';
 import { useAdmin } from '../hooks/useAdmin';
-import { Search, Loader2, Save, Trash2, Ban, ShieldCheck, ArrowLeft, RefreshCw, Edit2, X } from 'lucide-react';
+import { Search, Loader2, Save, Trash2, Ban, ShieldCheck, ArrowLeft, RefreshCw, Edit2, X, Mail } from 'lucide-react';
 
 interface AdminDashboardProps {
     onClose: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
-    const { adminGetAllUsers, adminUpdateUser, adminWipeDrinks, adminToggleBan, adminGetUserDrinks, adminUpdateDrink, adminDeleteDrink, loading, error } = useAdmin();
+    const { adminGetAllUsers, adminUpdateUser, adminWipeDrinks, adminToggleBan, adminGetUserDrinks, adminUpdateDrink, adminDeleteDrink, adminSendMessage, loading } = useAdmin();
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -22,6 +22,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
     // Stats editing state
     const [editWeight, setEditWeight] = useState(0);
     const [editGender, setEditGender] = useState<'male' | 'female'>('male');
+
+    // Message Modal State
+    const [showMessageModal, setShowMessageModal] = useState(false);
+    const [messageTitle, setMessageTitle] = useState('');
+    const [messageBody, setMessageBody] = useState('');
 
     useEffect(() => {
         loadUsers();
@@ -129,6 +134,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
             setSelectedUser(prev => prev ? { ...prev, isAdmin: newStatus } : null);
         }
     };
+
+    const handleSendMessage = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedUser?.uid || !messageTitle || !messageBody) return;
+
+        const success = await adminSendMessage(selectedUser.uid, messageTitle, messageBody);
+        if (success) {
+            alert("Message sent!");
+            setShowMessageModal(false);
+            setMessageTitle('');
+            setMessageBody('');
+        }
+    };
+
 
     return (
         <div className="w-full h-full flex flex-col bg-[#050505] text-white p-4 pt-[env(safe-area-inset-top)] overflow-hidden">
@@ -306,8 +325,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                 </div>
                             </div>
 
-                            {/* Dangerous Actions */}
+                            {/* Communication */}
                             <div className="space-y-3 mt-auto pt-6 border-t border-white/10">
+                                <h3 className="text-sm font-bold uppercase text-blue-400/60">Communication</h3>
+                                <button
+                                    onClick={() => setShowMessageModal(true)}
+                                    className="w-full py-3 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-2 transition-colors"
+                                >
+                                    <Mail size={16} /> Send Message
+                                </button>
+                            </div>
+
+                            {/* Dangerous Actions */}
+                            <div className="space-y-3 mt-6 pt-6 border-t border-white/10">
                                 <h3 className="text-sm font-bold uppercase text-red-500/60">Danger Zone</h3>
 
                                 <button
@@ -389,6 +419,54 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                 className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold uppercase text-xs mt-2"
                             >
                                 Save Changes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* Message Modal */}
+            {showMessageModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-2xl w-full max-w-md space-y-4 shadow-2xl animate-bounce-in">
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="text-lg font-bold flex items-center gap-2">
+                                <Mail className="text-blue-400" size={20} />
+                                Send Message
+                            </h3>
+                            <button onClick={() => setShowMessageModal(false)} className="text-white/40 hover:text-white">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <p className="text-xs text-white/60">
+                            Sending to: <span className="font-bold text-white">@{selectedUser?.username}</span>
+                        </p>
+                        <form onSubmit={handleSendMessage} className="space-y-4">
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-white/40 block mb-1">Title</label>
+                                <input
+                                    type="text"
+                                    value={messageTitle}
+                                    onChange={e => setMessageTitle(e.target.value)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm font-bold focus:border-blue-500 outline-none"
+                                    placeholder="Important Update"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-white/40 block mb-1">Message</label>
+                                <textarea
+                                    value={messageBody}
+                                    onChange={e => setMessageBody(e.target.value)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm font-bold focus:border-blue-500 outline-none min-h-[120px]"
+                                    placeholder="Type your message here..."
+                                    required
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold uppercase text-xs shadow-lg shadow-blue-900/20"
+                            >
+                                Send Notification
                             </button>
                         </form>
                     </div>

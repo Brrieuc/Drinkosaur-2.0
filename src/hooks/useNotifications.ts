@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { messaging, getToken, onMessage, db, doc, updateDoc } from '../firebase';
+import { messaging, getToken, onMessage, db, doc, updateDoc, collection, query, orderBy, onSnapshot, deleteDoc } from '../firebase';
 import { UserProfile } from '../types';
 
 const VAPID_KEY = 'OP3oOA0c72CvJbFml_5P6SGEV6mF7teoKCAdfHCaMQ4';
@@ -78,9 +78,49 @@ export const useNotifications = (userProfile: UserProfile | null) => {
         return () => unsubscribe();
     }, []);
 
+    const [notifications, setNotifications] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!userProfile?.uid) return;
+
+        const q = query(collection(db, `users/${userProfile.uid}/notifications`), orderBy("timestamp", "desc"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const notifs = snapshot.docs.map((doc: any) => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setNotifications(notifs);
+        });
+
+        return () => unsubscribe();
+    }, [userProfile?.uid]);
+
+    const markNotificationAsRead = async (id: string) => {
+        if (!userProfile?.uid) return;
+        try {
+            await updateDoc(doc(db, "users", userProfile.uid, "notifications", id), {
+                read: true
+            });
+        } catch (e) {
+            console.error("Error marking notification read:", e);
+        }
+    };
+
+    const deleteNotification = async (id: string) => {
+        if (!userProfile?.uid) return;
+        try {
+            await deleteDoc(doc(db, "users", userProfile.uid, "notifications", id));
+        } catch (e) {
+            console.error("Error deleting notification:", e);
+        }
+    };
+
     return {
         permission,
         token,
-        requestPermission
+        requestPermission,
+        notifications,
+        markNotificationAsRead,
+        deleteNotification
     };
 };

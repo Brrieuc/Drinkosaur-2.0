@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { FriendGroup } from '../types';
+import { FriendGroup, AdminNotification } from '../types';
 import { FriendRequest } from '../hooks/useSocial';
 import { AwardNotification } from '../hooks/useAwardNotifications';
 import { ComputedAward } from '../constants/awards';
 import { AwardsModal } from './AwardsModal';
-import { X, Bell, UserPlus, Users, Check, Trophy } from 'lucide-react';
+import { X, Bell, UserPlus, Users, Check, Trophy, Mail } from 'lucide-react';
 
 interface NotificationsModalProps {
     requests: FriendRequest[];
@@ -14,6 +14,10 @@ interface NotificationsModalProps {
     onAcceptGroup: (groupId: string) => void;
     onDeclineGroup: (groupId: string) => void;
     language?: 'en' | 'fr';
+    // Admin Messages
+    adminMessages?: AdminNotification[];
+    onMarkAdminMessageRead?: (id: string) => void;
+    onDeleteAdminMessage?: (id: string) => void;
     // Award notification props
     awardNotifications: AwardNotification[];
     onMarkAwardRead: (notificationId: string) => void;
@@ -42,7 +46,10 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
     onFetchGroupAwards,
     onClaimAward,
     appLaunch,
-    myUid
+    myUid,
+    adminMessages = [],
+    onMarkAdminMessageRead,
+    onDeleteAdminMessage
 }) => {
     const isFrench = language === 'fr';
     const [openAwardsNotif, setOpenAwardsNotif] = useState<AwardNotification | null>(null);
@@ -56,10 +63,12 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
         accept: isFrench ? 'Accepter' : 'Accept',
         decline: isFrench ? 'Refuser' : 'Decline',
         friendRequestDesc: isFrench ? 'veut être ami' : 'wants to be friends',
-        groupInviteDesc: isFrench ? 'vous invite à rejoindre' : 'invites you to join'
+        groupInviteDesc: isFrench ? 'vous invite à rejoindre' : 'invites you to join',
+        adminMessage: isFrench ? 'Message Admin' : 'Admin Message',
+        systemMessage: isFrench ? 'Message Système' : 'System Message'
     };
 
-    const hasContent = requests.length > 0 || invites.length > 0 || awardNotifications.length > 0;
+    const hasContent = requests.length > 0 || invites.length > 0 || awardNotifications.length > 0 || adminMessages.length > 0;
 
     const handleOpenAwardNotif = (notif: AwardNotification) => {
         onMarkAwardRead(notif.id);
@@ -101,6 +110,47 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                             </div>
                         ) : (
                             <div className="space-y-8">
+                                {/* Admin Messages - High Priority */}
+                                {adminMessages.length > 0 && (
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-black text-white/40 uppercase tracking-widest flex items-center gap-2">
+                                            <Mail size={14} className="text-blue-400" /> {t.adminMessage}
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {adminMessages.map((msg) => (
+                                                <div
+                                                    key={msg.id}
+                                                    className={`glass-panel-3d p-4 rounded-3xl relative overflow-hidden group ${msg.read ? 'opacity-60 bg-white/5' : 'bg-blue-500/10 border-blue-500/30'}`}
+                                                    onClick={() => !msg.read && onMarkAdminMessageRead?.(msg.id)}
+                                                >
+                                                    <div className="flex justify-between items-start gap-3">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-black uppercase tracking-wider border border-blue-500/20">
+                                                                    {msg.type === 'admin_message' ? 'ADMIN' : 'SYSTEM'}
+                                                                </span>
+                                                                <span className="text-[10px] text-white/30 font-bold">
+                                                                    {new Date(msg.timestamp).toLocaleDateString()}
+                                                                </span>
+                                                            </div>
+                                                            <h4 className={`font-bold ${msg.read ? 'text-white/60' : 'text-white'} text-lg`}>{msg.title}</h4>
+                                                            <p className={`text-sm mt-2 leading-relaxed ${msg.read ? 'text-white/40' : 'text-white/80'}`}>{msg.message}</p>
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onDeleteAdminMessage?.(msg.id);
+                                                            }}
+                                                            className="p-2 text-white/20 hover:text-red-400 hover:bg-white/5 rounded-full transition-colors"
+                                                        >
+                                                            <X size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Award Notifications — Shown first for visibility */}
                                 {awardNotifications.length > 0 && (

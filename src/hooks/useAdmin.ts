@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { UserProfile, Drink } from '../types';
-import { db, collection, getDocs, doc, updateDoc, getDoc } from '../firebase';
+import { db, collection, getDocs, doc, updateDoc, getDoc, setDoc, addDoc } from '../firebase';
 
 export const useAdmin = () => {
     const [loading, setLoading] = useState(false);
@@ -29,6 +29,52 @@ export const useAdmin = () => {
         }
     };
 
+    // Helper to update live status for real-time consistency
+    const updateLiveStatus = async (uid: string, userProfile?: UserProfile, drinks?: Drink[]) => {
+        try {
+            // Need to fetch if not provided
+            let profile = userProfile;
+            let currentDrinks = drinks;
+
+            if (!profile) {
+                const pSnap = await getDoc(doc(db, "users", uid));
+                if (pSnap.exists()) profile = pSnap.data() as UserProfile;
+            }
+            if (!currentDrinks) {
+                const dSnap = await getDoc(doc(db, "drinks", uid));
+                currentDrinks = dSnap.exists() ? (dSnap.data().list || []) : [];
+            }
+
+            if (profile && currentDrinks) {
+                // Calculate BAC
+                // We need to dynamic import or duplicate logic if we can't import service. 
+                // Assuming we can import calculateBac.
+                const { calculateBac } = await import('../services/bacService');
+                const status = calculateBac(currentDrinks, profile);
+
+                const statusRef = doc(db, "live_status", uid);
+
+                // We push the FULL data expected by useSocial listeners
+                await setDoc(statusRef, {
+                    displayName: profile.username || profile.displayName || 'User',
+                    photoURL: profile.customPhotoURL || profile.photoURL || '',
+                    currentBac: status.currentBac,
+                    statusMessage: status.statusMessage,
+                    color: status.color,
+                    lastUpdate: Date.now(),
+                    weightKg: profile.weightKg || 70,
+                    gender: profile.gender || 'male',
+                    drinkingSpeed: profile.drinkingSpeed || 'average',
+                    habitLevel: profile.habitLevel || 'average',
+                    drinks: currentDrinks.filter(d => d.timestamp > Date.now() - 24 * 60 * 60 * 1000), // Only last 24h
+                    drinkosaurPassConfig: profile.drinkosaurPassConfig || null
+                }, { merge: true });
+            }
+        } catch (err) {
+            console.error("[Admin] Failed to update live status:", err);
+        }
+    };
+
     // Update specific fields of a user
     const adminUpdateUser = async (uid: string, updates: Partial<UserProfile>): Promise<boolean> => {
         setLoading(true);
@@ -36,6 +82,13 @@ export const useAdmin = () => {
             const userRef = doc(db, "users", uid);
             await updateDoc(userRef, updates);
             console.log(`[Admin] Updated user ${uid}`, updates);
+
+            // Force update live status
+            await updateLiveStatus(uid, { ...updates } as any); // Partial update triggers fetch inside helper if needed? 
+            // Actually, we need the full profile to calc BAC. 
+            // Let's just call updateLiveStatus(uid) and let it fetch fresh data to be safe.
+            await updateLiveStatus(uid);
+
             return true;
         } catch (err: any) {
             console.error("[Admin] Update failed:", err);
@@ -54,15 +107,15 @@ export const useAdmin = () => {
 
         setLoading(true);
         try {
-            // Drinks are stored in a single document 'drinks/{uid}' with a 'list' field
-            // We verify if the document exists first
             const drinksDocRef = doc(db, "drinks", uid);
             const docSnap = await getDoc(drinksDocRef);
 
             if (docSnap.exists()) {
-                // We clear the list instead of deleting the doc to keep structure
                 await updateDoc(drinksDocRef, { list: [] });
                 console.log(`[Admin] Wiped drinks for ${uid}`);
+
+                // Update live status (BAC will be 0)
+                await updateLiveStatus(uid, undefined, []);
             } else {
                 console.log(`[Admin] No drinks document found for ${uid}`);
             }
@@ -112,6 +165,10 @@ export const useAdmin = () => {
             const docRef = doc(db, "drinks", uid);
             await updateDoc(docRef, { list: newDrinks });
             console.log(`[Admin] Updated drink ${updatedDrink.id} for ${uid}`);
+
+            // Sync Live Status
+            await updateLiveStatus(uid, undefined, newDrinks);
+
             return true;
         } catch (err: any) {
             console.error("[Admin] Update drink failed:", err);
@@ -131,9 +188,37 @@ export const useAdmin = () => {
             const docRef = doc(db, "drinks", uid);
             await updateDoc(docRef, { list: newDrinks });
             console.log(`[Admin] Deleted drink ${drinkId} for ${uid}`);
+
+            // Sync local status
+            await updateLiveStatus(uid, undefined, newDrinks);
+
             return true;
         } catch (err: any) {
             console.error("[Admin] Delete drink failed:", err);
+            setError(err.message);
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // NEW: Send Admin Message
+    const adminSendMessage = async (uid: string, title: string, message: string): Promise<boolean> => {
+        setLoading(true);
+        try {
+            // 1. Create notification in user's subcollection
+            const notifRef = collection(db, `users/${uid}/notifications`);
+            await addDoc(notifRef, {
+                title,
+                message,
+                timestamp: Date.now(),
+                read: false,
+                type: 'admin_message'
+            });
+            console.log(`[Admin] Message sent to ${uid}`);
+            return true;
+        } catch (err: any) {
+            console.error("[Admin] Failed to send message:", err);
             setError(err.message);
             return false;
         } finally {
@@ -150,6 +235,7 @@ export const useAdmin = () => {
         adminToggleBan,
         adminGetUserDrinks,
         adminUpdateDrink,
-        adminDeleteDrink
+        adminDeleteDrink,
+        adminSendMessage
     };
 };

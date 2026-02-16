@@ -5,7 +5,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, signOu
 import {
   getFirestore, doc, setDoc, getDoc, collection,
   query, where, getDocs, updateDoc, arrayUnion,
-  onSnapshot, deleteDoc, arrayRemove, addDoc
+  onSnapshot, deleteDoc, arrayRemove, addDoc, orderBy
 } from "firebase/firestore";
 import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
 import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
@@ -54,7 +54,7 @@ export {
   auth, db, storage, googleProvider, signInWithPopup, signInAnonymously, signOut,
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
   doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc,
-  arrayUnion, onSnapshot, deleteDoc, arrayRemove, addDoc,
+  arrayUnion, onSnapshot, deleteDoc, arrayRemove, addDoc, orderBy,
   ref, uploadString, getDownloadURL,
   messaging, getToken, onMessage
 };

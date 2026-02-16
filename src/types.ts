@@ -122,6 +122,16 @@ export interface FriendGroup {
   memberListPublic?: boolean;     // Whether the member list is publicly visible (default: false)
 }
 
+
+export interface AdminNotification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: number;
+  read: boolean;
+  type: 'admin_message' | 'system';
+}
+
 export enum AppView {
   DASHBOARD = 'DASHBOARD',
   ADD_DRINK = 'ADD_DRINK',

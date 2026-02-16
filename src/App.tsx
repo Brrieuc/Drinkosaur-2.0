@@ -108,7 +108,16 @@ const App: React.FC = () => {
     fetchMonthlyStats,
   } = useGlobalStats();
 
-  const { permission: notificationPermission, requestPermission } = useNotifications(user as UserProfile);
+  const {
+    permission: notificationPermission,
+    requestPermission,
+    notifications,
+    markNotificationAsRead,
+    deleteNotification
+  } = useNotifications(user as UserProfile);
+
+  const adminMessages = React.useMemo(() => notifications.filter(n => n.type === 'admin_message'), [notifications]);
+  const unreadAdminMessageCount = React.useMemo(() => adminMessages.filter(n => !n.read).length, [adminMessages]);
 
   const handleSelectFriend = async (uid: string) => {
     const friendStatus = friends.find(f => f.uid === uid);
@@ -608,6 +617,10 @@ const App: React.FC = () => {
               onClaimAward={(groupId, award) => claimAward(authUser!.uid, groupId, award)}
               appLaunch={appLaunch}
               myUid={authUser?.uid || ''}
+              adminMessages={adminMessages}
+              onMarkAdminMessageRead={markNotificationAsRead}
+              onDeleteAdminMessage={deleteNotification}
+              unreadAdminMessageCount={unreadAdminMessageCount}
             />
           )}
 
@@ -628,7 +641,6 @@ const App: React.FC = () => {
           {view === AppView.ADMIN && user.isAdmin && (
             <AdminDashboard
               onClose={() => setView(AppView.SETTINGS)}
-              currentUser={user as UserProfile}
             />
           )}
 
