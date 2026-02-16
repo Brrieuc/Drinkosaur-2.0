@@ -105,7 +105,7 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
 
         const now = Date.now();
         const activeDrinks = friendDrinks
-            .filter(d => d.timestamp > now - 12 * 60 * 60 * 1000)
+            .filter(d => d.timestamp > now - 24 * 60 * 60 * 1000)
             .sort((a, b) => a.timestamp - b.timestamp);
 
         const colors = activeDrinks
@@ -141,9 +141,9 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
 
     const activeDrinks = useMemo(() => {
         const now = Date.now();
-        // Show drinks from the last 12 hours that are still contributing (roughly)
+        // Show drinks from the last 24 hours that are still contributing (roughly)
         return friendDrinks
-            .filter(d => d.timestamp > now - 12 * 60 * 60 * 1000)
+            .filter(d => d.timestamp > now - 24 * 60 * 60 * 1000)
             .sort((a, b) => b.timestamp - a.timestamp);
     }, [friendDrinks]);
 

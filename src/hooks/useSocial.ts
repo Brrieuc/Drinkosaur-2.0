@@ -5,7 +5,6 @@ import { db, doc, updateDoc, arrayUnion, query, where, collection, getDocs, onSn
 import { useAuth } from './useAuth';
 import { FriendStatus, BacStatus, UserProfile, Drink } from '../types';
 import { calculateBac } from '../services/bacService';
-import { THEME_COLORS } from '../constants';
 
 export interface FriendRequest {
     id: string;
@@ -27,6 +26,13 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
     const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
     const [outgoingRequests, setOutgoingRequests] = useState<FriendRequest[]>([]);
     const [loading, setLoading] = useState(true);
+    const [tick, setTick] = useState(0);
+
+    // Update local clock for real-time BAC decay
+    useEffect(() => {
+        const i = setInterval(() => setTick(t => t + 1), 60000);
+        return () => clearInterval(i);
+    }, []);
 
     // 1. Fetch friend list (IDs) from user profile
     useEffect(() => {
@@ -158,49 +164,40 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
         fetchDetails();
     }, [friendIds, detailsCache]);
 
-    // Merge raw live status with cached full details
     const friends = useMemo(() => {
-        const language = myProfile?.language || 'fr';
         return friendIds.map(uid => {
             const live = rawFriends.find(f => f.uid === uid);
             const cached = detailsCache[uid];
 
-            if (live) {
-                return { ...live, ...cached } as FriendStatus;
-            }
+            // Primary source of drinks for calculation
+            const drinksToUse = live?.drinks || cached?.drinks || [];
+            const weight = live?.weightKg || cached?.weightKg || 70;
+            const gender = live?.gender || cached?.gender || 'male';
+            const speed = live?.drinkingSpeed || cached?.drinkingSpeed || 'average';
 
-            if (cached) {
-                // Recalculate BAC for offline friends if we have their details
-                let currentBac = 0;
-                let statusMessage = language === 'fr' ? 'Sobre' : 'Sober';
-                let color = THEME_COLORS.safe.split(' ')[0].replace('from-', ''); // Default safe color
+            if (drinksToUse.length > 0) {
+                // ALWAYS recalculate locally to ensure smooth real-time decay
+                const status = calculateBac(drinksToUse, {
+                    weightKg: weight,
+                    gender: gender,
+                    drinkingSpeed: speed
+                } as UserProfile);
 
-                if (cached.drinks && cached.drinks.length > 0) {
-                    const status = calculateBac(cached.drinks, {
-                        weightKg: cached.weightKg || 70,
-                        gender: cached.gender || 'male',
-                        drinkingSpeed: cached.drinkingSpeed || 'average'
-                    } as UserProfile);
-                    currentBac = status.currentBac;
-                    statusMessage = status.statusMessage;
-                    color = status.color;
-                }
-
+                const base = live || cached;
                 return {
+                    ...base,
                     uid,
-                    displayName: cached.displayName || 'Ami',
-                    photoURL: cached.photoURL,
-                    currentBac,
-                    statusMessage,
-                    color,
-                    lastUpdate: Date.now(),
-                    drinks: [],
-                    weightKg: 70,
-                    gender: 'male',
-                    drinkingSpeed: 'average',
-                    ...cached
+                    displayName: base?.displayName || 'Friend',
+                    photoURL: base?.photoURL,
+                    currentBac: status.currentBac,
+                    statusMessage: status.statusMessage,
+                    color: status.color,
+                    lastUpdate: live?.lastUpdate || Date.now()
                 } as FriendStatus;
             }
+
+            if (live) return live;
+            if (cached) return { ...cached, uid } as FriendStatus;
 
             return {
                 uid,
@@ -215,7 +212,7 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
                 drinkingSpeed: 'average'
             } as FriendStatus;
         }).sort((a, b) => b.currentBac - a.currentBac);
-    }, [friendIds, rawFriends, detailsCache, myProfile?.language]);
+    }, [friendIds, rawFriends, detailsCache, myProfile?.language, tick]);
 
     // 3. Update my own live status
     useEffect(() => {
@@ -236,7 +233,7 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
                 weightKg: myProfile.weightKg || 70,
                 gender: myProfile.gender || 'male',
                 drinkingSpeed: myProfile.drinkingSpeed || 'average',
-                drinks: myDrinks.filter(d => d.timestamp > Date.now() - 18 * 60 * 60 * 1000),
+                drinks: myDrinks.filter(d => d.timestamp > Date.now() - 24 * 60 * 60 * 1000),
                 drinkosaurPassConfig: myProfile.drinkosaurPassConfig || null
             }, { merge: true });
         };

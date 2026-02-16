@@ -116,7 +116,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
     const now = Date.now();
     const activeDrinks = drinks
-      .filter(d => d.timestamp > now - 12 * 60 * 60 * 1000)
+      .filter(d => d.timestamp > now - 24 * 60 * 60 * 1000)
       .sort((a, b) => a.timestamp - b.timestamp);
 
     const colors = activeDrinks

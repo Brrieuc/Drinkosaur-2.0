@@ -8,6 +8,7 @@ interface SEOProps {
     url?: string;
     type?: string;
     canonical?: string;
+    faq?: { q: string; a: string }[];
 }
 
 export const SEO: React.FC<SEOProps> = ({
@@ -16,7 +17,8 @@ export const SEO: React.FC<SEOProps> = ({
     image,
     url,
     type = 'website',
-    canonical
+    canonical,
+    faq
 }) => {
     const siteTitle = 'Drinkosaur';
     const fullTitle = title ? `${title} | ${siteTitle}` : 'Drinkosaur - Ethylotest & Calculateur d\'Alcoolémie';
@@ -45,6 +47,24 @@ export const SEO: React.FC<SEOProps> = ({
             <meta name="twitter:title" content={fullTitle} />
             <meta name="twitter:description" content={metaDescription} />
             <meta name="twitter:image" content={metaImage} />
+
+            {/* FAQ Schema */}
+            {faq && (
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "FAQPage",
+                        "mainEntity": faq.map(f => ({
+                            "@type": "Question",
+                            "name": f.q,
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": f.a
+                            }
+                        }))
+                    })}
+                </script>
+            )}
         </Helmet>
     );
 };
