@@ -6,6 +6,7 @@ import { ImageCropper } from './ImageCropper';
 import { TrophyHall } from './TrophyHall';
 import heic2any from 'heic2any';
 import { DrinkosaurPass, ProfilePhoto } from './DrinkosaurPass';
+import { CharitySupport } from './CharitySupport';
 import { Drink } from '../types';
 
 interface SettingsProps {
@@ -646,6 +647,13 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
               language={language}
             />
           )}
+
+          {/* Charity Support Component */}
+          <CharitySupport
+            user={user}
+            onUpdateUser={onSave}
+            language={language}
+          />
 
           {/* Privacy Section */}
           <div className="glass-panel-3d p-6 rounded-[32px] space-y-5">

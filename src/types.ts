@@ -42,6 +42,7 @@ export interface UserProfile {
   drinkosaurPassConfig?: DrinkosaurPassConfig;
   allowGlobalRequests?: boolean; // If true, allows friend requests from global leaderboard
   bestRanking?: number;
+  adsWatchedCharity?: number; // Total ads watched to support charity
 }
 
 export type PassStatType =
