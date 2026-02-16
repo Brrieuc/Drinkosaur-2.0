@@ -409,7 +409,9 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
 
     // Body scroll lock
     useEffect(() => {
-        document.body.classList.add('modal-open');
+        if (document.body && document.body.classList) {
+            document.body.classList.add('modal-open');
+        }
         return () => {
             const hasOtherModals = document.querySelectorAll('.modal-overlay').length > 1;
             if (!hasOtherModals) {

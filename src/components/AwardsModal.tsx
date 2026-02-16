@@ -99,7 +99,9 @@ export const AwardsModal: React.FC<AwardsModalProps> = ({
 
     // Body scroll lock
     useEffect(() => {
-        document.body.classList.add('modal-open');
+        if (document.body && document.body.classList) {
+            document.body.classList.add('modal-open');
+        }
         return () => {
             // Check if there are other modals open before removing the class
             const modalCheck = document.querySelectorAll('.fixed.z-\\[200\\]').length;

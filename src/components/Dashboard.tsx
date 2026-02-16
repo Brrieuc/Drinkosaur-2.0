@@ -149,11 +149,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
   React.useEffect(() => {
     const isAnyModalOpen = showChartModal || showStats || showNotifications || showShareModal;
     if (isAnyModalOpen) {
-      document.body.classList.add('modal-open');
+      if (document.body && document.body.classList) {
+        document.body.classList.add('modal-open');
+      }
     } else {
-      document.body.classList.remove('modal-open');
+      if (document.body && document.body.classList) {
+        document.body.classList.remove('modal-open');
+      }
     }
-    return () => document.body.classList.remove('modal-open');
+    return () => {
+      if (document.body && document.body.classList) {
+        document.body.classList.remove('modal-open');
+      }
+    };
   }, [showChartModal, showStats, showNotifications, showShareModal]);
 
   return (

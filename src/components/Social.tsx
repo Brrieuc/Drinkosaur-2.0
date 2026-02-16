@@ -142,11 +142,19 @@ export const Social: React.FC<SocialProps> = (props) => {
     useEffect(() => {
         const isAnyModalOpen = showSentRequests || isCreatingGroup || isInvitingToGroup || showAwardsModal || showPendingInvites;
         if (isAnyModalOpen) {
-            document.body.classList.add('modal-open');
+            if (document.body && document.body.classList) {
+                document.body.classList.add('modal-open');
+            }
         } else {
-            document.body.classList.remove('modal-open');
+            if (document.body && document.body.classList) {
+                document.body.classList.remove('modal-open');
+            }
         }
-        return () => document.body.classList.remove('modal-open');
+        return () => {
+            if (document.body && document.body.classList) {
+                document.body.classList.remove('modal-open');
+            }
+        };
     }, [showSentRequests, isCreatingGroup, isInvitingToGroup, showAwardsModal, showPendingInvites]);
 
     // Live update for ranking

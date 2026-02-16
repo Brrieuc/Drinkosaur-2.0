@@ -89,7 +89,9 @@ export const BacChartModal: React.FC<BacChartModalProps> = ({ drinks, user, onCl
   // Body scroll lock (nested)
   useEffect(() => {
     // Already locked by parent, but let's be safe
-    document.body.classList.add('modal-open');
+    if (document.body && document.body.classList) {
+      document.body.classList.add('modal-open');
+    }
     return () => {
       // Don't remove if parent modal is still open
       const hasOtherModals = document.querySelectorAll('.modal-overlay').length > 1;

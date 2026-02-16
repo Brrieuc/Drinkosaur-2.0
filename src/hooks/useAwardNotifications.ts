@@ -78,8 +78,10 @@ export const useAwardNotifications = (groups: FriendGroup[]) => {
 
     const markAsRead = useCallback((notificationId: string) => {
         const readIds = getReadIds();
-        readIds.add(notificationId);
-        saveReadIds(readIds);
+        if (readIds && typeof readIds.add === 'function') {
+            readIds.add(notificationId);
+            saveReadIds(readIds);
+        }
 
         setNotifications(prev =>
             prev.map(n =>

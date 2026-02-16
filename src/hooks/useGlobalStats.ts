@@ -119,10 +119,17 @@ export const useGlobalStats = () => {
             const myFriends = new Set<string>(myProfile?.friends || []);
             // Friends-of-friends: collect all friends' friends
             const friendsOfFriends = new Set<string>();
-            for (const u of allUsers) {
-                if (myFriends.has(u.uid)) {
-                    for (const fof of (u.profile.friends || [])) {
-                        if (fof !== myUid) friendsOfFriends.add(fof);
+            if (friendsOfFriends && friendsOfFriends.add) { // Defensive check
+                for (const u of allUsers) {
+                    if (myFriends.has(u.uid)) {
+                        const friendsArr = u.profile?.friends || [];
+                        if (Array.isArray(friendsArr)) {
+                            for (const fof of friendsArr) {
+                                if (fof && fof !== myUid) {
+                                    friendsOfFriends.add(fof as string);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -253,10 +260,17 @@ export const useGlobalStats = () => {
             const myProfile = profilesMap[myUid];
             const myFriends = new Set<string>(myProfile?.friends || []);
             const friendsOfFriends = new Set<string>();
-            for (const [uid, p] of Object.entries(profilesMap)) {
-                if (myFriends.has(uid)) {
-                    for (const fof of (p.friends || [])) {
-                        if (fof !== myUid) friendsOfFriends.add(fof);
+            if (friendsOfFriends && friendsOfFriends.add) {
+                for (const [uid, p] of Object.entries(profilesMap)) {
+                    if (myFriends.has(uid)) {
+                        const friendsArr = p.friends || [];
+                        if (Array.isArray(friendsArr)) {
+                            for (const fof of friendsArr) {
+                                if (fof && fof !== myUid) {
+                                    friendsOfFriends.add(fof as string);
+                                }
+                            }
+                        }
                     }
                 }
             }
