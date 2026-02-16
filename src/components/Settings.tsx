@@ -862,9 +862,31 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
         )}
 
         {/* Footer Credits */}
-        <div className="mt-12 mb-8 flex justify-center opacity-30">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">
-            ©<a href="https://brieucpecqueraux.blogspot.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors pointer-events-auto">Brieuc Pecqueraux</a> - Drinkosaur
+        <div className="mt-12 mb-8 flex justify-center opacity-30 select-none">
+          <p
+            onClick={() => {
+              // Secret Developer Mode Trigger
+              const now = Date.now();
+              const taps = (window as any)._devTaps || [];
+              const recentTaps = taps.filter((t: number) => now - t < 2000); // 2 seconds window
+              recentTaps.push(now);
+              (window as any)._devTaps = recentTaps;
+
+              if (recentTaps.length >= 7) {
+                (window as any)._devTaps = []; // Reset
+                const pin = prompt("🔐 DEVELOPER MODE ACCESS\nEnter PIN:");
+                if (pin === "DRINKOSAUR_DEV") {
+                  onSave({ isAdmin: true });
+                  alert("✅ Developer Mode Unlocked! You are now an Admin.");
+                  window.location.reload(); // Force refresh to update UI state
+                } else if (pin) {
+                  alert("⛔ Access Denied");
+                }
+              }
+            }}
+            className="text-[10px] font-bold uppercase tracking-[0.2em] text-white cursor-default active:text-blue-500 transition-colors"
+          >
+            v2.0 • ©<a href="https://brieucpecqueraux.blogspot.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors pointer-events-auto">Brieuc Pecqueraux</a>
           </p>
         </div>
       </div>
@@ -1038,9 +1060,31 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
         </div>
 
         {/* Footer Credits */}
-        <div className="mt-12 mb-8 flex justify-center opacity-30">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">
-            ©<a href="https://brieucpecqueraux.blogspot.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors pointer-events-auto">Brieuc Pecqueraux</a> - Drinkosaur
+        <div className="mt-12 mb-8 flex justify-center opacity-30 select-none">
+          <p
+            onClick={() => {
+              // Secret Developer Mode Trigger
+              const now = Date.now();
+              const taps = (window as any)._devTaps || [];
+              const recentTaps = taps.filter((t: number) => now - t < 2000); // 2 seconds window
+              recentTaps.push(now);
+              (window as any)._devTaps = recentTaps;
+
+              if (recentTaps.length >= 7) {
+                (window as any)._devTaps = []; // Reset
+                const pin = prompt("🔐 DEVELOPER MODE ACCESS\nEnter PIN:");
+                if (pin === "DRINKOSAUR_DEV") {
+                  onSave({ isAdmin: true });
+                  alert("✅ Developer Mode Unlocked! You are now an Admin.");
+                  window.location.reload(); // Force refresh to update UI state
+                } else if (pin) {
+                  alert("⛔ Access Denied");
+                }
+              }
+            }}
+            className="text-[10px] font-bold uppercase tracking-[0.2em] text-white cursor-default active:text-blue-500 transition-colors"
+          >
+            v2.0 • ©<a href="https://brieucpecqueraux.blogspot.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors pointer-events-auto">Brieuc Pecqueraux</a>
           </p>
         </div>
       </div>
