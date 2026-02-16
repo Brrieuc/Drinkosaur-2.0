@@ -8,7 +8,7 @@ import {
   onSnapshot, deleteDoc, arrayRemove, addDoc
 } from "firebase/firestore";
 import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
 
 
 const firebaseConfig = {
@@ -26,7 +26,25 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
-const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
+
+// Robust initialization for Messaging to prevent crashes on unsupported browsers (old iOS/Safari)
+let messaging: any = null;
+if (typeof window !== 'undefined') {
+  // Use isSupported() promise to safely check for messaging support
+  // Note: we export it as a let/variable that will be populated if supported
+  isSupported().then(supported => {
+    if (supported) {
+      try {
+        messaging = getMessaging(app);
+      } catch (err) {
+        console.warn('Firebase Messaging initialization failed:', err);
+      }
+    }
+  }).catch(err => {
+    console.warn('Firebase Messaging support check failed:', err);
+  });
+}
+
 const googleProvider = new GoogleAuthProvider();
 
 // Force account selection to refresh session handling

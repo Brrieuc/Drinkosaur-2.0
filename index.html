@@ -9,8 +9,17 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Drinkosaur">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#050505">
   <title>Drinkosaur - Suivi de consommation d'alcool</title>
+
+  <!-- Early error catching for mobile debugging -->
+  <script>
+    window.onerror = function (msg, url, line, col, error) {
+      // If we see a black screen, let's at least log what happened
+      console.error('Global JS Error:', msg, 'at', url, ':', line);
+      // Optional: alert(msg) if debugging on device
+    };
+  </script>
   <meta name="description"
     content="Drinkosaur vous aide à suivre votre consommation d'alcool et estimer votre taux d'alcoolémie en temps réel. Restez en sécurité et buvez responsablement." />
 
