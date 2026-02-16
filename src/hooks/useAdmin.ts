@@ -130,14 +130,6 @@ export const useAdmin = () => {
         }
     };
 
-    // Toggle Ban Status
-    const adminToggleBan = async (uid: string, currentStatus: boolean | undefined): Promise<boolean> => {
-        const newStatus = !currentStatus;
-        if (newStatus && !window.confirm("Ban this user? They will lose access.")) return false;
-
-        return await adminUpdateUser(uid, { isBanned: newStatus });
-    };
-
     // Fetch user drinks
     const adminGetUserDrinks = async (uid: string): Promise<Drink[]> => {
         setLoading(true);
@@ -184,12 +176,24 @@ export const useAdmin = () => {
         if (!window.confirm("Delete this drink?")) return false;
         setLoading(true);
         try {
+            // 1. Move to deleted (optional for single delete too?) - let's be consistent and add history
+            // But for now, let's keep original behavior OR upgrade it. 
+            // Let's upgrade it to use soft-delete logic too so restoration works for single deletes.
+            const drinkToDelete = currentDrinks.find(d => d.id === drinkId);
+            if (drinkToDelete) {
+                const deletedRef = doc(db, "deleted_drinks", uid);
+                const deletedSnap = await getDoc(deletedRef);
+                let currentDeleted = deletedSnap.exists() ? (deletedSnap.data().list || []) : [];
+                await setDoc(deletedRef, {
+                    list: [...currentDeleted, { ...drinkToDelete, deletedAt: Date.now() }]
+                }, { merge: true });
+            }
+
             const newDrinks = currentDrinks.filter(d => d.id !== drinkId);
             const docRef = doc(db, "drinks", uid);
             await updateDoc(docRef, { list: newDrinks });
             console.log(`[Admin] Deleted drink ${drinkId} for ${uid}`);
 
-            // Sync local status
             await updateLiveStatus(uid, undefined, newDrinks);
 
             return true;
@@ -206,7 +210,6 @@ export const useAdmin = () => {
     const adminSendMessage = async (uid: string, title: string, message: string): Promise<boolean> => {
         setLoading(true);
         try {
-            // 1. Create notification in user's subcollection
             const notifRef = collection(db, `users/${uid}/notifications`);
             await addDoc(notifRef, {
                 title,
@@ -226,16 +229,129 @@ export const useAdmin = () => {
         }
     };
 
+    // Delete multiple drinks
+    const adminDeleteDrinks = async (uid: string, drinkIds: string[], currentDrinks: Drink[]): Promise<boolean> => {
+        setLoading(true);
+        try {
+            // 1. Identify drinks to delete
+            const drinksToDelete = currentDrinks.filter(d => drinkIds.includes(d.id));
+            const remainingDrinks = currentDrinks.filter(d => !drinkIds.includes(d.id));
+
+            // 2. Add to deleted_drinks history
+            if (drinksToDelete.length > 0) {
+                const deletedRef = doc(db, "deleted_drinks", uid);
+                const deletedSnap = await getDoc(deletedRef);
+                let currentDeleted = deletedSnap.exists() ? (deletedSnap.data().list || []) : [];
+
+                // Add timestamp to deletion record
+                const newDeleted = drinksToDelete.map(d => ({ ...d, deletedAt: Date.now() }));
+
+                await setDoc(deletedRef, {
+                    list: [...currentDeleted, ...newDeleted]
+                }, { merge: true });
+            }
+
+            // 3. Update main drinks list
+            const drinksRef = doc(db, "drinks", uid);
+            await updateDoc(drinksRef, { list: remainingDrinks });
+
+            // 4. Update Live Status
+            await updateLiveStatus(uid, undefined, remainingDrinks);
+
+            console.log(`[Admin] Deleted ${drinkIds.length} drinks for ${uid}`);
+            return true;
+        } catch (err: any) {
+            console.error("[Admin] Delete drinks failed:", err);
+            setError(err.message);
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Restore a deleted drink
+    const adminRestoreDrink = async (uid: string, drink: Drink, currentLiveDrinks: Drink[]): Promise<boolean> => {
+        setLoading(true);
+        try {
+            // 1. Remove from deleted_drinks
+            const deletedRef = doc(db, "deleted_drinks", uid);
+            const deletedSnap = await getDoc(deletedRef);
+            if (deletedSnap.exists()) {
+                const currentDeleted = deletedSnap.data().list || [];
+                // Allow matching by ID even if other fields handled differently
+                const newDeleted = currentDeleted.filter((d: any) => d.id !== drink.id);
+                await updateDoc(deletedRef, { list: newDeleted });
+            }
+
+            // 2. Add back to drinks list (remove extra deletedAt field if present)
+            const { deletedAt, ...restoredDrink } = drink as any;
+            const newDrinksList = [...currentLiveDrinks, restoredDrink];
+
+            const drinksRef = doc(db, "drinks", uid);
+            await updateDoc(drinksRef, { list: newDrinksList });
+
+            // 3. Update Live Status
+            await updateLiveStatus(uid, undefined, newDrinksList);
+
+            return true;
+        } catch (err: any) {
+            console.error("[Admin] Restore failed:", err);
+            setError(err.message);
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Get deleted drinks
+    const adminGetDeletedDrinks = async (uid: string): Promise<Drink[]> => {
+        try {
+            const snap = await getDoc(doc(db, "deleted_drinks", uid));
+            if (snap.exists()) {
+                return (snap.data().list || []) as Drink[];
+            }
+            return [];
+        } catch (err) {
+            console.error(err);
+            return [];
+        }
+    };
+
+    // Toggle Ban Status with Reason
+    const adminBanUser = async (uid: string, reason: string): Promise<boolean> => {
+        return await adminUpdateUser(uid, {
+            isBanned: true,
+            banReason: reason,
+            banTimestamp: Date.now(),
+            banAppealed: false // Reset appeal status on new ban
+        } as any);
+    };
+
+    const adminUnbanUser = async (uid: string): Promise<boolean> => {
+        return await adminUpdateUser(uid, {
+            isBanned: false,
+            banReason: null, // Clear reason
+            banTimestamp: null,
+            banAppealed: null,
+            banAppealMessage: null
+        } as any);
+    };
+
     return {
         loading,
         error,
         adminGetAllUsers,
         adminUpdateUser,
         adminWipeDrinks,
-        adminToggleBan,
         adminGetUserDrinks,
         adminUpdateDrink,
         adminDeleteDrink,
-        adminSendMessage
+        adminSendMessage,
+        // New
+        adminDeleteDrinks,
+        adminRestoreDrink,
+        adminGetDeletedDrinks,
+        adminBanUser,
+        adminUnbanUser
     };
 };

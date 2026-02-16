@@ -46,6 +46,10 @@ export interface UserProfile {
   adsWatchedCharity?: number; // Total ads watched to support charity
   isAdmin?: boolean;
   isBanned?: boolean;
+  banReason?: string;
+  banTimestamp?: number;
+  banAppealMessage?: string;
+  banAppealTimestamp?: number;
 }
 
 export type PassStatType =

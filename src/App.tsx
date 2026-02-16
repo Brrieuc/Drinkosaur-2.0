@@ -11,6 +11,7 @@ import { FriendProfileModal } from './components/FriendProfileModal';
 import { GlobalDashboard } from './components/GlobalDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
 import { LandingPage } from './components/LandingPage';
+import { BannedScreen } from './components/BannedScreen';
 import { SEO } from './components/SEO';
 import { AppView, Drink, UserProfile } from './types';
 import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users, Loader2, X, Mail } from 'lucide-react';
@@ -394,6 +395,14 @@ const App: React.FC = () => {
       <div className="w-full h-screen bg-black flex items-center justify-center">
         <Loader2 className="animate-spin text-white/20" size={48} />
       </div>
+    );
+  }
+
+  if (user?.isBanned) {
+    return (
+      <SafeComponent>
+        <BannedScreen user={user} />
+      </SafeComponent>
     );
   }
 

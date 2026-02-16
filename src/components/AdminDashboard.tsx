@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { UserProfile, Drink } from '../types';
 import { useAdmin } from '../hooks/useAdmin';
-import { Search, Loader2, Save, Trash2, Ban, ShieldCheck, ArrowLeft, RefreshCw, Edit2, X, Mail } from 'lucide-react';
+import { Search, Loader2, Save, Trash2, Ban, ShieldCheck, ArrowLeft, RefreshCw, Edit2, X, Mail, CheckSquare, RotateCcw } from 'lucide-react';
 
 interface AdminDashboardProps {
     onClose: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
-    const { adminGetAllUsers, adminUpdateUser, adminWipeDrinks, adminToggleBan, adminGetUserDrinks, adminUpdateDrink, adminDeleteDrink, adminSendMessage, loading } = useAdmin();
+    const { adminGetAllUsers, adminUpdateUser, adminWipeDrinks, adminGetUserDrinks, adminUpdateDrink, adminDeleteDrink, adminDeleteDrinks, adminRestoreDrink, adminGetDeletedDrinks, adminBanUser, adminUnbanUser, adminSendMessage, loading } = useAdmin();
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -18,6 +18,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
     const [userDrinks, setUserDrinks] = useState<Drink[]>([]);
     const [loadingDrinks, setLoadingDrinks] = useState(false);
     const [editingDrink, setEditingDrink] = useState<Drink | null>(null);
+    const [selectedDrinkIds, setSelectedDrinkIds] = useState<Set<string>>(new Set());
+    const [viewDeletedDrinks, setViewDeletedDrinks] = useState(false);
+    const [deletedDrinks, setDeletedDrinks] = useState<Drink[]>([]);
+
+    // Ban Logic
+    const [showBanModal, setShowBanModal] = useState(false);
+    const [banReason, setBanReason] = useState('');
 
     // Stats editing state
     const [editWeight, setEditWeight] = useState(0);
@@ -64,6 +71,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         } else {
             setUserDrinks([]);
         }
+        setSelectedDrinkIds(new Set());
+        setViewDeletedDrinks(false);
     };
 
     const handleSaveStats = async () => {
@@ -83,8 +92,80 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         }
     };
 
-    const handleWipeDrinks = async () => {
+
+
+    const handleBulkDelete = async () => {
+        if (!selectedUser?.uid || selectedDrinkIds.size === 0) return;
+        if (!window.confirm(`Delete ${selectedDrinkIds.size} drinks?`)) return;
+
+        const ids = Array.from(selectedDrinkIds);
+        const success = await adminDeleteDrinks(selectedUser.uid, ids, userDrinks);
+
+        if (success) {
+            setUserDrinks(prev => prev.filter(d => !selectedDrinkIds.has(d.id)));
+            setSelectedDrinkIds(new Set());
+        }
+    };
+
+    const handleRestoreDrink = async (drink: Drink) => {
         if (!selectedUser?.uid) return;
+        const success = await adminRestoreDrink(selectedUser.uid, drink, userDrinks);
+        if (success) {
+            setDeletedDrinks(prev => prev.filter(d => d.id !== drink.id));
+            setUserDrinks(prev => [...prev, drink].sort((a, b) => b.timestamp - a.timestamp)); // Optimistic update
+        }
+    };
+
+    const toggleDrinkSelection = (id: string) => {
+        const newSet = new Set(selectedDrinkIds);
+        if (newSet.has(id)) newSet.delete(id);
+        else newSet.add(id);
+        setSelectedDrinkIds(newSet);
+    };
+
+    const loadDeletedDrinks = async () => {
+        if (!selectedUser?.uid) return;
+        setViewDeletedDrinks(true);
+        const deleted = await adminGetDeletedDrinks(selectedUser.uid);
+        setDeletedDrinks(deleted.sort((a, b) => (b as any).deletedAt - (a as any).deletedAt));
+    };
+
+    const handleBanSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedUser?.uid) return;
+
+        // Two step confirmation for ban
+        if (!window.confirm("Step 1/2: Are you sure you want to ban this user?")) return;
+        if (!window.confirm("Step 2/2: Confirm ban. The user will be locked out immediately.")) return;
+
+        const success = await adminBanUser(selectedUser.uid, banReason);
+        if (success) {
+            alert("User banned successfully.");
+            setShowBanModal(false);
+            setBanReason('');
+            loadUsers();
+            setSelectedUser(prev => prev ? { ...prev, isBanned: true, banReason } : null);
+        }
+    };
+
+    const handleUnban = async () => {
+        if (!selectedUser?.uid) return;
+        if (!window.confirm("Unban this user?")) return;
+
+        const success = await adminUnbanUser(selectedUser.uid);
+        if (success) {
+            alert("User unbanned.");
+            loadUsers();
+            setSelectedUser(prev => prev ? { ...prev, isBanned: false, banReason: undefined } : null);
+        }
+    };
+
+    const handleWipeDrinksConfirm = async () => {
+        if (!selectedUser?.uid) return;
+        // Two step confirmation
+        if (!window.confirm("Step 1/2: WARNING. You are about to delete ALL drinks.")) return;
+        if (!window.confirm("Step 2/2: FINAL CONFIRMATION. This cannot be undone easily.")) return;
+
         const success = await adminWipeDrinks(selectedUser.uid);
         if (success) {
             alert("Drinks wiped successfully");
@@ -111,16 +192,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         }
     };
 
-    const handleToggleBan = async () => {
-        if (!selectedUser?.uid) return;
-        const success = await adminToggleBan(selectedUser.uid, selectedUser.isBanned);
-        if (success) {
-            const newStatus = !selectedUser.isBanned;
-            alert(`User ${newStatus ? 'BANNED' : 'UNBANNED'}`);
-            loadUsers();
-            setSelectedUser(prev => prev ? { ...prev, isBanned: newStatus } : null);
-        }
-    };
+    // Old simple toggle replaced by handleBanSubmit and handleUnban
+    /* const handleToggleBan = ... */
 
     const handleToggleAdmin = async () => {
         if (!selectedUser?.uid) return;
@@ -279,51 +352,129 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                 <h3 className="text-sm font-bold uppercase text-white/40 flex items-center justify-between">
                                     Drink History
                                     <span className="text-[10px] bg-white/10 px-2 rounded-full text-white">{userDrinks.length}</span>
+
+                                    <div className="flex items-center gap-2">
+                                        {!viewDeletedDrinks ? (
+                                            <>
+                                                <button
+                                                    onClick={loadDeletedDrinks}
+                                                    className="text-[10px] bg-white/5 hover:bg-white/10 px-2 py-1 rounded text-white/40 hover:text-white transition-colors flex items-center gap-1"
+                                                >
+                                                    <Trash2 size={10} /> View Deleted
+                                                </button>
+                                                {selectedDrinkIds.size > 0 && (
+                                                    <button
+                                                        onClick={handleBulkDelete}
+                                                        className="text-[10px] bg-red-500/20 hover:bg-red-500/30 px-2 py-1 rounded text-red-300 transition-colors flex items-center gap-1 animate-fade-in"
+                                                    >
+                                                        <Trash2 size={10} /> Delete ({selectedDrinkIds.size})
+                                                    </button>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <button
+                                                onClick={() => setViewDeletedDrinks(false)}
+                                                className="text-[10px] bg-blue-500/20 hover:bg-blue-500/30 px-2 py-1 rounded text-blue-300 transition-colors flex items-center gap-1"
+                                            >
+                                                <RefreshCw size={10} /> View Active
+                                            </button>
+                                        )}
+                                    </div>
                                 </h3>
                                 <div className="bg-black/20 rounded-xl border border-white/5 overflow-hidden max-h-80 overflow-y-auto">
-                                    {loadingDrinks ? (
-                                        <div className="p-4 flex justify-center"><Loader2 className="animate-spin text-white/30" /></div>
-                                    ) : userDrinks.length === 0 ? (
-                                        <div className="p-4 text-center text-[10px] text-white/30">No drinks recorded</div>
-                                    ) : (
-                                        <div className="divide-y divide-white/5">
-                                            {userDrinks.map(drink => (
-                                                <div key={drink.id} className="p-3 flex items-center justify-between hover:bg-white/5 transition-colors group">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-lg">
-                                                            {drink.icon || '🍺'}
+                                    {viewDeletedDrinks ? (
+                                        // Deleted Drinks View
+                                        deletedDrinks.length === 0 ? (
+                                            <div className="p-4 text-center text-[10px] text-white/30">Trash is empty</div>
+                                        ) : (
+                                            <div className="divide-y divide-white/5">
+                                                {deletedDrinks.map((drink: any) => (
+                                                    <div key={drink.id} className="p-3 flex items-center justify-between hover:bg-white/5 transition-colors opacity-60">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center text-lg grayscale">
+                                                                {drink.icon || '🍺'}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-bold text-white line-through">{drink.name}</p>
+                                                                <p className="text-[10px] text-white/30">Deleted: {new Date(drink.deletedAt).toLocaleDateString()}</p>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-xs font-bold text-white">{drink.name}</p>
-                                                            <p className="text-[10px] text-white/40 flex items-center gap-2">
-                                                                <span>{drink.volumeMl}ml</span>
-                                                                <span>•</span>
-                                                                <span>{drink.abv}%</span>
-                                                                <span>•</span>
-                                                                <span>{new Date(drink.timestamp).toLocaleDateString()}</span>
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <button
-                                                            onClick={() => setEditingDrink(drink)}
+                                                            onClick={() => handleRestoreDrink(drink)}
                                                             className="p-2 hover:bg-blue-500/20 text-blue-400 rounded-lg transition-colors"
+                                                            title="Restore"
                                                         >
-                                                            <Edit2 size={14} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteDrink(drink.id)}
-                                                            className="p-2 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
-                                                        >
-                                                            <Trash2 size={14} />
+                                                            <RotateCcw size={14} />
                                                         </button>
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
+                                                ))}
+                                            </div>
+                                        )
+                                    ) : (
+                                        // Active Drinks View
+                                        loadingDrinks ? (
+                                            <div className="p-4 flex justify-center"><Loader2 className="animate-spin text-white/30" /></div>
+                                        ) : userDrinks.length === 0 ? (
+                                            <div className="p-4 text-center text-[10px] text-white/30">No drinks recorded</div>
+                                        ) : (
+                                            <div className="divide-y divide-white/5">
+                                                {userDrinks.map(drink => (
+                                                    <div key={drink.id} className={`p-3 flex items-center justify-between hover:bg-white/5 transition-colors group ${selectedDrinkIds.has(drink.id) ? 'bg-blue-500/10' : ''}`}>
+                                                        <div className="flex items-center gap-3">
+                                                            <button
+                                                                onClick={() => toggleDrinkSelection(drink.id)}
+                                                                className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedDrinkIds.has(drink.id) ? 'bg-blue-500 border-blue-500 text-white' : 'border-white/20 hover:border-white/40'}`}
+                                                            >
+                                                                {selectedDrinkIds.has(drink.id) && <CheckSquare size={12} />}
+                                                            </button>
+                                                            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-lg">
+                                                                {drink.icon || '🍺'}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-bold text-white">{drink.name}</p>
+                                                                <p className="text-[10px] text-white/40 flex items-center gap-2">
+                                                                    <span>{drink.volumeMl}ml</span>
+                                                                    <span>•</span>
+                                                                    <span>{drink.abv}%</span>
+                                                                    <span>•</span>
+                                                                    <span>{new Date(drink.timestamp).toLocaleDateString()}</span>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button
+                                                                onClick={() => setEditingDrink(drink)}
+                                                                className="p-2 hover:bg-blue-500/20 text-blue-400 rounded-lg transition-colors"
+                                                            >
+                                                                <Edit2 size={14} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteDrink(drink.id)}
+                                                                className="p-2 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )
                                     )}
                                 </div>
                             </div>
+
+                            {/* Unban Appeal Message (if any) */}
+                            {selectedUser.banAppealMessage && selectedUser.isBanned && (
+                                <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-4 animate-bounce-in">
+                                    <h3 className="text-orange-400 text-xs font-bold uppercase flex items-center gap-2 mb-2">
+                                        <Mail size={14} /> Appeal from User
+                                    </h3>
+                                    <p className="text-white/80 text-sm font-medium italic">"{selectedUser.banAppealMessage}"</p>
+                                    <p className="text-right text-[10px] text-white/30 mt-2">
+                                        Sent: {selectedUser.banAppealTimestamp ? new Date(selectedUser.banAppealTimestamp).toLocaleString() : 'N/A'}
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Communication */}
                             <div className="space-y-3 mt-auto pt-6 border-t border-white/10">
@@ -341,21 +492,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                 <h3 className="text-sm font-bold uppercase text-red-500/60">Danger Zone</h3>
 
                                 <button
-                                    onClick={handleWipeDrinks}
+                                    onClick={handleWipeDrinksConfirm}
                                     className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-2 transition-colors"
                                 >
                                     <Trash2 size={16} /> Wipe All Drinks
                                 </button>
 
-                                <button
-                                    onClick={handleToggleBan}
-                                    className={`w-full py-3 border rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-2 transition-colors ${selectedUser.isBanned
-                                        ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20'
-                                        : 'bg-gray-500/10 hover:bg-gray-500/20 text-gray-400 border-gray-500/20'
-                                        }`}
-                                >
-                                    <Ban size={16} /> {selectedUser.isBanned ? 'Unban User' : 'Ban User'}
-                                </button>
+                                {selectedUser.isBanned ? (
+                                    <button
+                                        onClick={handleUnban}
+                                        className="w-full py-3 border border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-2 transition-colors"
+                                    >
+                                        <ShieldCheck size={16} /> Unban User
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => setShowBanModal(true)}
+                                        className="w-full py-3 border border-gray-500/20 bg-gray-500/10 hover:bg-gray-500/20 text-gray-400 rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-2 transition-colors"
+                                    >
+                                        <Ban size={16} /> Ban User
+                                    </button>
+                                )}
 
                                 <button
                                     onClick={handleToggleAdmin}
@@ -467,6 +624,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                 className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold uppercase text-xs shadow-lg shadow-blue-900/20"
                             >
                                 Send Notification
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* Ban Modal */}
+            {showBanModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-[#1a1a1a] border border-red-500/20 p-6 rounded-2xl w-full max-w-md space-y-4 shadow-2xl animate-bounce-in">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-lg font-bold text-red-500 flex items-center gap-2">
+                                <Ban size={20} /> Ban User
+                            </h3>
+                            <button onClick={() => setShowBanModal(false)} className="text-white/40 hover:text-white">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <p className="text-sm text-white/60">
+                            This will restrict access for <span className="font-bold text-white">@{selectedUser?.username}</span> immediately.
+                            They will see the reason you provide below.
+                        </p>
+                        <form onSubmit={handleBanSubmit} className="space-y-4">
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-white/40 block mb-1">Reason for Ban</label>
+                                <textarea
+                                    value={banReason}
+                                    onChange={e => setBanReason(e.target.value)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm font-bold focus:border-red-500 outline-none min-h-[100px]"
+                                    placeholder="e.g. Violation of terms, harassment..."
+                                    required
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold uppercase text-xs shadow-lg shadow-red-900/20"
+                            >
+                                Proceed to Confirmation
                             </button>
                         </form>
                     </div>
