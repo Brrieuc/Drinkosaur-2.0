@@ -785,6 +785,27 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
             <ChevronRight className="text-white/20 group-hover:text-sky-400/40 transition-colors" />
           </a>
 
+          {/* Admin Dashboard Button (Only for Admins) */}
+          {user.isAdmin && (
+            <button
+              onClick={() => (window as any)._openAdminDashboard && (window as any)._openAdminDashboard()}
+              className="w-full glass-panel-3d p-6 rounded-[32px] flex items-center justify-between active:scale-[0.98] transition-all group hover:bg-red-500/10 border border-red-500/20 mb-4"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-4 bg-red-500/10 rounded-2xl group-hover:bg-red-500/20 transition-colors border border-red-500/20">
+                  <Shield size={24} className="text-red-500" />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-red-100 leading-tight text-lg">Admin Dashboard</p>
+                  <p className="text-xs text-red-500/60 mt-1 uppercase tracking-wider font-bold">
+                    Manage Players & Data
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="text-red-500/40 group-hover:text-red-500 transition-colors" />
+            </button>
+          )}
+
           {/* Notifications Button */}
           <button
             onClick={() => onRequestNotification?.()}

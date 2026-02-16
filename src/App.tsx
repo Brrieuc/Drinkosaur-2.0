@@ -9,6 +9,7 @@ import { OnboardingTour } from './components/OnboardingTour';
 import { InstallPwaGuide } from './components/InstallPwaGuide';
 import { FriendProfileModal } from './components/FriendProfileModal';
 import { GlobalDashboard } from './components/GlobalDashboard';
+import { AdminDashboard } from './components/AdminDashboard';
 import { LandingPage } from './components/LandingPage';
 import { SEO } from './components/SEO';
 import { AppView, Drink, UserProfile } from './types';
@@ -178,6 +179,9 @@ const App: React.FC = () => {
       setIsStandalone(isStandaloneMode);
     };
     checkStandalone();
+
+    // Admin Dashboard Shortcut
+    (window as any)._openAdminDashboard = () => setView(AppView.ADMIN);
   }, []);
 
   // -- Rendering Logic Gate (moved below hooks) --
@@ -618,6 +622,13 @@ const App: React.FC = () => {
               language={user.language}
               myUid={authUser?.uid || ''}
               onSelectUser={handleSelectGlobalUser}
+            />
+          )}
+
+          {view === AppView.ADMIN && user.isAdmin && (
+            <AdminDashboard
+              onClose={() => setView(AppView.SETTINGS)}
+              currentUser={user as UserProfile}
             />
           )}
 

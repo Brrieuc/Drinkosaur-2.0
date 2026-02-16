@@ -44,6 +44,8 @@ export interface UserProfile {
   allowGlobalRequests?: boolean; // If true, allows friend requests from global leaderboard
   bestRanking?: number;
   adsWatchedCharity?: number; // Total ads watched to support charity
+  isAdmin?: boolean;
+  isBanned?: boolean;
 }
 
 export type PassStatType =
@@ -127,5 +129,6 @@ export enum AppView {
   HISTORY = 'HISTORY',
   SOCIAL = 'SOCIAL',
   GLOBE = 'GLOBE',
+  ADMIN = 'ADMIN',
 }
 
