@@ -37,7 +37,7 @@ export interface MonthlyUserStat {
     uid: string;
     username: string;
     photoURL: string;
-    count: number;
+    value: number; // Liters for drinks, or generic count
     isFriend: boolean;
     isMe: boolean;
     visibility: LeaderboardVisibility;
@@ -266,12 +266,12 @@ export const useGlobalStats = () => {
                 allDrinksMap[d.id] = (d.data()?.list || []) as Drink[];
             });
 
-            // 3. Per-user: count beer/wine/spirits this month
+            // 3. Per-user: volume beer/wine/spirits this month
             interface UserMonthData {
                 uid: string;
-                beerCount: number;
-                wineCount: number;
-                spiritCount: number;
+                beerVolume: number;
+                wineVolume: number;
+                spiritVolume: number;
                 totalAlcoholMl: number;
             }
 
@@ -281,9 +281,9 @@ export const useGlobalStats = () => {
                 const monthDrinks = drinks.filter(d => d.timestamp >= monthStart);
                 if (monthDrinks.length === 0) continue;
 
-                let beerCount = 0;
-                let wineCount = 0;
-                let spiritCount = 0;
+                let beerVolume = 0;
+                let wineVolume = 0;
+                let spiritVolume = 0;
                 let totalAlcoholMl = 0;
 
                 for (const d of monthDrinks) {
@@ -291,15 +291,21 @@ export const useGlobalStats = () => {
                     const pureAlcohol = d.volumeMl * (d.abv / 100);
                     totalAlcoholMl += pureAlcohol;
 
-                    if (type === 'beer') beerCount++;
-                    else if (type === 'wine') wineCount++;
-                    else if (type === 'spirit' || type === 'cocktail') spiritCount++;
+                    if (type === 'beer') beerVolume += d.volumeMl;
+                    else if (type === 'wine') wineVolume += d.volumeMl;
+                    else if (type === 'spirit' || type === 'cocktail') spiritVolume += d.volumeMl;
                 }
 
-                userData[uid] = { uid, beerCount, wineCount, spiritCount, totalAlcoholMl };
+                userData[uid] = {
+                    uid,
+                    beerVolume: beerVolume / 1000, // Convert to Liters
+                    wineVolume: wineVolume / 1000,
+                    spiritVolume: spiritVolume / 1000,
+                    totalAlcoholMl
+                };
             }
 
-            const toStatUser = (uid: string, count: number): MonthlyUserStat | null => {
+            const toStatUser = (uid: string, value: number): MonthlyUserStat | null => {
                 const p = profilesMap[uid];
                 const visibility = p?.leaderboardVisibility || 'public';
 
@@ -318,7 +324,7 @@ export const useGlobalStats = () => {
                     uid,
                     username: showIdentity ? (p?.username || p?.displayName || 'Anon') : '???',
                     photoURL: displayPhoto,
-                    count,
+                    value,
                     isFriend,
                     isMe,
                     visibility,
@@ -329,24 +335,24 @@ export const useGlobalStats = () => {
             const allUserData = Object.values(userData);
 
             const topBeer = allUserData
-                .filter(u => u.beerCount > 0)
-                .sort((a, b) => b.beerCount - a.beerCount)
+                .filter(u => u.beerVolume > 0)
+                .sort((a, b) => b.beerVolume - a.beerVolume)
                 .slice(0, 5)
-                .map(u => toStatUser(u.uid, u.beerCount))
+                .map(u => toStatUser(u.uid, u.beerVolume))
                 .filter(Boolean) as MonthlyUserStat[];
 
             const topWine = allUserData
-                .filter(u => u.wineCount > 0)
-                .sort((a, b) => b.wineCount - a.wineCount)
+                .filter(u => u.wineVolume > 0)
+                .sort((a, b) => b.wineVolume - a.wineVolume)
                 .slice(0, 5)
-                .map(u => toStatUser(u.uid, u.wineCount))
+                .map(u => toStatUser(u.uid, u.wineVolume))
                 .filter(Boolean) as MonthlyUserStat[];
 
             const topSpirits = allUserData
-                .filter(u => u.spiritCount > 0)
-                .sort((a, b) => b.spiritCount - a.spiritCount)
+                .filter(u => u.spiritVolume > 0)
+                .sort((a, b) => b.spiritVolume - a.spiritVolume)
                 .slice(0, 5)
-                .map(u => toStatUser(u.uid, u.spiritCount))
+                .map(u => toStatUser(u.uid, u.spiritVolume))
                 .filter(Boolean) as MonthlyUserStat[];
 
             // 4. Top 3 groups — respect showInGlobalRanking

@@ -376,8 +376,7 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
             title: string,
             icon: React.ReactNode,
             users: MonthlyUserStat[],
-            accentColor: string,
-            label: string
+            accentColor: string
         ) => (
             <div>
                 <div className="flex items-center gap-2 mb-3 px-1">
@@ -424,8 +423,8 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                                         </p>
                                     </div>
                                     <div className="text-right shrink-0">
-                                        <p className={`text-base font-black`} style={{ color: accentColor }}>{user.count}</p>
-                                        <p className="text-[8px] text-white/20 font-bold uppercase tracking-widest">{label}</p>
+                                        <p className={`text-base font-black`} style={{ color: accentColor }}>{user.value.toFixed(1)}</p>
+                                        <p className="text-[8px] text-white/20 font-bold uppercase tracking-widest">{isFrench ? 'Litres' : 'Liters'}</p>
                                     </div>
                                 </div>
                             );
@@ -451,24 +450,21 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                     t.topBeer,
                     <Beer size={16} className="text-amber-400" />,
                     monthlyStats.topBeer,
-                    '#fbbf24',
-                    t.drinks
+                    '#fbbf24'
                 )}
 
                 {renderUserRanking(
                     t.topWine,
                     <Wine size={16} className="text-rose-400" />,
                     monthlyStats.topWine,
-                    '#f43f5e',
-                    t.drinks
+                    '#f43f5e'
                 )}
 
                 {renderUserRanking(
                     t.topSpirits,
                     <Martini size={16} className="text-violet-400" />,
                     monthlyStats.topSpirits,
-                    '#a78bfa',
-                    t.drinks
+                    '#a78bfa'
                 )}
 
                 {/* Top 3 groups by consumption */}
