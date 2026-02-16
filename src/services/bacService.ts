@@ -1,6 +1,6 @@
 
 import { Drink, UserProfile, BacStatus } from '../types';
-import { ALCOHOL_DENSITY, GENDER_CONSTANT, METABOLISM_RATE, THEME_COLORS, CONSUMPTION_RATES, FUNNY_EXPRESSIONS } from '../constants';
+import { ALCOHOL_DENSITY, GENDER_CONSTANT, METABOLISM_RATE, METABOLISM_RATES, THEME_COLORS, CONSUMPTION_RATES, FUNNY_EXPRESSIONS } from '../constants';
 
 // Helper to get duration
 const getConsumptionDurationMs = (drink: Drink, userSpeed: 'slow' | 'average' | 'fast'): number => {
@@ -18,7 +18,9 @@ const simulateBac = (drinks: Drink[], user: UserProfile, startTime: number, endT
   const weight = user.weightKg;
   const userSpeed = user.drinkingSpeed || 'average';
   const ABSORPTION_DELAY_MIN = 45;
-  const METABOLISM_PER_MS = (METABOLISM_RATE / 60) / 60000;
+
+  const eliminationRate = user.habitLevel ? METABOLISM_RATES[user.habitLevel] : METABOLISM_RATE;
+  const METABOLISM_PER_MS = (eliminationRate / 60) / 60000;
 
   const sortedDrinks = [...drinks].sort((a, b) => a.timestamp - b.timestamp);
 

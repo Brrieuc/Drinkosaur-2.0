@@ -174,13 +174,15 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
             const weight = live?.weightKg || cached?.weightKg || 70;
             const gender = live?.gender || cached?.gender || 'male';
             const speed = live?.drinkingSpeed || cached?.drinkingSpeed || 'average';
+            const habit = live?.habitLevel || cached?.habitLevel || 'average';
 
             if (drinksToUse.length > 0) {
                 // ALWAYS recalculate locally to ensure smooth real-time decay
                 const status = calculateBac(drinksToUse, {
                     weightKg: weight,
                     gender: gender,
-                    drinkingSpeed: speed
+                    drinkingSpeed: speed,
+                    habitLevel: habit
                 } as UserProfile);
 
                 const base = live || cached;
@@ -233,6 +235,7 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
                 weightKg: myProfile.weightKg || 70,
                 gender: myProfile.gender || 'male',
                 drinkingSpeed: myProfile.drinkingSpeed || 'average',
+                habitLevel: myProfile.habitLevel || 'average',
                 drinks: myDrinks.filter(d => d.timestamp > Date.now() - 24 * 60 * 60 * 1000),
                 drinkosaurPassConfig: myProfile.drinkosaurPassConfig || null
             }, { merge: true });

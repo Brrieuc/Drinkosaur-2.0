@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Drink, UserProfile } from '../types';
 import { X, Beer, Clock, Flame, Trophy, Calendar } from 'lucide-react';
+import { METABOLISM_RATE, METABOLISM_RATES } from '../constants';
 
 interface StatsModalProps {
     drinks: Drink[];
@@ -54,7 +55,8 @@ export const StatsModal: React.FC<StatsModalProps> = ({ drinks, user, onClose })
         // 2. Total hours intoxicated
         // Group drinks by "session" — a session is active when BAC > 0
         // Use a simplified Widmark metabolism model
-        const METABOLISM_RATE_PER_HOUR = 0.015; // % per hour
+        const eliminationRate = user.habitLevel ? METABOLISM_RATES[user.habitLevel] : METABOLISM_RATE;
+        const METABOLISM_RATE_PER_HOUR = eliminationRate; // % per hour
         const ALCOHOL_DENSITY = 0.789;
         const GENDER_R = user.gender === 'male' ? 0.68 : 0.55;
         const weight = user.weightKg || 70;

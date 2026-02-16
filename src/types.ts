@@ -22,6 +22,7 @@ export interface UserProfile {
   isSetup: boolean;
   language: 'en' | 'fr';
   drinkingSpeed: 'slow' | 'average' | 'fast';
+  habitLevel?: 'low' | 'average' | 'high' | 'chronic';
   displayName?: string;
   photoURL?: string;
   customPhotoURL?: string;
@@ -93,6 +94,7 @@ export interface FriendStatus {
   weightKg: number;
   gender: 'male' | 'female';
   drinkingSpeed: 'slow' | 'average' | 'fast';
+  habitLevel?: 'low' | 'average' | 'high' | 'chronic';
   drinkosaurPassConfig?: DrinkosaurPassConfig;
 }
 

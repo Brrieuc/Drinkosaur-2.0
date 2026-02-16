@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { calculateBac } from '../services/bacService';
-import { METABOLISM_RATE, THEME_COLORS } from '../constants';
+import { METABOLISM_RATE, METABOLISM_RATES, THEME_COLORS } from '../constants';
 import { FriendStatus, UserProfile, BacStatus, FriendGroup } from '../types';
 import { FriendRequest } from '../hooks/useSocial';
 import { ComputedAward } from '../constants/awards';
@@ -291,6 +291,7 @@ export const Social: React.FC<SocialProps> = (props) => {
                     weightKg: f.weightKg,
                     gender: f.gender,
                     drinkingSpeed: f.drinkingSpeed || 'average',
+                    habitLevel: f.habitLevel || 'average',
                     language: language
                 } as UserProfile);
                 currentBac = live.currentBac;
@@ -302,7 +303,8 @@ export const Social: React.FC<SocialProps> = (props) => {
                 const hoursPassed = (Date.now() - f.lastUpdate) / (1000 * 60 * 60);
                 // On réduit la vitesse de décroissance par sécurité (0.015 -> 0.010 par exemple)
                 // pour éviter qu'un ami apparaisse sobre alors qu'il est encore pompette dans la réalité complexe
-                const safeRate = METABOLISM_RATE * 0.7;
+                const metabolism = f.habitLevel ? METABOLISM_RATES[f.habitLevel as keyof typeof METABOLISM_RATES] : METABOLISM_RATE;
+                const safeRate = metabolism * 0.7;
                 const reduction = hoursPassed * safeRate;
                 currentBac = Math.max(0, f.currentBac - reduction);
 
@@ -366,6 +368,7 @@ export const Social: React.FC<SocialProps> = (props) => {
                     weightKg: f.weightKg,
                     gender: f.gender,
                     drinkingSpeed: f.drinkingSpeed || 'average',
+                    habitLevel: f.habitLevel || 'average',
                     language: language
                 } as UserProfile);
                 currentBac = live.currentBac;
@@ -375,7 +378,8 @@ export const Social: React.FC<SocialProps> = (props) => {
             // 3. Decay prudent
             else if (f.lastUpdate && f.currentBac > 0) {
                 const hoursPassed = (Date.now() - f.lastUpdate) / (1000 * 60 * 60);
-                const safeRate = METABOLISM_RATE * 0.7;
+                const metabolism = f.habitLevel ? METABOLISM_RATES[f.habitLevel as keyof typeof METABOLISM_RATES] : METABOLISM_RATE;
+                const safeRate = metabolism * 0.7;
                 const reduction = hoursPassed * safeRate;
                 currentBac = Math.max(0, f.currentBac - reduction);
 

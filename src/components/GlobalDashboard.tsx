@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Globe, Zap, Calendar, Loader2, Users, TrendingUp, Beer, Wine, Martini, Trophy, Flame, Lock } from 'lucide-react';
 import { ProfilePhoto } from './DrinkosaurPass';
 import { calculateBac } from '../services/bacService';
-import { METABOLISM_RATE, THEME_COLORS } from '../constants';
+import { METABOLISM_RATE, METABOLISM_RATES, THEME_COLORS } from '../constants';
 import { UserProfile } from '../types';
 import {
     GlobalLiveStats,
@@ -96,6 +96,7 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                     weightKg: u.weightKg,
                     gender: u.gender,
                     drinkingSpeed: u.drinkingSpeed || 'average',
+                    habitLevel: u.habitLevel || 'average',
                     language: language
                 } as UserProfile);
                 currentBac = live.currentBac;
@@ -105,7 +106,8 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
             // 2. Linear decay if data is missing or stale
             else if (u.lastUpdate && u.currentBac > 0) {
                 const hoursPassed = (Date.now() - u.lastUpdate) / (1000 * 60 * 60);
-                const reduction = hoursPassed * METABOLISM_RATE;
+                const metabolism = u.habitLevel ? METABOLISM_RATES[u.habitLevel] : METABOLISM_RATE;
+                const reduction = hoursPassed * metabolism;
                 currentBac = Math.max(0, u.currentBac - reduction);
 
                 if (currentBac === 0) {

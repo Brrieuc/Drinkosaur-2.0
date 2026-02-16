@@ -22,7 +22,7 @@ interface SettingsProps {
   onRequestNotification?: () => void;
 }
 
-type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn' | 'errorWeight' | 'errorUsername' | 'birthDate' | 'birthDateDesc' | 'underageTitle' | 'underageMsg' | 'errorBirthDate' | 'privacy' | 'photoVisible' | 'photoVisibleDesc';
+type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'habit' | 'habitDesc' | 'habitLow' | 'habitAverage' | 'habitHigh' | 'habitChronic' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn' | 'errorWeight' | 'errorUsername' | 'birthDate' | 'birthDateDesc' | 'underageTitle' | 'underageMsg' | 'errorBirthDate' | 'privacy' | 'photoVisible' | 'photoVisibleDesc';
 
 export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar, wonAwards = [], selectedBadges = [], onUpdateBadges, drinks = [], notificationPermission, onRequestNotification }) => {
   const [showAdvanced, setShowAdvanced] = useState(!user.isSetup);
@@ -31,6 +31,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   const [gender, setGender] = useState<'male' | 'female'>(user.gender);
   const [language, setLanguage] = useState<'en' | 'fr'>(user.language || 'en');
   const [drinkingSpeed, setDrinkingSpeed] = useState<'slow' | 'average' | 'fast'>(user.drinkingSpeed || 'average');
+  const [habitLevel, setHabitLevel] = useState<'low' | 'average' | 'high' | 'chronic'>(user.habitLevel || 'average');
   const [username, setUsername] = useState(user.username || '');
   const [customPhotoURL, setCustomPhotoURL] = useState(user.customPhotoURL || '');
   const [birthDate, setBirthDate] = useState(user.birthDate || '');
@@ -112,6 +113,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       gender,
       language,
       drinkingSpeed,
+      habitLevel,
       stayConnected,
       username: cleanUsername,
       customPhotoURL,
@@ -204,6 +206,12 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       slow: "Slow",
       average: "Average",
       fast: "Fast",
+      habit: "Alcohol Habit",
+      habitDesc: "How often do you drink? (Induces MEOS for faster elimination)",
+      habitLow: "Occasional",
+      habitAverage: "Moderate",
+      habitHigh: "Frequent",
+      habitChronic: "Expert",
       save: "Save Changes",
       sync: "Cloud Sync",
       syncDesc: "Connect to save your data.",
@@ -242,6 +250,12 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       slow: "Lent",
       average: "Moyen",
       fast: "Rapide",
+      habit: "Habitude de consommation",
+      habitDesc: "Fréquence de consommation (influence la vitesse d'élimination)",
+      habitLow: "Occasionnel",
+      habitAverage: "Régulier",
+      habitHigh: "Fréquent",
+      habitChronic: "Expert",
       save: "Enregistrer",
       sync: "Synchronisation Cloud",
       syncDesc: "Connectez-vous pour sauvegarder vos données.",
@@ -970,6 +984,22 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                   className={`py-4 rounded-xl text-[10px] font-black border uppercase tracking-tighter transition-all ${drinkingSpeed === s ? 'bg-amber-500/20 border-amber-500 text-amber-200 shadow-md' : 'bg-white/5 border-white/10 text-white/20'}`}
                 >
                   {t[s]}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Drinking Habit */}
+          <div className="space-y-3">
+            <label className="text-sm font-bold text-white/60 ml-2 flex items-center gap-2 uppercase tracking-widest text-[10px]"><Zap size={12} /> {t.habit}</label>
+            <p className="text-[10px] text-white/30 ml-2 font-medium">{t.habitDesc}</p>
+            <div className="grid grid-cols-2 gap-2">
+              {(['low', 'average', 'high', 'chronic'] as const).map((h) => (
+                <button
+                  key={h}
+                  onClick={() => setHabitLevel(h)}
+                  className={`py-4 rounded-xl text-[10px] font-black border uppercase tracking-tighter transition-all ${habitLevel === h ? 'bg-blue-500/20 border-blue-500 text-blue-200 shadow-md' : 'bg-white/5 border-white/10 text-white/20'}`}
+                >
+                  {t[`habit${h.charAt(0).toUpperCase() + h.slice(1)}` as TranslationKey]}
                 </button>
               ))}
             </div>

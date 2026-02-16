@@ -1,5 +1,11 @@
 
-export const METABOLISM_RATE = 0.015; // Average elimination rate per hour in % (approx 0.15 g/L/h)
+export const METABOLISM_RATE = 0.015; // Standard average elimination rate per hour in % (0.15 g/L/h)
+export const METABOLISM_RATES = {
+  low: 0.012,     // 0.12 g/L/h (Occasional/Slow)
+  average: 0.015, // 0.15 g/L/h (Average/Standard)
+  high: 0.025,    // 0.25 g/L/h (Frequent/MEOS induction)
+  chronic: 0.035, // 0.35 g/L/h (Chronic/Fast)
+};
 export const ALCOHOL_DENSITY = 0.789; // g/ml
 
 export const GENDER_CONSTANT = {
