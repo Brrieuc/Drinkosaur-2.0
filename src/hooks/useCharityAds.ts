@@ -36,7 +36,7 @@ export const useCharityAds = ({
 
                 if (rewardedSlot && typeof rewardedSlot.addService === 'function') {
                     const pubads = googletag.pubads ? googletag.pubads() : null;
-                    if (pubads) {
+                    if (pubads && typeof pubads.addEventListener === 'function') {
                         rewardedSlot.addService(pubads);
 
                         // Event listener for rewarded event

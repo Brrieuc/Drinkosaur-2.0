@@ -9,6 +9,7 @@ import { DrinkosaurPass, ProfilePhoto } from './DrinkosaurPass';
 import { CharitySupport } from './CharitySupport';
 import { LegalModal } from './LegalModals';
 import { Drink } from '../types';
+import { SafeComponent } from './SafeComponent';
 
 interface SettingsProps {
   user: UserProfile;
@@ -664,12 +665,14 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
             />
           )}
 
-          {/* Charity Support Component */}
-          <CharitySupport
-            user={user}
-            onUpdateUser={onSave}
-            language={language}
-          />
+          {/* Charity Support Component - Wrapped in SafeComponent to prevent ad-related crashes */}
+          <SafeComponent>
+            <CharitySupport
+              user={user}
+              onUpdateUser={onSave}
+              language={language}
+            />
+          </SafeComponent>
 
           {/* Privacy Section */}
           <div className="glass-panel-3d p-6 rounded-[32px] space-y-5">
