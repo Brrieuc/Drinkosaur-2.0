@@ -119,7 +119,7 @@ export const useGlobalStats = () => {
             const myFriends = new Set<string>(myProfile?.friends || []);
             // Friends-of-friends: collect all friends' friends
             const friendsOfFriends = new Set<string>();
-            if (friendsOfFriends && friendsOfFriends.add) { // Defensive check
+            if (friendsOfFriends && typeof friendsOfFriends.add === 'function') { // Strict Defensive check
                 for (const u of allUsers) {
                     if (myFriends.has(u.uid)) {
                         const friendsArr = u.profile?.friends || [];
@@ -260,7 +260,7 @@ export const useGlobalStats = () => {
             const myProfile = profilesMap[myUid];
             const myFriends = new Set<string>(myProfile?.friends || []);
             const friendsOfFriends = new Set<string>();
-            if (friendsOfFriends && friendsOfFriends.add) {
+            if (friendsOfFriends && typeof friendsOfFriends.add === 'function') {
                 for (const [uid, p] of Object.entries(profilesMap)) {
                     if (myFriends.has(uid)) {
                         const friendsArr = p.friends || [];

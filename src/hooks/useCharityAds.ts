@@ -41,19 +41,31 @@ export const useCharityAds = ({
 
                         // Event listener for rewarded event
                         pubads.addEventListener('rewardedSlotReady', (_event: any) => {
-                            setIsAdLoaded(true);
-                            setError(null);
+                            try {
+                                setIsAdLoaded(true);
+                                setError(null);
+                            } catch (e) {
+                                console.error('Error in rewardedSlotReady:', e);
+                            }
                         });
 
                         pubads.addEventListener('rewardedSlotClosed', (_event: any) => {
-                            setIsAdLoaded(false);
-                            setIsAdShowing(false);
-                            // Preload next ad
-                            googletag.display(rewardedSlot);
+                            try {
+                                setIsAdLoaded(false);
+                                setIsAdShowing(false);
+                                // Preload next ad
+                                googletag.display(rewardedSlot);
+                            } catch (e) {
+                                console.error('Error in rewardedSlotClosed:', e);
+                            }
                         });
 
                         pubads.addEventListener('rewardedSlotGranted', (event: any) => {
-                            onRewarded(event.payload);
+                            try {
+                                onRewarded(event.payload);
+                            } catch (e) {
+                                console.error('Error in rewardedSlotGranted:', e);
+                            }
                         });
 
                         // Enable services and request the ad

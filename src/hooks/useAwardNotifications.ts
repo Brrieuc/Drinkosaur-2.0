@@ -21,7 +21,12 @@ const getReadIds = (): Set<string> => {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return new Set();
-        return new Set(JSON.parse(raw));
+        const parsed = JSON.parse(raw);
+        // Ensure parsed is an array or iterable before creating Set
+        if (Array.isArray(parsed)) {
+            return new Set(parsed);
+        }
+        return new Set();
     } catch {
         return new Set();
     }

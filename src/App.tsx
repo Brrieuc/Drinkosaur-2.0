@@ -13,6 +13,7 @@ import { LandingPage } from './components/LandingPage';
 import { SEO } from './components/SEO';
 import { AppView, Drink, UserProfile } from './types';
 import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users, Loader2, X, Mail } from 'lucide-react';
+import { SafeComponent } from './components/SafeComponent';
 import { useUser } from './hooks/useUser';
 import { useDrinks } from './hooks/useDrinks';
 import { useSocial } from './hooks/useSocial';
@@ -483,24 +484,28 @@ const App: React.FC = () => {
         {/* ONBOARDING TOUR */}
         {/* PWA INSTALL GUIDE */}
         {user.isSetup && !user.hasSeenPwaInstallGuide && (
-          <InstallPwaGuide
-            language={user.language}
-            onComplete={() => {
-              saveUser({ ...user, hasSeenPwaInstallGuide: true });
-            }}
-          />
+          <SafeComponent>
+            <InstallPwaGuide
+              language={user.language}
+              onComplete={() => {
+                saveUser({ ...user, hasSeenPwaInstallGuide: true });
+              }}
+            />
+          </SafeComponent>
         )}
 
         {/* ONBOARDING TOUR */}
         {user.isSetup && user.hasSeenPwaInstallGuide && !user.hasSeenTour && (
-          <OnboardingTour
-            language={user.language}
-            onComplete={() => {
-              saveUser({ ...user, hasSeenTour: true });
-            }}
-            onRequestNotifications={requestPermission}
-            notificationPermission={notificationPermission}
-          />
+          <SafeComponent>
+            <OnboardingTour
+              language={user.language}
+              onComplete={() => {
+                saveUser({ ...user, hasSeenTour: true });
+              }}
+              onRequestNotifications={requestPermission}
+              notificationPermission={notificationPermission}
+            />
+          </SafeComponent>
         )}
 
         {/* TOAST NOTIFICATION */}
