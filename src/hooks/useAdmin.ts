@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { UserProfile, Drink } from '../types';
-import { db, collection, getDocs, doc, updateDoc, getDoc, setDoc, addDoc } from '../firebase';
+import { db, collection, getDocs, doc, updateDoc, getDoc, setDoc, addDoc, deleteField } from '../firebase';
 
 export const useAdmin = () => {
     const [loading, setLoading] = useState(false);
@@ -323,17 +323,25 @@ export const useAdmin = () => {
             isBanned: true,
             banReason: reason,
             banTimestamp: Date.now(),
-            banAppealed: false // Reset appeal status on new ban
+            banAppealMessage: deleteField(),
+            banAppealTimestamp: deleteField()
         } as any);
     };
 
     const adminUnbanUser = async (uid: string): Promise<boolean> => {
         return await adminUpdateUser(uid, {
             isBanned: false,
-            banReason: null, // Clear reason
-            banTimestamp: null,
-            banAppealed: null,
-            banAppealMessage: null
+            banReason: deleteField(),
+            banTimestamp: deleteField(),
+            banAppealMessage: deleteField(),
+            banAppealTimestamp: deleteField()
+        } as any);
+    };
+
+    const adminDismissAppeal = async (uid: string): Promise<boolean> => {
+        return await adminUpdateUser(uid, {
+            banAppealMessage: deleteField(),
+            banAppealTimestamp: deleteField()
         } as any);
     };
 
@@ -352,6 +360,7 @@ export const useAdmin = () => {
         adminRestoreDrink,
         adminGetDeletedDrinks,
         adminBanUser,
-        adminUnbanUser
+        adminUnbanUser,
+        adminDismissAppeal
     };
 };

@@ -8,7 +8,7 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
-    const { adminGetAllUsers, adminUpdateUser, adminWipeDrinks, adminGetUserDrinks, adminUpdateDrink, adminDeleteDrink, adminDeleteDrinks, adminRestoreDrink, adminGetDeletedDrinks, adminBanUser, adminUnbanUser, adminSendMessage, loading } = useAdmin();
+    const { adminGetAllUsers, adminUpdateUser, adminWipeDrinks, adminGetUserDrinks, adminUpdateDrink, adminDeleteDrink, adminDeleteDrinks, adminRestoreDrink, adminGetDeletedDrinks, adminBanUser, adminUnbanUser, adminDismissAppeal, adminSendMessage, loading } = useAdmin();
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -35,22 +35,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
     const [messageTitle, setMessageTitle] = useState('');
     const [messageBody, setMessageBody] = useState('');
 
+    // View management
+    const [viewMode, setViewMode] = useState<'users' | 'appeals'>('users');
+
     useEffect(() => {
         loadUsers();
     }, []);
 
     useEffect(() => {
+        let baseUsers = users;
+        if (viewMode === 'appeals') {
+            baseUsers = users.filter(u => u.banAppealMessage && u.isBanned);
+        }
+
         if (!searchTerm) {
-            setFilteredUsers(users);
+            setFilteredUsers(baseUsers);
         } else {
             const lower = searchTerm.toLowerCase();
-            setFilteredUsers(users.filter(u =>
+            setFilteredUsers(baseUsers.filter(u =>
                 (u.username?.toLowerCase().includes(lower)) ||
                 (u.displayName?.toLowerCase().includes(lower)) ||
                 (u.uid?.includes(lower))
             ));
         }
-    }, [searchTerm, users]);
+    }, [searchTerm, users, viewMode]);
 
     const loadUsers = async () => {
         const data = await adminGetAllUsers();
@@ -148,15 +156,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         }
     };
 
+    const handleDismissAppeal = async () => {
+        if (!selectedUser?.uid) return;
+        if (!window.confirm("Reject and dismiss this appeal? The user will remain banned, but the appeal message will be cleared from your inbox.")) return;
+
+        const success = await adminDismissAppeal(selectedUser.uid);
+
+        if (success) {
+            alert("Appeal dismissed.");
+            loadUsers();
+            setSelectedUser(prev => prev ? { ...prev, banAppealMessage: undefined, banAppealTimestamp: undefined } : null);
+        }
+    };
+
     const handleUnban = async () => {
         if (!selectedUser?.uid) return;
-        if (!window.confirm("Unban this user?")) return;
+        if (!window.confirm("Accept appeal and unban this user?")) return;
 
         const success = await adminUnbanUser(selectedUser.uid);
         if (success) {
             alert("User unbanned.");
             loadUsers();
-            setSelectedUser(prev => prev ? { ...prev, isBanned: false, banReason: undefined } : null);
+            setSelectedUser(prev => prev ? { ...prev, isBanned: false, banReason: undefined, banAppealMessage: undefined, banAppealTimestamp: undefined } : null);
         }
     };
 
@@ -221,6 +242,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         }
     };
 
+    const appealCount = users.filter(u => u.banAppealMessage && u.isBanned).length;
+
 
     return (
         <div className="w-full h-full flex flex-col bg-[#050505] text-white p-4 pt-[env(safe-area-inset-top)] overflow-hidden">
@@ -237,6 +260,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                 </button>
             </div>
 
+            {/* Tab Switcher */}
+            <div className="flex gap-2 mb-6 bg-white/5 p-1 rounded-2xl border border-white/5 w-fit">
+                <button
+                    onClick={() => setViewMode('users')}
+                    className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${viewMode === 'users' ? 'bg-white text-black shadow-lg' : 'text-white/40 hover:text-white/60'}`}
+                >
+                    Users
+                </button>
+                <button
+                    onClick={() => setViewMode('appeals')}
+                    className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 ${viewMode === 'appeals' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-white/40 hover:text-white/60'}`}
+                >
+                    Appeals
+                    {appealCount > 0 && (
+                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${viewMode === 'appeals' ? 'bg-white text-orange-500' : 'bg-orange-500 text-white'}`}>
+                            {appealCount}
+                        </span>
+                    )}
+                </button>
+            </div>
+
             <div className="flex flex-1 gap-6 overflow-hidden">
                 {/* User List & Search */}
                 <div className={`flex-1 flex flex-col gap-4 ${selectedUser ? 'hidden md:flex' : 'flex'}`}>
@@ -244,7 +288,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                         <input
                             type="text"
-                            placeholder="Search users (username, uid)..."
+                            placeholder={viewMode === 'users' ? "Search users..." : "Search appeals..."}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm font-bold focus:border-red-500/50 outline-none transition-all"
@@ -254,17 +298,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                     <div className="flex-1 overflow-y-auto pr-2 space-y-2">
                         {loading && users.length === 0 ? (
                             <div className="flex justify-center p-8"><Loader2 className="animate-spin text-red-500" /></div>
+                        ) : filteredUsers.length === 0 ? (
+                            <div className="text-center p-8 text-white/20 font-bold uppercase tracking-widest text-xs">
+                                {viewMode === 'users' ? 'No users found' : 'No pending appeals'}
+                            </div>
                         ) : filteredUsers.map(user => (
                             <div
                                 key={user.uid || Math.random()}
                                 onClick={() => handleSelectUser(user)}
-                                className={`p-3 rounded-xl border cursor-pointer transition-all hover:bg-white/5 flex items-center gap-3 ${selectedUser?.uid === user.uid ? 'bg-red-500/10 border-red-500/50' : 'bg-black/20 border-white/5'}`}
+                                className={`p-3 rounded-xl border cursor-pointer transition-all hover:bg-white/5 flex items-center gap-3 ${selectedUser?.uid === user.uid ? (viewMode === 'appeals' ? 'bg-orange-500/10 border-orange-500/50' : 'bg-red-500/10 border-red-500/50') : 'bg-black/20 border-white/5'}`}
                             >
-                                <img
-                                    src={user.customPhotoURL || user.photoURL || 'https://via.placeholder.com/40'}
-                                    alt="avatar"
-                                    className="w-10 h-10 rounded-full bg-white/10 object-cover"
-                                />
+                                <div className="relative">
+                                    <img
+                                        src={user.customPhotoURL || user.photoURL || 'https://via.placeholder.com/40'}
+                                        alt="avatar"
+                                        className="w-10 h-10 rounded-full bg-white/10 object-cover"
+                                    />
+                                    {user.banAppealMessage && user.isBanned && (
+                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full border-2 border-black" />
+                                    )}
+                                </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                         <p className="font-bold text-sm truncate">@{user.username || 'Unnamed'}</p>
@@ -274,14 +327,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                     <p className="text-[10px] text-white/40 truncate">{user.uid}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] font-bold text-white/60">{user.habitLevel || 'N/A'}</p>
-                                    {user.weightKg && <p className="text-[10px] text-white/30">{user.weightKg}kg</p>}
+                                    {viewMode === 'appeals' ? (
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[10px] font-bold text-orange-400 capitalize">Pending Appeal</span>
+                                            <span className="text-[8px] text-white/20">{user.banAppealTimestamp ? new Date(user.banAppealTimestamp).toLocaleDateString() : 'N/A'}</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <p className="text-[10px] font-bold text-white/60">{user.habitLevel || 'N/A'}</p>
+                                            {user.weightKg && <p className="text-[10px] text-white/30">{user.weightKg}kg</p>}
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ))}
                     </div>
-                    <p className="text-[10px] text-white/20 text-center">{filteredUsers.length} users found</p>
+                    <p className="text-[10px] text-white/20 text-center">{filteredUsers.length} {viewMode === 'users' ? 'users' : 'appeals'} found</p>
                 </div>
+
 
                 {/* User Details Panel */}
                 {selectedUser ? (
@@ -465,14 +528,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
 
                             {/* Unban Appeal Message (if any) */}
                             {selectedUser.banAppealMessage && selectedUser.isBanned && (
-                                <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-4 animate-bounce-in">
-                                    <h3 className="text-orange-400 text-xs font-bold uppercase flex items-center gap-2 mb-2">
-                                        <Mail size={14} /> Appeal from User
-                                    </h3>
-                                    <p className="text-white/80 text-sm font-medium italic">"{selectedUser.banAppealMessage}"</p>
-                                    <p className="text-right text-[10px] text-white/30 mt-2">
-                                        Sent: {selectedUser.banAppealTimestamp ? new Date(selectedUser.banAppealTimestamp).toLocaleString() : 'N/A'}
-                                    </p>
+                                <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-5 animate-bounce-in ring-1 ring-orange-500/30">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="text-orange-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                                            <Mail size={14} /> Pending Appeal
+                                        </h3>
+                                        <span className="text-[10px] text-white/20 font-mono">
+                                            {selectedUser.banAppealTimestamp ? new Date(selectedUser.banAppealTimestamp).toLocaleDateString() : 'N/A'}
+                                        </span>
+                                    </div>
+                                    <div className="bg-black/40 rounded-lg p-3 mb-4">
+                                        <p className="text-white/90 text-sm font-medium italic">"{selectedUser.banAppealMessage}"</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleUnban}
+                                            className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-black uppercase rounded-lg transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <ShieldCheck size={14} /> Accept
+                                        </button>
+                                        <button
+                                            onClick={handleDismissAppeal}
+                                            className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-[10px] font-black uppercase rounded-lg transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <X size={14} /> Reject
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
