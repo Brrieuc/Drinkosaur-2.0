@@ -503,27 +503,19 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
         <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
             {/* Header */}
             <div className="px-6 pt-6 pb-2">
-                <div className="grid grid-cols-[40px_1fr_40px] items-center gap-2 mb-5">
-                    <div className="flex justify-start">
-                        <Globe size={22} className="text-cyan-400" />
-                    </div>
+                <div className="flex items-center justify-center gap-3 mb-5 relative">
+                    <Globe size={22} className="text-cyan-400" />
+                    <h1 className="text-xl font-black text-white uppercase tracking-wider">{t.title}</h1>
 
-                    <h1 className="text-xl font-black text-white uppercase tracking-wider text-center truncate px-2">
-                        {t.title}
-                    </h1>
-
-                    <div className="flex justify-end">
-                        {tab === 'live' && liveStats && (
-                            <button
-                                onClick={() => setShowHeatmap(true)}
-                                className="p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-xl border border-blue-500/30 text-blue-400 transition-all active:scale-95 flex items-center gap-2"
-                                title={isFrench ? 'Carte' : 'Map'}
-                            >
-                                <Globe size={16} />
-                                <span className="hidden xs:inline text-[10px] font-black uppercase tracking-widest">{isFrench ? 'Carte' : 'Map'}</span>
-                            </button>
-                        )}
-                    </div>
+                    {tab === 'live' && liveStats && (
+                        <button
+                            onClick={() => setShowHeatmap(true)}
+                            className="absolute right-0 p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-xl border border-blue-500/30 text-blue-400 transition-all active:scale-95 flex items-center gap-2"
+                        >
+                            <Globe size={16} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">{isFrench ? 'Carte' : 'Map'}</span>
+                        </button>
+                    )}
                 </div>
 
                 {/* Tab Switcher */}
