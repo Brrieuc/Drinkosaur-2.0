@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { Drink } from '../types';
 import {
     BEER_LIBRARY, SPIRIT_LIBRARY, COCKTAIL_LIBRARY, GENERIC_BEERS, GENERIC_WINES,
@@ -141,24 +141,28 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
     // Geolocation for Heatmap
     const [coords, setCoords] = useState<{ lat: number, lng: number } | null>(null);
 
-    // Fetch location on mount
-    React.useEffect(() => {
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    // Privacy: mask to ~50m precision (0.0005 degrees)
-                    const MASK_PRECISION = 0.0005;
-                    const maskedLat = Math.round(position.coords.latitude / MASK_PRECISION) * MASK_PRECISION;
-                    const maskedLng = Math.round(position.coords.longitude / MASK_PRECISION) * MASK_PRECISION;
-                    setCoords({ lat: maskedLat, lng: maskedLng });
-                },
-                (error) => {
-                    console.warn("Geolocation error:", error);
-                },
-                { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
-            );
-        }
+    const fetchLocation = useCallback(() => {
+        if (!("geolocation" in navigator)) return;
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                // Privacy: mask to ~50m precision (0.0005 degrees)
+                const MASK_PRECISION = 0.0005;
+                const maskedLat = Math.round(position.coords.latitude / MASK_PRECISION) * MASK_PRECISION;
+                const maskedLng = Math.round(position.coords.longitude / MASK_PRECISION) * MASK_PRECISION;
+                setCoords({ lat: maskedLat, lng: maskedLng });
+            },
+            (error) => {
+                console.warn("Geolocation error:", error);
+            },
+            { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+        );
     }, []);
+
+    // Fetch location on mount
+    useEffect(() => {
+        fetchLocation();
+    }, [fetchLocation]);
 
     // Search
     const [searchTerm, setSearchTerm] = useState('');
@@ -273,8 +277,13 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
         }
     };
 
-    const finalizeDrink = (volumeOverride?: number) => {
+    const finalizeDrink = async (volumeOverride?: number) => {
         if (!selectedItem) return;
+
+        // One last attempt to get coords if missing
+        if (!coords && "geolocation" in navigator) {
+            fetchLocation();
+        }
 
         let finalName = (language === 'fr' && selectedItem.name_fr) ? selectedItem.name_fr : selectedItem.name;
         let finalVol = volumeOverride !== undefined ? volumeOverride : alcoholVolume;

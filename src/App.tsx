@@ -248,6 +248,18 @@ const App: React.FC = () => {
 
 
   // -- Effects --
+
+  // Geolocation Request on mount for Heatmap Feature
+  useEffect(() => {
+    if (authUser && user.isSetup && "geolocation" in navigator) {
+      // Trigger a light request to prompt for permission early
+      navigator.geolocation.getCurrentPosition(
+        () => console.log("Location permission granted/already had it"),
+        (err) => console.log("Location permission denied/error:", err),
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 600000 }
+      );
+    }
+  }, [authUser, user.isSetup]);
   useEffect(() => {
     if (user.isSetup && view === AppView.SETTINGS) {
       setView(AppView.DASHBOARD);
@@ -524,6 +536,11 @@ const App: React.FC = () => {
                 saveUser({ ...user, hasSeenTour: true });
               }}
               onRequestNotifications={requestPermission}
+              onRequestLocation={() => {
+                if ("geolocation" in navigator) {
+                  navigator.geolocation.getCurrentPosition(() => { }, () => { }, { enableHighAccuracy: false, timeout: 5000 });
+                }
+              }}
               notificationPermission={notificationPermission}
             />
           </SafeComponent>

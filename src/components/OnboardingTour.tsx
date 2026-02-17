@@ -6,10 +6,11 @@ interface OnboardingTourProps {
     language: 'en' | 'fr';
     onComplete: () => void;
     onRequestNotifications?: () => void;
+    onRequestLocation?: () => void;
     notificationPermission?: NotificationPermission;
 }
 
-export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComplete, onRequestNotifications, notificationPermission }) => {
+export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComplete, onRequestNotifications, onRequestLocation, notificationPermission }) => {
     const [step, setStep] = useState(0);
 
     const steps = [
@@ -39,6 +40,15 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComp
                 : 'Add your drinks instantly or log a drink you had earlier in the evening.',
             icon: <PlusCircle className="w-12 h-12 text-emerald-500" />,
             color: 'from-emerald-500 to-teal-600'
+        },
+        {
+            id: 'heatmap',
+            title: language === 'fr' ? 'La Heatmap Mondiale' : 'Global Heatmap',
+            content: language === 'fr'
+                ? 'Visualisez en temps réel les zones d\'activité festive ! Votre position est approximative pour votre vie privée.'
+                : 'Visualize party zones in real-time! Your location is masked to 50m to preserve your privacy.',
+            icon: <Share className="w-12 h-12 text-cyan-400 rotate-90" />,
+            color: 'from-cyan-400 to-blue-500'
         },
         {
             id: 'social',
@@ -95,6 +105,10 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ language, onComp
     const handleNext = () => {
         if (currentStep.id === 'notifications' && onRequestNotifications) {
             onRequestNotifications();
+        }
+
+        if (currentStep.id === 'heatmap' && onRequestLocation) {
+            onRequestLocation();
         }
 
         if (step < steps.length - 1) {
