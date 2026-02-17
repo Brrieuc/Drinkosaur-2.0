@@ -23,7 +23,7 @@ interface SettingsProps {
   onRequestNotification?: () => void;
 }
 
-type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'habit' | 'habitDesc' | 'habitLow' | 'habitAverage' | 'habitHigh' | 'habitChronic' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn' | 'errorWeight' | 'errorUsername' | 'birthDate' | 'birthDateDesc' | 'underageTitle' | 'underageMsg' | 'errorBirthDate' | 'privacy' | 'photoVisible' | 'photoVisibleDesc';
+type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'habit' | 'habitDesc' | 'habitLow' | 'habitAverage' | 'habitHigh' | 'habitChronic' | 'habitLowHint' | 'habitAverageHint' | 'habitHighHint' | 'habitChronicHint' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn' | 'errorWeight' | 'errorUsername' | 'birthDate' | 'birthDateDesc' | 'underageTitle' | 'underageMsg' | 'errorBirthDate' | 'privacy' | 'photoVisible' | 'photoVisibleDesc';
 
 export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar, wonAwards = [], selectedBadges = [], onUpdateBadges, drinks = [], notificationPermission, onRequestNotification }) => {
   const [showAdvanced, setShowAdvanced] = useState(!user.isSetup);
@@ -213,6 +213,10 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       habitAverage: "Moderate",
       habitHigh: "Frequent",
       habitChronic: "Expert",
+      habitLowHint: "< 1 / month",
+      habitAverageHint: "1-2 / week",
+      habitHighHint: "3-5 / week",
+      habitChronicHint: "Daily",
       save: "Save Changes",
       sync: "Cloud Sync",
       syncDesc: "Connect to save your data.",
@@ -257,6 +261,10 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       habitAverage: "Régulier",
       habitHigh: "Fréquent",
       habitChronic: "Expert",
+      habitLowHint: "< 1 / mois",
+      habitAverageHint: "1-2 / semaine",
+      habitHighHint: "3-5 / semaine",
+      habitChronicHint: "Quotidien",
       save: "Enregistrer",
       sync: "Synchronisation Cloud",
       syncDesc: "Connectez-vous pour sauvegarder vos données.",
@@ -1043,9 +1051,14 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                 <button
                   key={h}
                   onClick={() => setHabitLevel(h)}
-                  className={`py-4 rounded-xl text-[10px] font-black border uppercase tracking-tighter transition-all ${habitLevel === h ? 'bg-blue-500/20 border-blue-500 text-blue-200 shadow-md' : 'bg-white/5 border-white/10 text-white/20'}`}
+                  className={`py-3 px-2 rounded-xl border uppercase tracking-tighter transition-all flex flex-col items-center justify-center gap-0.5 ${habitLevel === h ? 'bg-blue-500/20 border-blue-500 text-blue-200 shadow-md' : 'bg-white/5 border-white/10 text-white/20'}`}
                 >
-                  {t[`habit${h.charAt(0).toUpperCase() + h.slice(1)}` as TranslationKey]}
+                  <span className="text-[10px] font-black">
+                    {t[`habit${h.charAt(0).toUpperCase() + h.slice(1)}` as TranslationKey]}
+                  </span>
+                  <span className={`text-[8px] font-bold opacity-60 ${habitLevel === h ? 'text-blue-300' : 'text-white/20'}`}>
+                    {t[`habit${h.charAt(0).toUpperCase() + h.slice(1)}Hint` as TranslationKey]}
+                  </span>
                 </button>
               ))}
             </div>
