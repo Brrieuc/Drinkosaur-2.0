@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Clock, Zap, History, Lock, UserPlus } from 'lucide-react';
+import { X, Clock, Zap, History, UserPlus } from 'lucide-react';
 import { Drink, UserProfile, WonAward } from '../types';
 import { BacChartModal } from './BacChartModal';
 import { calculateBac } from '../services/bacService';
@@ -187,13 +187,15 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                             )}
                         </div>
                         <h2 className="text-2xl font-black text-white italic">@{friend.displayName}</h2>
-                        <div className="mt-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full animate-pulse`} style={{ backgroundColor: fullStatus.color }} />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white/70">{fullStatus.statusMessage}</span>
-                        </div>
+                        {isFriend && (
+                            <div className="mt-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full animate-pulse`} style={{ backgroundColor: fullStatus.color }} />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/70">{fullStatus.statusMessage}</span>
+                            </div>
+                        )}
 
-                        {/* Selected Badges */}
-                        {friendProfile.selectedBadges && friendProfile.selectedBadges.length > 0 && (() => {
+                        {/* Selected Badges — ONLY for friends */}
+                        {isFriend && friendProfile.selectedBadges && friendProfile.selectedBadges.length > 0 && (() => {
                             const badgeDefs = friendProfile.selectedBadges
                                 .map(bid => ({ id: bid, def: AWARD_DEFINITIONS.find(a => a.id === bid) }))
                                 .filter(b => b.def);
@@ -227,54 +229,49 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                     </div>
 
                     {!isFriend ? (
-                        <div className="flex flex-col items-center justify-center py-10 space-y-6 animate-fade-in">
-                            <div className="w-40 h-40 rounded-full bg-white/5 flex items-center justify-center border border-white/10 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <Lock size={48} className="text-white/20" />
-                            </div>
-                            <div className="text-center space-y-2">
-                                <h3 className="text-xl font-black text-white">{t.privateProfile}</h3>
-                                <p className="text-sm text-white/40 px-6 max-w-xs mx-auto leading-relaxed">
-                                    {isFrench
-                                        ? "Le taux d'alcoolémie et la sphère sont privés. Vous pouvez cependant consulter le Drinkopass ci-dessous."
-                                        : "BAC level and sphere are private. You can still view their Drinkopass below."}
-                                </p>
-                            </div>
+                        <div className="flex flex-col items-center justify-center py-6 space-y-8 animate-fade-in">
+                            {/* Drinkopass Action Card */}
+                            <div className="w-full glass-panel-3d p-8 rounded-[32px] border-white/10 flex flex-col items-center gap-6">
+                                <div className="text-center">
+                                    <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tight">{isFrench ? "CARTE JOUEUR" : "PLAYER CARD"}</h3>
+                                    <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                                        {isFrench ? "Consulter le Drinkopass public" : "View public Drinkopass"}
+                                    </p>
+                                </div>
 
-                            {/* Drinkopass Button for Non-Friends */}
-                            <div className="flex justify-center mb-4">
                                 <button
                                     onClick={() => setShowPass(true)}
-                                    className="w-48 relative h-14 rounded-2xl overflow-hidden group shadow-xl active:scale-95 transition-all border border-white/10"
+                                    className="w-full relative h-24 rounded-2xl overflow-hidden group shadow-2xl active:scale-95 transition-all border border-white/10"
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-br from-purple-900 to-indigo-900 z-0">
                                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30 mix-blend-overlay"></div>
                                     </div>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-2 text-center">
-                                        <h3 className="text-xl font-black italic uppercase tracking-tighter text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.5)]" style={{ fontFamily: 'Impact, sans-serif' }}>
+                                        <h3 className="text-4xl font-black italic uppercase tracking-tighter text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.5)]" style={{ fontFamily: 'Impact, sans-serif' }}>
                                             DRINKOPASS
                                         </h3>
-                                        <span className="text-[7px] font-black uppercase tracking-widest text-white/40">{isFrench ? 'Voir la carte' : 'View Pass'}</span>
                                     </div>
                                     <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent translate-y-full group-hover:translate-y-[-100%] transition-transform duration-1000 z-20 pointer-events-none"></div>
                                 </button>
                             </div>
 
-                            {/* Add Friend Button - Check Privacy Setting */}
-                            {friendProfile.allowGlobalRequests !== false ? (
-                                <button
-                                    onClick={onAddFriend}
-                                    className="px-8 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg hover:shadow-emerald-500/25 active:scale-95"
-                                >
-                                    <UserPlus size={18} />
-                                    {t.addFriend}
-                                </button>
-                            ) : (
-                                <div className="px-6 py-2 rounded-lg bg-white/5 text-white/30 text-xs font-bold uppercase tracking-widest flex items-center gap-2 border border-white/5">
-                                    <X size={14} />
-                                    {t.requestsDisabled}
-                                </div>
-                            )}
+                            {/* Add Friend Section */}
+                            <div className="flex flex-col items-center gap-4 w-full">
+                                {friendProfile.allowGlobalRequests !== false ? (
+                                    <button
+                                        onClick={onAddFriend}
+                                        className="w-full py-5 rounded-[24px] bg-emerald-500 hover:bg-emerald-400 text-white font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-emerald-500/25 active:scale-95"
+                                    >
+                                        <UserPlus size={20} />
+                                        {t.addFriend}
+                                    </button>
+                                ) : (
+                                    <div className="w-full py-4 rounded-2xl bg-white/5 text-white/30 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 border border-white/5">
+                                        <X size={14} />
+                                        {t.requestsDisabled}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ) : (
                         <div className="animate-fade-in">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Globe, Zap, Calendar, Loader2, Users, TrendingUp, Beer, Wine, Martini, Trophy, Flame, Lock } from 'lucide-react';
+import { Globe, Zap, Calendar, Loader2, Users, TrendingUp, Beer, Wine, Martini, Trophy, Flame } from 'lucide-react';
 import { ProfilePhoto } from './DrinkosaurPass';
 import { calculateBac } from '../services/bacService';
 import { METABOLISM_RATE, METABOLISM_RATES, THEME_COLORS } from '../constants';
@@ -145,12 +145,7 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
         return { bg: 'from-white/5 to-white/[0.02]', border: 'border-white/10', icon: '', textColor: 'text-white/60' };
     };
 
-    /** ABSOLUTE RULE: BAC is only visible to friends (and to yourself) */
-    const canSeeBac = (user: LiveUser | MonthlyUserStat): boolean => {
-        if ('isMe' in user && user.isMe) return true;
-        if ('isFriend' in user && user.isFriend) return true;
-        return false;
-    };
+    // Every user on the leaderboard has already opted-in to be public via their settings
 
 
     // ─── LIVE TAB ────────────────────────────────────────────
@@ -248,7 +243,6 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                             {reLiveStats.topUsers.map((user, idx) => {
                                 const style = getRankStyle(idx);
                                 const isMe = user.uid === myUid;
-                                const showBac = canSeeBac(user);
                                 return (
                                     <div
                                         key={user.uid}
@@ -287,21 +281,12 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                                                 @{user.username || 'joueur'}
                                                 {isMe && <span className="ml-1 text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full font-black">{isFrench ? 'VOUS' : 'YOU'}</span>}
                                             </p>
-                                            {showBac && (
-                                                <p className="text-[10px] text-white/30 font-bold mt-0.5">{user.statusMessage}</p>
-                                            )}
+                                            <p className="text-[10px] text-white/30 font-bold mt-0.5">{user.statusMessage}</p>
                                         </div>
 
-                                        {/* BAC — ONLY for friends and self */}
+                                        {/* BAC — Visible for everyone on leaderboard */}
                                         <div className="text-right shrink-0">
-                                            {showBac ? (
-                                                <p className={`text-lg font-black ${style.textColor}`}>{formatBac(user.currentBac)}</p>
-                                            ) : (
-                                                <div className="flex items-center gap-1 text-white/15">
-                                                    <Lock size={12} />
-                                                    <span className="text-[9px] font-bold uppercase tracking-wider">{t.hiddenBac}</span>
-                                                </div>
-                                            )}
+                                            <p className={`text-lg font-black ${style.textColor}`}>{formatBac(user.currentBac)}</p>
                                         </div>
                                     </div>
                                 );
