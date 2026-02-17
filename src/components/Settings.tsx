@@ -539,7 +539,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
         <div className="flex flex-col items-center mt-8 mb-8">
           <div className="relative mb-6">
             <div
-              className={`w-40 h-40 rounded-[48px] overflow-hidden border-4 border-white/5 shadow-2xl relative group transition-all ${isUploading || isConverting ? 'cursor-wait' : 'cursor-pointer active:scale-95'}`}
+              className={`w-40 h-40 rounded-full overflow-hidden border-4 border-white/5 shadow-2xl relative group transition-all ${isUploading || isConverting ? 'cursor-wait' : 'cursor-pointer active:scale-95'}`}
               onClick={() => !isUploading && !isConverting && fileInputRef.current?.click()}
               role="button"
               aria-label="Change profile photo"
@@ -557,7 +557,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                 effect={user.drinkosaurPassConfig?.profileEffect}
                 size="w-40 h-40"
                 className={`transition-transform group-hover:scale-110 ${(isUploading || isConverting) ? 'opacity-30 blur-sm' : ''}`}
-                rounded="rounded-[44px]"
+                rounded="rounded-full"
               />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center z-30">
                 <Camera className="w-10 h-10 text-white/0 group-hover:text-white/100 transition-all scale-50 group-hover:scale-100" />

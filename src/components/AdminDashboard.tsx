@@ -356,7 +356,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                             <img
                                 src={selectedUser.customPhotoURL || selectedUser.photoURL || 'https://via.placeholder.com/80'}
                                 alt="avatar"
-                                className="w-20 h-20 rounded-[24px] bg-black/40 border-2 border-white/10 object-cover"
+                                className="w-20 h-20 rounded-full bg-black/40 border-2 border-white/10 object-cover"
                             />
                             <div>
                                 <h2 className="text-2xl font-black">@{selectedUser.username}</h2>

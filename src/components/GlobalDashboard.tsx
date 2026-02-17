@@ -274,7 +274,7 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                                                     borderColor="rgba(255,255,255,0.1)"
                                                 />
                                             ) : (
-                                                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white/40 text-sm font-black border border-white/10">
+                                                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/40 text-sm font-black border border-white/10">
                                                     {(user.username || 'A').charAt(0).toUpperCase()}
                                                 </div>
                                             )}
@@ -415,7 +415,7 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                                             borderColor="rgba(255,255,255,0.1)"
                                         />
                                     ) : (
-                                        <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white/40 text-xs font-black border border-white/10 shrink-0">
+                                        <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/40 text-xs font-black border border-white/10 shrink-0">
                                             {(user.username || 'A').charAt(0).toUpperCase()}
                                         </div>
                                     )}

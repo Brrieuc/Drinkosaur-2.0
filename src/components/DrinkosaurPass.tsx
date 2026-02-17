@@ -474,7 +474,7 @@ export const DrinkosaurPass: React.FC<DrinkosaurPassProps> = ({ user, wonAwards,
                                 size="w-32 h-32"
                                 borderColor={config.backgroundColor || 'rgba(139, 92, 246, 0.5)'}
                                 className="shadow-[0_0_30px_rgba(0,0,0,0.5)]"
-                                rounded="rounded-[32px]"
+                                rounded="rounded-full"
                                 crossOrigin={blobUrl ? "anonymous" : undefined}
                                 referrerPolicy={blobUrl ? "no-referrer" : undefined}
                             />
