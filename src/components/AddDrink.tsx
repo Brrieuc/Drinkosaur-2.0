@@ -138,6 +138,28 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
     const [manualDateMode, setManualDateMode] = useState<'today' | 'yesterday'>('today');
     const [manualTime, setManualTime] = useState<string>('');
 
+    // Geolocation for Heatmap
+    const [coords, setCoords] = useState<{ lat: number, lng: number } | null>(null);
+
+    // Fetch location on mount
+    React.useEffect(() => {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // Privacy: mask to ~50m precision (0.0005 degrees)
+                    const MASK_PRECISION = 0.0005;
+                    const maskedLat = Math.round(position.coords.latitude / MASK_PRECISION) * MASK_PRECISION;
+                    const maskedLng = Math.round(position.coords.longitude / MASK_PRECISION) * MASK_PRECISION;
+                    setCoords({ lat: maskedLat, lng: maskedLng });
+                },
+                (error) => {
+                    console.warn("Geolocation error:", error);
+                },
+                { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+            );
+        }
+    }, []);
+
     // Search
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -290,7 +312,9 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
             icon,
             type,
             color: selectedItem.color,
-            isChug: isChug || drinkType === 'shot'
+            isChug: isChug || drinkType === 'shot',
+            lat: coords?.lat,
+            lng: coords?.lng
         });
         onClose();
     };

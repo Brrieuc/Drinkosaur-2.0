@@ -10,6 +10,8 @@ export interface Drink {
   type?: 'beer' | 'wine' | 'cocktail' | 'spirit' | 'other';
   color?: string; // Hex or rgba for liquid rendering
   isChug?: boolean; // If true, consumption time is 0
+  lat?: number; // Masked latitude
+  lng?: number; // Masked longitude
 }
 
 export type LeaderboardVisibility = 'hidden' | 'friends_only' | 'friends_of_friends' | 'public';
