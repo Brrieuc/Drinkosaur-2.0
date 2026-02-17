@@ -59,7 +59,6 @@ export interface GlobalLiveStats {
     totalUsers: number;
     topUsers: LiveUser[];
     topGroups: LiveGroupRanking[];
-    heatmapPoints?: { lat: number, lng: number }[];
 }
 
 export interface GlobalMonthlyStats {
@@ -146,7 +145,6 @@ export const useGlobalStats = () => {
             const liveUsers: LiveUser[] = [];
             let totalNotSoberCount = 0;
             let totalBacSum = 0;
-            const heatmapPoints: { lat: number, lng: number }[] = [];
 
             for (const { uid, profile } of allUsers) {
                 const userDrinks = drinksMap[uid] || [];
@@ -156,13 +154,6 @@ export const useGlobalStats = () => {
 
                 totalNotSoberCount++;
                 totalBacSum += bac.currentBac;
-
-                // Heatmap Data: Collect all active drinks with location
-                userDrinks.forEach(d => {
-                    if (d.lat !== undefined && d.lng !== undefined) {
-                        heatmapPoints.push({ lat: d.lat, lng: d.lng });
-                    }
-                });
 
                 const visibility = profile.leaderboardVisibility || 'public';
 
@@ -240,7 +231,6 @@ export const useGlobalStats = () => {
                 totalUsers: allUsers.length,
                 topUsers: liveUsers.slice(0, 10),
                 topGroups: groupRankings.slice(0, 3),
-                heatmapPoints: heatmapPoints
             });
         } catch (err) {
             console.error("Error fetching live stats:", err);

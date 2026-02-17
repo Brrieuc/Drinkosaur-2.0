@@ -10,7 +10,6 @@ import {
     MonthlyUserStat,
     LiveUser,
 } from '../hooks/useGlobalStats';
-import { HeatmapModal } from './HeatmapModal';
 
 type GlobeTab = 'live' | 'month';
 
@@ -41,7 +40,6 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
     onSelectUser
 }) => {
     const [tab, setTab] = useState<GlobeTab>('live');
-    const [showHeatmap, setShowHeatmap] = useState(false);
     const isFrench = language === 'fr';
 
     // Live update ticker (every minute)
@@ -503,19 +501,9 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
         <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
             {/* Header */}
             <div className="px-6 pt-6 pb-2">
-                <div className="flex items-center justify-center gap-3 mb-5 relative">
+                <div className="flex items-center justify-center gap-3 mb-5">
                     <Globe size={22} className="text-cyan-400" />
                     <h1 className="text-xl font-black text-white uppercase tracking-wider">{t.title}</h1>
-
-                    {tab === 'live' && liveStats && (
-                        <button
-                            onClick={() => setShowHeatmap(true)}
-                            className="absolute right-0 p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-xl border border-blue-500/30 text-blue-400 transition-all active:scale-95 flex items-center gap-2"
-                        >
-                            <Globe size={16} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">{isFrench ? 'Carte' : 'Map'}</span>
-                        </button>
-                    )}
                 </div>
 
                 {/* Tab Switcher */}
@@ -560,14 +548,6 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
             <div className="flex-1 overflow-y-auto px-6 pb-40 no-scrollbar scroll-smooth">
                 {tab === 'live' ? renderLive() : renderMonth()}
             </div>
-
-            {showHeatmap && liveStats && (
-                <HeatmapModal
-                    drinks={(liveStats.heatmapPoints || []).map((p, i) => ({ id: `${i}`, ...p } as any))}
-                    onClose={() => setShowHeatmap(false)}
-                    language={language}
-                />
-            )}
         </div>
     );
 };
