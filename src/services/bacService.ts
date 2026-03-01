@@ -123,19 +123,43 @@ export const calculateBac = (drinks: Drink[], user: UserProfile): BacStatus => {
   let maxBacTime: number | null = null;
   let soberTime: number | null = null;
 
-  const nowPoint = points.find(p => p.time >= now);
-  currentBac = nowPoint ? nowPoint.bac : 0;
+  const nowPointIndex = points.findIndex(p => p.time >= now);
 
-  points.forEach(p => {
-    if (p.bac > maxBac) {
-      maxBac = p.bac;
-      maxBacTime = p.time;
+  if (nowPointIndex !== -1) {
+    currentBac = points[nowPointIndex].bac;
+
+    if (currentBac > 0) {
+      // Find the start of the current drinking session (backwards from now)
+      let sessionStartIndex = 0;
+      for (let i = nowPointIndex; i >= 0; i--) {
+        if (points[i].bac <= 0) {
+          sessionStartIndex = i;
+          break;
+        }
+      }
+
+      // Find the end of the current drinking session (forwards from now)
+      let sessionEndIndex = points.length - 1;
+      for (let i = nowPointIndex; i < points.length; i++) {
+        if (points[i].bac <= 0) {
+          sessionEndIndex = i;
+          break;
+        }
+      }
+
+      // Calculate peak only within this active session
+      for (let i = sessionStartIndex; i <= sessionEndIndex; i++) {
+        if (points[i].bac > maxBac) {
+          maxBac = points[i].bac;
+          maxBacTime = points[i].time;
+        }
+      }
+
+      // Sober time is the end of the session, if it's strictly in the future
+      if (points[sessionEndIndex].bac <= 0 && points[sessionEndIndex].time > now) {
+        soberTime = points[sessionEndIndex].time;
+      }
     }
-  });
-
-  if (maxBac > 0 && maxBacTime) {
-    const soberPoint = points.find(p => p.time > maxBacTime! && p.bac <= 0);
-    if (soberPoint) soberTime = soberPoint.time;
   }
 
   const formattedBac = Math.max(0, parseFloat(currentBac.toFixed(4)));
