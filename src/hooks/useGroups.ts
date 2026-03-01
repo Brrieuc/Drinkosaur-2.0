@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { db, doc, updateDoc, arrayUnion, query, where, collection, getDocs, onSnapshot, arrayRemove, addDoc, getDoc } from '../firebase';
-import { useAuth } from './useAuth';
+import { useAuthContext } from '../contexts/AuthContext';
 import { FriendGroup, FriendStatus } from '../types';
 
 export const useGroups = () => {
-    const { user: authUser } = useAuth();
+    const { user: authUser } = useAuthContext();
     const [groups, setGroups] = useState<FriendGroup[]>([]);
     const [groupInvites, setGroupInvites] = useState<FriendGroup[]>([]);
     const [loading, setLoading] = useState(true);

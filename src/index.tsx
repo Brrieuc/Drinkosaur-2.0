@@ -11,13 +11,16 @@ if (!rootElement) {
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 import { HelmetProvider } from 'react-helmet-async';
+import { AuthProvider } from './contexts/AuthContext';
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <HelmetProvider>
       <ErrorBoundary>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </ErrorBoundary>
     </HelmetProvider>
   </React.StrictMode>

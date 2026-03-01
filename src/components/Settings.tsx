@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { UserProfile, WonAward, LeaderboardVisibility } from '../types';
 import { Save, User, Globe, Zap, LogOut, Camera, ChevronRight, Settings as SettingsIcon, ArrowLeft, Loader2, Shield, Calendar, Trophy, HelpCircle, UserPlus, Bell, FileText, Info } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuthContext } from '../contexts/AuthContext';
 import { ImageCropper } from './ImageCropper';
 import { TrophyHall } from './TrophyHall';
 import heic2any from 'heic2any';
@@ -54,7 +54,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auth Hook
-  const { user: authUser, loading: authLoading, signIn, linkEmailToAccount, changePassword, logout } = useAuth();
+  const { user: authUser, loading: authLoading, signIn, linkEmailToAccount, changePassword, logout } = useAuthContext();
   const [isSyncing, setIsSyncing] = useState(false);
   const [showLinkEmail, setShowLinkEmail] = useState(false);
   const [linkEmail, setLinkEmail] = useState('');

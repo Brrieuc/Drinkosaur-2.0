@@ -231,7 +231,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </h1>
           </div>
           <div className={`px-4 py-2 rounded-2xl glass-panel-3d flex items-center gap-2 border border-white/10 relative overflow-hidden group`}>
-            <div className={`w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] ${status.color.split(' ')[1].replace('to-', 'text-')} animate-pulse`} />
+            <div className={`w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] ${(status.color.split(' ')[1] || 'to-cyan-400').replace('to-', 'text-')} animate-pulse`} />
             <span className="text-white font-semibold text-xs uppercase tracking-widest">{status.statusMessage}</span>
           </div>
         </div>

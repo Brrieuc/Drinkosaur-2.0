@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
-import { useAuth } from './useAuth';
+import { useAuthContext } from '../contexts/AuthContext';
 import { doc, getDoc, setDoc, db, collection, query, where, getDocs, storage, ref, uploadString, getDownloadURL } from '../firebase';
 
 export const useUser = () => {
@@ -26,7 +26,7 @@ export const useUser = () => {
         }
     });
 
-    const { user: authUser } = useAuth();
+    const { user: authUser } = useAuthContext();
 
     useEffect(() => {
         const fetchUserProfile = async () => {

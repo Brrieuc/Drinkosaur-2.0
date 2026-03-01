@@ -57,6 +57,8 @@ declare module 'firebase/firestore' {
     export function onSnapshot(reference: any, observer: (snapshot: any) => void, error?: (error: any) => void): any;
     export function deleteDoc(reference: any): Promise<void>;
     export function addDoc(reference: any, data: any): Promise<any>;
+    export function orderBy(fieldPath: string, directionStr?: string): any;
+    export function deleteField(): any;
 }
 
 declare module 'firebase/storage' {

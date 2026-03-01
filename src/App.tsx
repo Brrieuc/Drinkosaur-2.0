@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Background } from './components/Background';
-import { Settings } from './components/Settings';
 import { Dashboard } from './components/Dashboard';
 import { AddDrink } from './components/AddDrink';
 import { DrinkList } from './components/DrinkList';
-import { Social } from './components/Social';
 import { OnboardingTour } from './components/OnboardingTour';
 import { InstallPwaGuide } from './components/InstallPwaGuide';
 import { FriendProfileModal } from './components/FriendProfileModal';
 import { GlobalDashboard } from './components/GlobalDashboard';
-import { AdminDashboard } from './components/AdminDashboard';
 import { LandingPage } from './components/LandingPage';
 import { BannedScreen } from './components/BannedScreen';
 import { SEO } from './components/SEO';
+
+// Lazy-loaded heavy components for better initial load
+const Settings = React.lazy(() => import('./components/Settings').then(m => ({ default: m.Settings })));
+const Social = React.lazy(() => import('./components/Social').then(m => ({ default: m.Social })));
+const AdminDashboard = React.lazy(() => import('./components/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 import { AppView, Drink, UserProfile } from './types';
 import { LayoutDashboard, PlusCircle, History, User, CheckCircle, AlertOctagon, Users, Loader2, X, Mail } from 'lucide-react';
 import { SafeComponent } from './components/SafeComponent';
@@ -20,7 +22,7 @@ import { useUser } from './hooks/useUser';
 import { useDrinks } from './hooks/useDrinks';
 import { useSocial } from './hooks/useSocial';
 import { useGroups } from './hooks/useGroups';
-import { useAuth } from './hooks/useAuth';
+import { useAuthContext } from './contexts/AuthContext';
 import useBacCalculator from './hooks/useBacCalculator';
 import { useAwards } from './hooks/useAwards';
 import { ComputedAward } from './constants/awards';
@@ -40,7 +42,7 @@ const App: React.FC = () => {
   // -- State --
   const [view, setView] = useState<AppView>(AppView.SETTINGS);
   const [toast, setToast] = useState<{ msg: string, type: 'success' | 'warning' } | null>(null);
-  const { user: authUser } = useAuth();
+  const { user: authUser, signIn, signInAnonymous, signInWithEmail, signUpWithEmail, loading: authLoading, error: authError } = useAuthContext();
 
   // Custom Hooks
   const [user, saveUser, uploadAvatar] = useUser();
@@ -173,7 +175,6 @@ const App: React.FC = () => {
     });
   };
 
-  const { signIn, signInAnonymous, signInWithEmail, signUpWithEmail, loading: authLoading, error: authError } = useAuth();
   const [showEmailAuth, setShowEmailAuth] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -534,149 +535,155 @@ const App: React.FC = () => {
 
         {/* Main Content Area */}
         <main className="flex-1 relative overflow-hidden flex flex-col">
-          {view === AppView.SETTINGS && (
-            <Settings
-              user={user as UserProfile}
-              onSave={async (newProfile) => {
-                const result = await saveUser(newProfile);
-                if (!result.success) {
-                  setToast({ msg: result.error || 'Error', type: 'warning' });
+          <Suspense fallback={
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-white/30 animate-spin" />
+            </div>
+          }>
+            {view === AppView.SETTINGS && (
+              <Settings
+                user={user as UserProfile}
+                onSave={async (newProfile) => {
+                  const result = await saveUser(newProfile);
+                  if (!result.success) {
+                    setToast({ msg: result.error || 'Error', type: 'warning' });
+                    setTimeout(() => setToast(null), 3000);
+                  }
+                }}
+                onUploadAvatar={uploadAvatar}
+                wonAwards={user.wonAwards || []}
+                selectedBadges={user.selectedBadges || []}
+                drinks={drinks}
+                onUpdateBadges={async (badges) => {
+                  const result = await saveUser({ selectedBadges: badges });
+                  if (result.success) {
+                    setToast({ msg: user.language === 'fr' ? 'Badges mis à jour !' : 'Badges updated!', type: 'success' });
+                  } else {
+                    setToast({ msg: result.error || 'Error', type: 'warning' });
+                  }
                   setTimeout(() => setToast(null), 3000);
-                }
-              }}
-              onUploadAvatar={uploadAvatar}
-              wonAwards={user.wonAwards || []}
-              selectedBadges={user.selectedBadges || []}
-              drinks={drinks}
-              onUpdateBadges={async (badges) => {
-                const result = await saveUser({ selectedBadges: badges });
-                if (result.success) {
-                  setToast({ msg: user.language === 'fr' ? 'Badges mis à jour !' : 'Badges updated!', type: 'success' });
-                } else {
-                  setToast({ msg: result.error || 'Error', type: 'warning' });
-                }
-                setTimeout(() => setToast(null), 3000);
-              }}
-              notificationPermission={notificationPermission}
-              onRequestNotification={requestPermission}
-            />
-          )}
+                }}
+                notificationPermission={notificationPermission}
+                onRequestNotification={requestPermission}
+              />
+            )}
 
-          {view === AppView.SOCIAL && (
-            <>
-              <Social
-                friends={friends}
-                requests={incomingRequests}
-                myProfile={user as UserProfile}
-                myBac={bacStatus}
-                myUid={authUser?.uid || ''}
-                isAnonymous={(authUser as any)?.isAnonymous}
-                onAddFriend={addFriendByUsername}
-                onAddFriendByUid={addFriendByUid}
-                onRespondRequest={respondToRequest}
-                onRemoveFriend={removeFriend}
-                onRefresh={refreshSocial}
-                onSelectFriend={handleSelectFriend}
-                suggestions={suggestions}
-                onFetchSuggestions={getSuggestions}
-                loading={socialLoading}
+            {view === AppView.SOCIAL && (
+              <>
+                <Social
+                  friends={friends}
+                  requests={incomingRequests}
+                  myProfile={user as UserProfile}
+                  myBac={bacStatus}
+                  myUid={authUser?.uid || ''}
+                  isAnonymous={(authUser as any)?.isAnonymous}
+                  onAddFriend={addFriendByUsername}
+                  onAddFriendByUid={addFriendByUid}
+                  onRespondRequest={respondToRequest}
+                  onRemoveFriend={removeFriend}
+                  onRefresh={refreshSocial}
+                  onSelectFriend={handleSelectFriend}
+                  suggestions={suggestions}
+                  onFetchSuggestions={getSuggestions}
+                  loading={socialLoading}
+                  language={user.language}
+                  groups={groups}
+                  groupInvites={groupInvites}
+                  onCreateGroup={createGroup}
+                  onAcceptGroupInvite={acceptGroupInvite}
+                  onDeclineGroupInvite={declineGroupInvite}
+                  onLeaveGroup={leaveGroup}
+                  onFetchGroupStatus={fetchGroupMembersStatus}
+                  onInviteToGroup={inviteMemberToGroup}
+                  onUpdateGroupIcon={updateGroupIcon}
+                  onUpdateGroupSettings={updateGroupSettings}
+                  onFetchGroupInvites={fetchGroupPendingInvites}
+                  awards={awards}
+                  awardsLoading={awardsLoading}
+                  awardsMonth={awardsMonth}
+                  onFetchGroupAwards={(groupId: string, month: number, year: number) => fetchGroupAwards(groupId, month, year, user.language)}
+                  onClaimAward={(groupId: string, award: ComputedAward) => claimAward(authUser?.uid || '', groupId, award)}
+                  onOpenGlobal={() => setView(AppView.GLOBE)}
+                  outgoingRequests={outgoingRequests}
+                  onCancelRequest={cancelRequest}
+                  appLaunch={appLaunch}
+                />
+              </>
+            )}
+
+            {view === AppView.DASHBOARD && (
+              <Dashboard
+                status={bacStatus}
                 language={user.language}
-                groups={groups}
+                drinks={drinks}
+                user={user as UserProfile}
+                incomingRequests={incomingRequests}
                 groupInvites={groupInvites}
-                onCreateGroup={createGroup}
-                onAcceptGroupInvite={acceptGroupInvite}
-                onDeclineGroupInvite={declineGroupInvite}
-                onLeaveGroup={leaveGroup}
-                onFetchGroupStatus={fetchGroupMembersStatus}
-                onInviteToGroup={inviteMemberToGroup}
-                onUpdateGroupIcon={updateGroupIcon}
-                onUpdateGroupSettings={updateGroupSettings}
-                onFetchGroupInvites={fetchGroupPendingInvites}
+                onRespondRequest={respondToRequest}
+                onAcceptGroup={acceptGroupInvite}
+                onDeclineGroup={declineGroupInvite}
+                awardNotifications={awardNotifications}
+                onMarkAwardRead={markAwardAsRead}
+                unreadAwardCount={unreadAwardCount}
                 awards={awards}
                 awardsLoading={awardsLoading}
                 awardsMonth={awardsMonth}
                 onFetchGroupAwards={(groupId: string, month: number, year: number) => fetchGroupAwards(groupId, month, year, user.language)}
-                onClaimAward={(groupId: string, award: ComputedAward) => claimAward(authUser?.uid || '', groupId, award)}
-                onOpenGlobal={() => setView(AppView.GLOBE)}
-                outgoingRequests={outgoingRequests}
-                onCancelRequest={cancelRequest}
+                onClaimAward={(groupId, award) => claimAward(authUser!.uid, groupId, award)}
                 appLaunch={appLaunch}
+                myUid={authUser?.uid || ''}
+                adminMessages={adminMessages}
+                onMarkAdminMessageRead={markNotificationAsRead}
+                onDeleteAdminMessage={deleteNotification}
+                unreadAdminMessageCount={unreadAdminMessageCount}
               />
-            </>
-          )}
+            )}
 
-          {view === AppView.DASHBOARD && (
-            <Dashboard
-              status={bacStatus}
-              language={user.language}
-              drinks={drinks}
-              user={user as UserProfile}
-              incomingRequests={incomingRequests}
-              groupInvites={groupInvites}
-              onRespondRequest={respondToRequest}
-              onAcceptGroup={acceptGroupInvite}
-              onDeclineGroup={declineGroupInvite}
-              awardNotifications={awardNotifications}
-              onMarkAwardRead={markAwardAsRead}
-              unreadAwardCount={unreadAwardCount}
-              awards={awards}
-              awardsLoading={awardsLoading}
-              awardsMonth={awardsMonth}
-              onFetchGroupAwards={(groupId: string, month: number, year: number) => fetchGroupAwards(groupId, month, year, user.language)}
-              onClaimAward={(groupId, award) => claimAward(authUser!.uid, groupId, award)}
-              appLaunch={appLaunch}
-              myUid={authUser?.uid || ''}
-              adminMessages={adminMessages}
-              onMarkAdminMessageRead={markNotificationAsRead}
-              onDeleteAdminMessage={deleteNotification}
-              unreadAdminMessageCount={unreadAdminMessageCount}
-            />
-          )}
+            {view === AppView.GLOBE && (
+              <GlobalDashboard
+                liveStats={liveStats}
+                monthlyStats={monthlyStats}
+                loadingLive={loadingLive}
+                loadingMonthly={loadingMonthly}
+                onFetchLive={() => fetchLiveStats(authUser?.uid || '')}
+                onFetchMonthly={() => fetchMonthlyStats(authUser?.uid || '')}
+                language={user.language}
+                myUid={authUser?.uid || ''}
+                onSelectUser={handleSelectGlobalUser}
+              />
+            )}
 
-          {view === AppView.GLOBE && (
-            <GlobalDashboard
-              liveStats={liveStats}
-              monthlyStats={monthlyStats}
-              loadingLive={loadingLive}
-              loadingMonthly={loadingMonthly}
-              onFetchLive={() => fetchLiveStats(authUser?.uid || '')}
-              onFetchMonthly={() => fetchMonthlyStats(authUser?.uid || '')}
-              language={user.language}
-              myUid={authUser?.uid || ''}
-              onSelectUser={handleSelectGlobalUser}
-            />
-          )}
+            {view === AppView.ADMIN && user.isAdmin && (
+              <AdminDashboard
+                onClose={() => setView(AppView.SETTINGS)}
+              />
+            )}
 
-          {view === AppView.ADMIN && user.isAdmin && (
-            <AdminDashboard
-              onClose={() => setView(AppView.SETTINGS)}
-            />
-          )}
+            {view === AppView.ADD_DRINK && (
+              <AddDrink onAdd={handleAddDrink} onClose={() => setView(AppView.DASHBOARD)} language={user.language} />
+            )}
 
-          {view === AppView.ADD_DRINK && (
-            <AddDrink onAdd={handleAddDrink} onClose={() => setView(AppView.DASHBOARD)} language={user.language} />
-          )}
+            {view === AppView.HISTORY && (
+              <DrinkList drinks={drinks} onRemove={handleRemoveDrink} language={user.language} />
+            )}
 
-          {view === AppView.HISTORY && (
-            <DrinkList drinks={drinks} onRemove={handleRemoveDrink} language={user.language} />
-          )}
-
-          {selectedFriend && (
-            <FriendProfileModal
-              friend={selectedFriend.status}
-              friendDrinks={selectedFriend.drinks}
-              friendProfile={selectedFriend.profile}
-              onClose={() => setSelectedFriend(null)}
-              language={user.language}
-              isFriend={selectedFriend.isFriend !== false}
-              onAddFriend={() => {
-                if (selectedFriend.profile.uid) {
-                  addFriendByUid(selectedFriend.profile.uid);
-                  setToast({ msg: user.language === 'fr' ? 'Demande envoyée !' : 'Friend request sent!', type: 'success' });
-                }
-              }}
-            />
-          )}
+            {selectedFriend && (
+              <FriendProfileModal
+                friend={selectedFriend.status}
+                friendDrinks={selectedFriend.drinks}
+                friendProfile={selectedFriend.profile}
+                onClose={() => setSelectedFriend(null)}
+                language={user.language}
+                isFriend={selectedFriend.isFriend !== false}
+                onAddFriend={() => {
+                  if (selectedFriend.profile.uid) {
+                    addFriendByUid(selectedFriend.profile.uid);
+                    setToast({ msg: user.language === 'fr' ? 'Demande envoyée !' : 'Friend request sent!', type: 'success' });
+                  }
+                }}
+              />
+            )}
+          </Suspense>
         </main>
 
         {/* Gradient Overlay for Bottom Navigation */}

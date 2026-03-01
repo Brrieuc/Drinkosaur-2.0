@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { db, doc, updateDoc, arrayUnion, query, where, collection, getDocs, onSnapshot, arrayRemove, setDoc, addDoc, deleteDoc, getDoc } from '../firebase';
-import { useAuth } from './useAuth';
+import { useAuthContext } from '../contexts/AuthContext';
 import { FriendStatus, BacStatus, UserProfile, Drink } from '../types';
 import { calculateBac } from '../services/bacService';
 
@@ -19,7 +19,7 @@ export interface FriendRequest {
 }
 
 export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDrinks: Drink[] = []) => {
-    const { user: authUser } = useAuth();
+    const { user: authUser } = useAuthContext();
     const [rawFriends, setRawFriends] = useState<FriendStatus[]>([]);
     const [detailsCache, setDetailsCache] = useState<Record<string, Partial<FriendStatus>>>({});
     const [friendIds, setFriendIds] = useState<string[]>([]);
@@ -162,7 +162,7 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
         };
 
         fetchDetails();
-    }, [friendIds, detailsCache]);
+    }, [friendIds]);
 
     const friends = useMemo(() => {
         return friendIds.map(uid => {
@@ -353,7 +353,7 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
         if (friendIds.length > 0) {
             const statusQuery = query(
                 collection(db, "live_status"),
-                where("__name__", "in", friendIds)
+                where("__name__", "in", friendIds.slice(0, 30))
             );
             const querySnapshot = await getDocs(statusQuery);
             const statuses: FriendStatus[] = [];
@@ -422,15 +422,14 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
 
     const fetchFriendData = async (friendUid: string) => {
         const [profileSnap, drinksSnap] = await Promise.all([
-            getDocs(query(collection(db, "users"), where("__name__", "==", friendUid))),
-            getDocs(query(collection(db, "drinks"), where("__name__", "==", friendUid)))
+            getDoc(doc(db, "users", friendUid)),
+            getDoc(doc(db, "drinks", friendUid))
         ]);
 
+        if (!profileSnap.exists()) throw new Error("Friend not found");
 
-        if (profileSnap.empty) throw new Error("Friend not found");
-
-        const profile = profileSnap.docs[0].data() as UserProfile;
-        const drinks = drinksSnap.empty ? [] : (drinksSnap.docs[0].data()?.list || []) as Drink[];
+        const profile = profileSnap.data() as UserProfile;
+        const drinks = drinksSnap.exists() ? (drinksSnap.data()?.list || []) as Drink[] : [];
 
         return { profile, drinks };
     };
