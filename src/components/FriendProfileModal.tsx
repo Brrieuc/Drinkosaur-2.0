@@ -56,9 +56,12 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
 
     const fullStatus = useMemo(() => isFriend ? calculateBac(friendDrinks, friendProfile) : {
         currentBac: friend.currentBac || 0,
+        peakBac: 0,
+        peakTime: null,
         statusMessage: friend.statusMessage,
         color: friend.color,
-        soberTimestamp: null
+        soberTimestamp: null,
+        limitBac: 0.20
     }, [friendDrinks, friendProfile, tick, isFriend, friend]);
 
     // Notify parent (List) of the correct calculated status

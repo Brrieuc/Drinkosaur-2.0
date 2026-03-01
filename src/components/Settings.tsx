@@ -23,7 +23,7 @@ interface SettingsProps {
   onRequestNotification?: () => void;
 }
 
-type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'habit' | 'habitDesc' | 'habitLow' | 'habitAverage' | 'habitHigh' | 'habitChronic' | 'habitLowHint' | 'habitAverageHint' | 'habitHighHint' | 'habitChronicHint' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn' | 'errorWeight' | 'errorUsername' | 'birthDate' | 'birthDateDesc' | 'underageTitle' | 'underageMsg' | 'errorBirthDate' | 'privacy' | 'photoVisible' | 'photoVisibleDesc';
+type TranslationKey = 'profileTitle' | 'settingsTitle' | 'desc' | 'advancedDesc' | 'weight' | 'height' | 'sex' | 'male' | 'female' | 'lang' | 'speed' | 'speedDesc' | 'slow' | 'average' | 'fast' | 'habit' | 'habitDesc' | 'habitLow' | 'habitAverage' | 'habitHigh' | 'habitChronic' | 'habitLowHint' | 'habitAverageHint' | 'habitHighHint' | 'habitChronicHint' | 'save' | 'sync' | 'syncDesc' | 'signIn' | 'signOut' | 'loggedIn' | 'stayConnected' | 'username' | 'usernameDesc' | 'photo' | 'advancedBtn' | 'backBtn' | 'errorWeight' | 'errorUsername' | 'birthDate' | 'birthDateDesc' | 'underageTitle' | 'underageMsg' | 'errorBirthDate' | 'privacy' | 'photoVisible' | 'photoVisibleDesc' | 'stomach' | 'stomachDesc' | 'stomachFasting' | 'stomachLight' | 'stomachFull';
 
 export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar, wonAwards = [], selectedBadges = [], onUpdateBadges, drinks = [], notificationPermission, onRequestNotification }) => {
   const [showAdvanced, setShowAdvanced] = useState(!user.isSetup);
@@ -36,6 +36,8 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
   const [username, setUsername] = useState(user.username || '');
   const [customPhotoURL, setCustomPhotoURL] = useState(user.customPhotoURL || '');
   const [birthDate, setBirthDate] = useState(user.birthDate || '');
+  const [heightCm, setHeightCm] = useState(user.heightCm || 170);
+  const [stomachState, setStomachState] = useState<'fasting' | 'light' | 'full'>(user.stomachState || 'light');
   const [leaderboardVisibility, setLeaderboardVisibility] = useState<LeaderboardVisibility>(user.leaderboardVisibility || 'public');
   const [allowGlobalRequests, setAllowGlobalRequests] = useState(user.allowGlobalRequests !== false);
   const [isPrivacyExpanded, setIsPrivacyExpanded] = useState(false);
@@ -119,6 +121,8 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       username: cleanUsername,
       customPhotoURL,
       birthDate,
+      heightCm,
+      stomachState,
       isSetup: true,
       // Force public visibility as per new requirements
       photoVisibleToFriends: true,
@@ -238,7 +242,13 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       errorBirthDate: "Please enter your date of birth",
       privacy: "Privacy",
       photoVisible: "Photo visible to friends",
-      photoVisibleDesc: "Your friends can see your profile photo"
+      photoVisibleDesc: "Your friends can see your profile photo",
+      height: "Height (cm)",
+      stomach: "Stomach State",
+      stomachDesc: "Did you eat recently? Affects absorption speed.",
+      stomachFasting: "Empty",
+      stomachLight: "Light meal",
+      stomachFull: "Full meal"
     },
     fr: {
       profileTitle: "Mon Profil",
@@ -286,7 +296,13 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
       errorBirthDate: "Veuillez entrer votre date de naissance",
       privacy: "Confidentialité",
       photoVisible: "Photo visible par les amis",
-      photoVisibleDesc: "Vos amis peuvent voir votre photo de profil"
+      photoVisibleDesc: "Vos amis peuvent voir votre photo de profil",
+      height: "Taille (cm)",
+      stomach: "État de l'estomac",
+      stomachDesc: "Avez-vous mangé récemment ? Influence la vitesse d'absorption.",
+      stomachFasting: "À jeun",
+      stomachLight: "Repas léger",
+      stomachFull: "Repas copieux"
     }
   }[language] as any;
 
@@ -1011,6 +1027,20 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
             </div>
           </div>
 
+          {/* Height */}
+          <div className="space-y-3">
+            <label className="text-sm font-bold text-white/60 ml-2 uppercase tracking-widest text-[10px]">{t.height}</label>
+            <div className="relative">
+              <input
+                type="number"
+                value={heightCm}
+                onChange={(e) => setHeightCm(Number(e.target.value))}
+                className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-5 text-2xl font-black text-white outline-none focus:border-blue-500/50 transition-all text-center"
+              />
+              <span className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-white/20 text-xl italic">CM</span>
+            </div>
+          </div>
+
           {/* Gender */}
           <div className="grid grid-cols-2 gap-4">
             <button
@@ -1059,6 +1089,23 @@ export const Settings: React.FC<SettingsProps> = ({ user, onSave, onUploadAvatar
                   <span className={`text-[8px] font-bold opacity-60 ${habitLevel === h ? 'text-blue-300' : 'text-white/20'}`}>
                     {t[`habit${h.charAt(0).toUpperCase() + h.slice(1)}Hint` as TranslationKey]}
                   </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Stomach State */}
+          <div className="space-y-3">
+            <label className="text-sm font-bold text-white/60 ml-2 flex items-center gap-2 uppercase tracking-widest text-[10px]">{t.stomach}</label>
+            <p className="text-[10px] text-white/30 ml-2 font-medium">{t.stomachDesc}</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(['fasting', 'light', 'full'] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setStomachState(s)}
+                  className={`py-4 rounded-xl text-[10px] font-black border uppercase tracking-tighter transition-all ${stomachState === s ? 'bg-green-500/20 border-green-500 text-green-200 shadow-md' : 'bg-white/5 border-white/10 text-white/20'}`}
+                >
+                  {t[`stomach${s.charAt(0).toUpperCase() + s.slice(1)}` as TranslationKey]}
                 </button>
               ))}
             </div>

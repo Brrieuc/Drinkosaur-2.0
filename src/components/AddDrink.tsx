@@ -290,7 +290,8 @@ export const AddDrink: React.FC<AddDrinkProps> = ({ onAdd, onClose, language = '
             icon,
             type,
             color: selectedItem.color,
-            isChug: isChug || drinkType === 'shot'
+            isChug: isChug || drinkType === 'shot',
+            carbonated: selectedItem.carbonated || false
         });
         onClose();
     };

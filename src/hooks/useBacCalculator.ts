@@ -9,7 +9,8 @@ const useBacCalculator = (drinks: Drink[], user: UserProfile) => {
         peakTime: null,
         soberTimestamp: null,
         statusMessage: 'Ready',
-        color: 'from-emerald-400 to-cyan-400'
+        color: 'from-emerald-400 to-cyan-400',
+        limitBac: 0.20
     });
 
     const prevStatusRef = useRef<string>("");

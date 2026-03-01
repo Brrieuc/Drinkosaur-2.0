@@ -3,8 +3,8 @@ export const METABOLISM_RATE = 0.015; // Standard average elimination rate per h
 export const METABOLISM_RATES = {
   low: 0.012,     // 0.12 g/L/h (Occasional/Slow)
   average: 0.015, // 0.15 g/L/h (Average/Standard)
-  high: 0.025,    // 0.25 g/L/h (Frequent/MEOS induction)
-  chronic: 0.035, // 0.35 g/L/h (Chronic/Fast)
+  high: 0.020,    // 0.20 g/L/h (Frequent/Moderate MEOS induction)
+  chronic: 0.025, // 0.25 g/L/h (Chronic/Fast — calibrated to medical literature)
 };
 export const ALCOHOL_DENSITY = 0.789; // g/ml
 
@@ -12,6 +12,19 @@ export const GENDER_CONSTANT = {
   male: 0.7,
   female: 0.6,
 };
+
+// Absorption delays in minutes by drink type and stomach state
+// Source: Pharmacokinetic literature (Jones 2019, Cederbaum 2012)
+export const ABSORPTION_DELAYS: Record<string, Record<string, number>> = {
+  spirit: { fasting: 15, light: 30, full: 45 },
+  cocktail: { fasting: 25, light: 40, full: 55 },
+  wine: { fasting: 30, light: 45, full: 65 },
+  beer: { fasting: 25, light: 40, full: 55 },
+  other: { fasting: 30, light: 45, full: 60 },
+};
+
+// CO₂ accelerates gastric emptying → faster absorption
+export const CARBONATION_FACTOR = 0.80; // Reduces absorption delay by 20%
 
 export const MAX_SAFE_BAC = 0.08;
 

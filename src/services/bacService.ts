@@ -1,8 +1,58 @@
 
 import { Drink, UserProfile, BacStatus } from '../types';
-import { ALCOHOL_DENSITY, GENDER_CONSTANT, METABOLISM_RATE, METABOLISM_RATES, THEME_COLORS, CONSUMPTION_RATES, FUNNY_EXPRESSIONS } from '../constants';
+import { ALCOHOL_DENSITY, GENDER_CONSTANT, METABOLISM_RATE, METABOLISM_RATES, THEME_COLORS, CONSUMPTION_RATES, ABSORPTION_DELAYS, CARBONATION_FACTOR, FUNNY_EXPRESSIONS } from '../constants';
 
-// Helper to get duration
+// --- Watson Formula for Widmark r ---
+// Uses Total Body Water (TBW) estimation from Watson (1981) for more individualized calculation.
+// Falls back to average GENDER_CONSTANT if height/age not available.
+const calculateWidmarkR = (gender: 'male' | 'female', weightKg: number, heightCm?: number, birthDate?: string): number => {
+  if (!heightCm || !birthDate) {
+    return GENDER_CONSTANT[gender]; // Fallback to simple constant
+  }
+
+  // Calculate age from birthDate
+  const birth = new Date(birthDate);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const monthDiff = now.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+    age--;
+  }
+  age = Math.max(18, Math.min(99, age)); // Clamp to reasonable range
+
+  let tbw: number;
+  if (gender === 'male') {
+    // Watson (1981) — Male
+    tbw = 2.447 - 0.09516 * age + 0.1074 * heightCm + 0.3362 * weightKg;
+  } else {
+    // Watson (1981) — Female
+    tbw = -2.097 + 0.1069 * heightCm + 0.2466 * weightKg;
+  }
+
+  // r = TBW / (density_water × bodyweight)
+  // density_water ≈ 0.8 for the distribution volume ratio
+  const r = tbw / (0.8 * weightKg);
+
+  // Clamp to physiologically reasonable range (0.45–0.85)
+  return Math.max(0.45, Math.min(0.85, r));
+};
+
+// --- Dynamic Absorption Delay ---
+// Returns the absorption delay in minutes based on drink type, stomach state, and carbonation.
+const getAbsorptionDelayMin = (drink: Drink, stomachState: 'fasting' | 'light' | 'full'): number => {
+  const type = drink.type || 'other';
+  const delays = ABSORPTION_DELAYS[type] || ABSORPTION_DELAYS.other;
+  let delay = delays[stomachState] || delays.light;
+
+  // Carbonated drinks are absorbed faster
+  if (drink.carbonated) {
+    delay *= CARBONATION_FACTOR;
+  }
+
+  return delay;
+};
+
+// Helper to get consumption duration
 const getConsumptionDurationMs = (drink: Drink, userSpeed: 'slow' | 'average' | 'fast'): number => {
   if (drink.isChug) return 0;
   const type = drink.type || 'other';
@@ -12,20 +62,22 @@ const getConsumptionDurationMs = (drink: Drink, userSpeed: 'slow' | 'average' | 
   return minutes * 60 * 1000;
 };
 
-// Common simulation logic generator
+// --- Exponential Absorption Model ---
+// Instead of linear absorption, we use an exponential model where most alcohol
+// is absorbed early in the window. This better models real GI absorption.
+// The total BAC is distributed using: f(t) = k * e^(-k*t), where k is chosen
+// so that ~95% is absorbed by the end of the absorption window.
+// For discrete simulation: at each step, we compute the fraction absorbed.
 const simulateBac = (drinks: Drink[], user: UserProfile, startTime: number, endTime: number, stepMs: number = 60000): { time: number, bac: number }[] => {
-  const r = GENDER_CONSTANT[user.gender];
+  const r = calculateWidmarkR(user.gender, user.weightKg, user.heightCm, user.birthDate);
   const weight = user.weightKg;
   const userSpeed = user.drinkingSpeed || 'average';
-  const ABSORPTION_DELAY_MIN = 45;
+  const stomachState = user.stomachState || 'light'; // Default: light meal
 
   const eliminationRate = user.habitLevel ? METABOLISM_RATES[user.habitLevel] : METABOLISM_RATE;
   const METABOLISM_PER_MS = (eliminationRate / 60) / 60000;
 
   const sortedDrinks = [...drinks].sort((a, b) => a.timestamp - b.timestamp);
-
-  // Safety: If weight is invalid, we can't calc BAC, but we should return time points with 0 BAC
-
 
   if (sortedDrinks.length === 0) {
     const points = [];
@@ -35,16 +87,25 @@ const simulateBac = (drinks: Drink[], user: UserProfile, startTime: number, endT
     return points;
   }
 
+  // Build drink events with exponential absorption parameters
   const drinkEvents = sortedDrinks.map(d => {
-    const duration = getConsumptionDurationMs(d, userSpeed);
+    const consumptionDurationMs = getConsumptionDurationMs(d, userSpeed);
+    const absorptionDelayMin = getAbsorptionDelayMin(d, stomachState);
     const alcoholGrams = d.volumeMl * (d.abv / 100) * ALCOHOL_DENSITY;
     const totalPotentialBac = weight > 0 ? (alcoholGrams / (weight * r)) / 10 : 0;
-    const absorptionWindowMs = duration + (ABSORPTION_DELAY_MIN * 60 * 1000);
+
+    // Total absorption window = consumption time + absorption delay
+    const absorptionWindowMs = consumptionDurationMs + (absorptionDelayMin * 60 * 1000);
+
+    // k parameter for exponential: chosen so that 95% is absorbed by end of window
+    // Integral of k*e^(-kt) from 0 to T = 1 - e^(-kT) = 0.95 → k = -ln(0.05)/T
+    const k = -Math.log(0.05) / absorptionWindowMs; // ~= 3 / absorptionWindowMs
 
     return {
       start: d.timestamp,
-      end: d.timestamp + absorptionWindowMs,
-      bacPerMs: totalPotentialBac / absorptionWindowMs
+      absorptionWindowMs,
+      totalPotentialBac,
+      k,
     };
   });
 
@@ -60,13 +121,29 @@ const simulateBac = (drinks: Drink[], user: UserProfile, startTime: number, endT
   let tSim = firstDrinkTime;
   let currentSimBac = 0;
 
+  // Track cumulative absorption per drink event for exponential model
+  const cumulativeAbsorbed: number[] = drinkEvents.map(() => 0);
+
   while (tSim <= endTime) {
     let addedBac = 0;
-    for (const event of drinkEvents) {
-      if (tSim >= event.start && tSim < event.end) {
-        addedBac += event.bacPerMs * stepMs;
+
+    for (let i = 0; i < drinkEvents.length; i++) {
+      const event = drinkEvents[i];
+      const elapsed = tSim - event.start;
+
+      if (elapsed >= 0 && elapsed < event.absorptionWindowMs + stepMs) {
+        // Exponential CDF: fraction absorbed at time t = 1 - e^(-k*t)
+        const fractionNow = Math.min(1, 1 - Math.exp(-event.k * Math.max(0, elapsed + stepMs)));
+        const fractionPrev = cumulativeAbsorbed[i];
+
+        const delta = (fractionNow - fractionPrev) * event.totalPotentialBac;
+        if (delta > 0) {
+          addedBac += delta;
+          cumulativeAbsorbed[i] = fractionNow;
+        }
       }
     }
+
     currentSimBac += addedBac;
 
     if (currentSimBac > 0) {
@@ -103,13 +180,13 @@ export const calculateBac = (drinks: Drink[], user: UserProfile): BacStatus => {
   };
 
   if (!user.weightKg || user.weightKg <= 0) {
-    return { currentBac: 0, peakBac: 0, peakTime: null, soberTimestamp: null, statusMessage: t.setup, color: THEME_COLORS.safe };
+    return { currentBac: 0, peakBac: 0, peakTime: null, soberTimestamp: null, statusMessage: t.setup, color: THEME_COLORS.safe, limitBac: 0.20 };
   }
 
   const now = Date.now();
 
   if (drinks.length === 0) {
-    return { currentBac: 0, peakBac: 0, peakTime: null, soberTimestamp: null, statusMessage: t.sober, color: THEME_COLORS.safe };
+    return { currentBac: 0, peakBac: 0, peakTime: null, soberTimestamp: null, statusMessage: t.sober, color: THEME_COLORS.safe, limitBac: 0.20 };
   }
 
   const sortedDrinks = [...drinks].sort((a, b) => a.timestamp - b.timestamp);
@@ -184,14 +261,9 @@ export const calculateBac = (drinks: Drink[], user: UserProfile): BacStatus => {
     color = THEME_COLORS.danger;
   } else if (formattedBac >= 0.15) {
     // Funny expressions mode
-    // We need a stable index based on the BAC value so it doesn't flicker every minute
-    // 0.150 -> Index 0
-    // 0.155 -> Index 1
-    // Step is 0.005 (which corresponds to 0.05 g/L)
     const step = 0.005;
     const base = 0.15;
     const index = Math.floor((formattedBac - base) / step);
-    // Safe modulo
     const safeIndex = Math.max(0, index) % FUNNY_EXPRESSIONS.length;
     statusMessage = FUNNY_EXPRESSIONS[safeIndex];
     color = THEME_COLORS.danger;
@@ -203,6 +275,7 @@ export const calculateBac = (drinks: Drink[], user: UserProfile): BacStatus => {
     peakTime: maxBacTime,
     soberTimestamp: soberTime,
     statusMessage,
-    color
+    color,
+    limitBac: 0.20
   };
 };

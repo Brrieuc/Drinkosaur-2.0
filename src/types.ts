@@ -10,6 +10,7 @@ export interface Drink {
   type?: 'beer' | 'wine' | 'cocktail' | 'spirit' | 'other';
   color?: string; // Hex or rgba for liquid rendering
   isChug?: boolean; // If true, consumption time is 0
+  carbonated?: boolean; // If true, absorption is faster (~20%)
 }
 
 export type LeaderboardVisibility = 'hidden' | 'friends_only' | 'friends_of_friends' | 'public';
@@ -23,6 +24,8 @@ export interface UserProfile {
   language: 'en' | 'fr';
   drinkingSpeed: 'slow' | 'average' | 'fast';
   habitLevel?: 'low' | 'average' | 'high' | 'chronic';
+  heightCm?: number; // Height in cm for Watson formula
+  stomachState?: 'fasting' | 'light' | 'full'; // Stomach state for absorption model
   displayName?: string;
   photoURL?: string;
   customPhotoURL?: string;
@@ -101,6 +104,8 @@ export interface FriendStatus {
   gender: 'male' | 'female';
   drinkingSpeed: 'slow' | 'average' | 'fast';
   habitLevel?: 'low' | 'average' | 'high' | 'chronic';
+  heightCm?: number;
+  stomachState?: 'fasting' | 'light' | 'full';
   drinkosaurPassConfig?: DrinkosaurPassConfig;
 }
 
@@ -111,6 +116,7 @@ export interface BacStatus {
   soberTimestamp: number | null; // Estimated time to 0.00
   statusMessage: string;
   color: string;
+  limitBac: number; // Visual max for liquid gauge
 }
 
 export interface FriendGroup {
