@@ -5,7 +5,7 @@ import { Drink, UserProfile, WonAward } from '../types';
 import { BacChartModal } from './BacChartModal';
 import { calculateBac } from '../services/bacService';
 import { AWARD_DEFINITIONS } from '../constants/awards';
-import { useDeviceMotion } from '../hooks/useDeviceMotion';
+
 import { DrinkosaurPass } from './DrinkosaurPass';
 
 const MONTH_NAMES_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
@@ -41,8 +41,6 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
 }) => {
     const [showChart, setShowChart] = useState(false);
 
-    // Gyroscope pour mouvement du liquide
-    const { tilt } = useDeviceMotion();
     const [selectedBadgeDetail, setSelectedBadgeDetail] = useState<WonAward | null>(null);
     const [showPass, setShowPass] = useState(false);
     const isFrench = language === 'fr';
@@ -294,14 +292,14 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                                         style={{
                                             height: `${liquidHeight}%`,
                                             maxHeight: '100%',
-                                            transform: `perspective(400px) rotateX(${tilt.y * 8}deg) rotateY(${tilt.x * 8}deg)`,
+                                            transform: `perspective(400px) rotateX(0deg) rotateY(0deg)`,
                                             transformOrigin: 'bottom center'
                                         }}
                                     >
                                         <div
                                             className="absolute -top-3 left-0 w-[200%] h-6 bg-white/30 rounded-[100%] animate-[liquid-wave_6s_linear_infinite]"
                                             style={{
-                                                transform: `translateX(${tilt.x * -15}px) translateY(${tilt.y * -8}px)`,
+                                                transform: `translateX(0px) translateY(0px)`,
                                                 transition: 'transform 0.3s ease-out'
                                             }}
                                         />
