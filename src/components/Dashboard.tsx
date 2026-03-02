@@ -36,6 +36,7 @@ interface DashboardProps {
   onMarkAdminMessageRead?: (id: string) => void;
   onDeleteAdminMessage?: (id: string) => void;
   unreadAdminMessageCount?: number;
+  onUpdateUser?: (data: Partial<UserProfile>) => Promise<{ success: boolean, error?: string }>;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -61,12 +62,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
   adminMessages = [],
   onMarkAdminMessageRead,
   onDeleteAdminMessage,
-  unreadAdminMessageCount = 0
+  unreadAdminMessageCount = 0,
+  onUpdateUser
 }) => {
   const [showChartModal, setShowChartModal] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [isUpdatingStomach, setIsUpdatingStomach] = useState(false);
   const isFrench = language === 'fr';
 
   const notificationCount = incomingRequests.length + groupInvites.length + unreadAwardCount + unreadAdminMessageCount;
@@ -80,7 +83,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
     peak: isFrench ? 'Pic' : 'Peak',
     at: isFrench ? 'à' : '@',
     stats: isFrench ? 'Stats' : 'Stats',
-    share: isFrench ? 'Partager' : 'Share'
+    share: isFrench ? 'Partager' : 'Share',
+    stomach: isFrench ? 'Estomac' : 'Stomach',
+    stomachFasting: isFrench ? 'Vide' : 'Empty',
+    stomachLight: isFrench ? 'Léger' : 'Light',
+    stomachFull: isFrench ? 'Plein' : 'Full'
   };
 
 
@@ -369,6 +376,48 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Stomach State Quick Selector (New) */}
+        {user && (
+          <div className="mt-8 w-full max-w-xs animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <div className="flex items-center justify-between px-2 mb-2">
+              <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">{t.stomach}</span>
+              {isUpdatingStomach && <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />}
+            </div>
+            <div className="grid grid-cols-3 gap-2 p-1.5 rounded-[24px] glass-panel-3d border border-white/5">
+              {(['fasting', 'light', 'full'] as const).map((s) => {
+                const isActive = user.stomachState === s;
+                const emoji = s === 'fasting' ? '🥦' : s === 'light' ? '🥪' : '🍕';
+                return (
+                  <button
+                    key={s}
+                    disabled={isUpdatingStomach}
+                    onClick={async () => {
+                      if (isActive || !onUpdateUser) return;
+                      setIsUpdatingStomach(true);
+                      await onUpdateUser({ stomachState: s });
+                      setIsUpdatingStomach(false);
+                    }}
+                    className={`relative flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-500 overflow-hidden ${isActive
+                      ? 'bg-gradient-to-br from-white/20 to-white/5 border border-white/20 shadow-lg scale-[1.05] z-10'
+                      : 'hover:bg-white/5 border border-transparent text-white/30'
+                      }`}
+                  >
+                    <span className={`text-xl mb-1 transition-transform duration-500 ${isActive ? 'scale-110' : 'grayscale opacity-50'}`}>
+                      {emoji}
+                    </span>
+                    <span className={`text-[9px] font-black uppercase tracking-tighter ${isActive ? 'text-white' : 'text-white/20'}`}>
+                      {t[`stomach${s.charAt(0).toUpperCase() + s.slice(1)}` as keyof typeof t] as string}
+                    </span>
+                    {isActive && (
+                      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Data Pills */}
         <div className="grid grid-cols-2 gap-4 w-full max-w-xs mt-10">

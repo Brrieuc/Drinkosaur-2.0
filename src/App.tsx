@@ -636,6 +636,7 @@ const App: React.FC = () => {
                 onMarkAdminMessageRead={markNotificationAsRead}
                 onDeleteAdminMessage={deleteNotification}
                 unreadAdminMessageCount={unreadAdminMessageCount}
+                onUpdateUser={saveUser}
               />
             )}
 
