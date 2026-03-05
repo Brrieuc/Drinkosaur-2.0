@@ -146,6 +146,10 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
                             weightKg: p.weightKg || 70,
                             gender: p.gender || 'male',
                             drinkingSpeed: p.drinkingSpeed || 'average',
+                            habitLevel: p.habitLevel || 'average',
+                            heightCm: p.heightCm,
+                            birthDate: p.birthDate,
+                            stomachState: p.stomachState,
                             // Ensure photo is fetched from source of truth, respecting privacy
                             photoURL: (p.photoVisibleToFriends !== false) ? (p.customPhotoURL || p.photoURL || undefined) : undefined,
                             drinkosaurPassConfig: p.drinkosaurPassConfig
@@ -182,7 +186,10 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
                     weightKg: weight,
                     gender: gender,
                     drinkingSpeed: speed,
-                    habitLevel: habit
+                    habitLevel: habit,
+                    heightCm: live?.heightCm || cached?.heightCm,
+                    birthDate: live?.birthDate || cached?.birthDate,
+                    stomachState: live?.stomachState || cached?.stomachState
                 } as UserProfile);
 
                 const base = live || cached;
@@ -231,11 +238,10 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
                 statusMessage: myBacStatus.statusMessage,
                 color: myBacStatus.color,
                 lastUpdate: Date.now(),
-                // Extra data for live recalculation by friends
-                weightKg: myProfile.weightKg || 70,
-                gender: myProfile.gender || 'male',
-                drinkingSpeed: myProfile.drinkingSpeed || 'average',
                 habitLevel: myProfile.habitLevel || 'average',
+                heightCm: myProfile.heightCm || null,
+                birthDate: myProfile.birthDate || null,
+                stomachState: myProfile.stomachState || 'light',
                 drinks: myDrinks.filter(d => d.timestamp > Date.now() - 24 * 60 * 60 * 1000),
                 drinkosaurPassConfig: myProfile.drinkosaurPassConfig || null
             }, { merge: true });

@@ -97,6 +97,9 @@ export const GlobalDashboard: React.FC<GlobalDashboardProps> = ({
                     gender: u.gender,
                     drinkingSpeed: u.drinkingSpeed || 'average',
                     habitLevel: u.habitLevel || 'average',
+                    heightCm: u.heightCm,
+                    birthDate: u.birthDate,
+                    stomachState: u.stomachState,
                     language: language
                 } as UserProfile);
                 currentBac = live.currentBac;

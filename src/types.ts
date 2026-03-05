@@ -105,6 +105,7 @@ export interface FriendStatus {
   drinkingSpeed: 'slow' | 'average' | 'fast';
   habitLevel?: 'low' | 'average' | 'high' | 'chronic';
   heightCm?: number;
+  birthDate?: string;
   stomachState?: 'fasting' | 'light' | 'full';
   drinkosaurPassConfig?: DrinkosaurPassConfig;
 }

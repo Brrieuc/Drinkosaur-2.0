@@ -22,6 +22,9 @@ export interface LiveUser {
     gender?: 'male' | 'female';
     drinkingSpeed?: 'slow' | 'average' | 'fast';
     habitLevel?: 'low' | 'average' | 'high' | 'chronic';
+    heightCm?: number;
+    birthDate?: string;
+    stomachState?: 'fasting' | 'light' | 'full';
     lastUpdate?: number;
     drinkosaurPassConfig?: any;
 }
@@ -182,6 +185,9 @@ export const useGlobalStats = () => {
                     gender: profile.gender,
                     drinkingSpeed: profile.drinkingSpeed,
                     habitLevel: profile.habitLevel,
+                    heightCm: profile.heightCm,
+                    birthDate: profile.birthDate,
+                    stomachState: profile.stomachState,
                     lastUpdate: Date.now(),
                     drinkosaurPassConfig: profile.drinkosaurPassConfig
                 });

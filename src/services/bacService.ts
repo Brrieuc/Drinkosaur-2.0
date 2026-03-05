@@ -189,11 +189,20 @@ export const calculateBac = (drinks: Drink[], user: UserProfile): BacStatus => {
     return { currentBac: 0, peakBac: 0, peakTime: null, soberTimestamp: null, statusMessage: t.sober, color: THEME_COLORS.safe, limitBac: 0.20 };
   }
 
-  const sortedDrinks = [...drinks].sort((a, b) => a.timestamp - b.timestamp);
+  // 1. Filter: only consider drinks from the last 48 hours for calculation.
+  // This ensures simulation remains fast and avoids accumulation of drift from very old drinks.
+  const LOOKBACK_WINDOW = 48 * 60 * 60 * 1000;
+  const recentDrinks = drinks.filter(d => d.timestamp > now - LOOKBACK_WINDOW);
+
+  if (recentDrinks.length === 0) {
+    return { currentBac: 0, peakBac: 0, peakTime: null, soberTimestamp: null, statusMessage: t.sober, color: THEME_COLORS.safe, limitBac: 0.20 };
+  }
+
+  const sortedDrinks = [...recentDrinks].sort((a, b) => a.timestamp - b.timestamp);
   const simStart = sortedDrinks[0].timestamp;
   const simEnd = Math.max(now + (24 * 60 * 60 * 1000), sortedDrinks[sortedDrinks.length - 1].timestamp + (12 * 60 * 60 * 1000));
 
-  const points = simulateBac(drinks, user, simStart, simEnd, 60000);
+  const points = simulateBac(recentDrinks, user, simStart, simEnd, 60000);
 
   let currentBac = 0;
   let maxBac = 0;

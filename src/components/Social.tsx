@@ -300,6 +300,9 @@ export const Social: React.FC<SocialProps> = (props) => {
                     gender: f.gender,
                     drinkingSpeed: f.drinkingSpeed || 'average',
                     habitLevel: f.habitLevel || 'average',
+                    heightCm: f.heightCm,
+                    birthDate: f.birthDate,
+                    stomachState: f.stomachState,
                     language: language
                 } as UserProfile);
                 currentBac = live.currentBac;
@@ -312,8 +315,7 @@ export const Social: React.FC<SocialProps> = (props) => {
                 // On réduit la vitesse de décroissance par sécurité (0.015 -> 0.010 par exemple)
                 // pour éviter qu'un ami apparaisse sobre alors qu'il est encore pompette dans la réalité complexe
                 const metabolism = f.habitLevel ? METABOLISM_RATES[f.habitLevel as keyof typeof METABOLISM_RATES] : METABOLISM_RATE;
-                const safeRate = metabolism * 0.7;
-                const reduction = hoursPassed * safeRate;
+                const reduction = hoursPassed * metabolism;
                 currentBac = Math.max(0, f.currentBac - reduction);
 
                 // Si l'utilisateur est devenu sobre par le temps
@@ -332,7 +334,7 @@ export const Social: React.FC<SocialProps> = (props) => {
         });
 
         const me: FriendStatus = {
-            uid: 'me',
+            uid: myUid || 'me',
             displayName: myProfile.username || t.you,
             photoURL: myProfile.customPhotoURL || myProfile.photoURL,
             currentBac: myBac.currentBac,
@@ -342,11 +344,25 @@ export const Social: React.FC<SocialProps> = (props) => {
             drinks: [],
             weightKg: myProfile.weightKg,
             gender: myProfile.gender,
-            drinkingSpeed: myProfile.drinkingSpeed
+            drinkingSpeed: myProfile.drinkingSpeed,
+            habitLevel: myProfile.habitLevel,
+            heightCm: myProfile.heightCm,
+            birthDate: myProfile.birthDate,
+            stomachState: myProfile.stomachState
         };
 
-        return [...liveFriends, me].sort((a, b) => b.currentBac - a.currentBac);
-    }, [friends, myBac, myProfile, t.you, tick, language]);
+        // Filter and merge strictly
+        const all = [...liveFriends];
+        if (!all.some(f => f.uid === me.uid)) {
+            all.push(me);
+        } else {
+            // Update "me" data if already in list (somehow)
+            const idx = all.findIndex(f => f.uid === me.uid);
+            all[idx] = { ...all[idx], ...me };
+        }
+
+        return all.sort((a, b) => (b.currentBac || 0) - (a.currentBac || 0));
+    }, [friends, myBac, myProfile, t.you, tick, language, myUid]);
 
     // Same live recalculation logic for GROUP ranking
     const calculatedGroupRanking = useMemo(() => {
@@ -387,8 +403,7 @@ export const Social: React.FC<SocialProps> = (props) => {
             else if (f.lastUpdate && f.currentBac > 0) {
                 const hoursPassed = (Date.now() - f.lastUpdate) / (1000 * 60 * 60);
                 const metabolism = f.habitLevel ? METABOLISM_RATES[f.habitLevel as keyof typeof METABOLISM_RATES] : METABOLISM_RATE;
-                const safeRate = metabolism * 0.7;
-                const reduction = hoursPassed * safeRate;
+                const reduction = hoursPassed * metabolism;
                 currentBac = Math.max(0, f.currentBac - reduction);
 
                 if (currentBac === 0) {
