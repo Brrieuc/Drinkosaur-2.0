@@ -219,6 +219,7 @@ export const MIXERS: MixerReference[] = [
   { name: 'Ginger Beer', color: '#FEF3C7', carbonated: true },
   { name: 'Apple Juice', name_fr: 'Jus de Pomme', color: '#B45309', carbonated: false },
   { name: 'Pineapple Juice', name_fr: 'Jus d\'Ananas', color: '#FDE68A', carbonated: false },
+  { name: 'Water', name_fr: 'Eau', color: '#E0F2FE', carbonated: false },
 ];
 
 export interface MixPreset {
@@ -276,6 +277,15 @@ export const FLASK_SIZES = [
   { label: '25cl', ml: 250 },
   { label: '35cl', ml: 350 },
   { label: '50cl', ml: 500 },
+];
+
+export const BOTTLE_SIZES = [
+  { label: '25cl', ml: 250 },
+  { label: '33cl', ml: 330 },
+  { label: '50cl', ml: 500 },
+  { label: '1L', ml: 1000 },
+  { label: '1.5L', ml: 1500 },
+  { label: '2L', ml: 2000 },
 ];
 
 // GLASS DEFINITIONS
@@ -344,6 +354,17 @@ export const GLASS_SHAPES = [
     mask: 'M 32,25 L 37,88 L 63,88 L 68,25 Z',
     liquidBottom: 88,
     liquidTop: 25,
+    fillType: 'cylinder'
+  },
+  {
+    id: 'bottle',
+    name: 'Bottle',
+    name_fr: 'Bouteille',
+    capacity: 500,
+    path: 'M 40,5 L 60,5 L 60,15 L 75,30 L 75,90 Q 75,97 50,97 Q 25,97 25,90 L 25,30 L 40,15 Z',
+    mask: 'M 40,5 L 60,5 L 60,15 L 75,30 L 75,90 Q 75,95 50,95 Q 25,95 25,90 L 25,30 L 40,15 Z',
+    liquidBottom: 95,
+    liquidTop: 5,
     fillType: 'cylinder'
   },
 ];
