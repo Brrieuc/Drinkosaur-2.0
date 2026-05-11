@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ───────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Admin check: reads the requesting user's document.
+    // Costs 1 extra read per rule evaluation — acceptable for a small app.
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Fields that only admins may change on a user document.
+    function writingAdminOnlyFields() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(['isAdmin', 'isBanned', 'banReason', 'banTimestamp']);
+    }
+
+    // ── Users ──────────────────────────────────────────────────
+    // Any authenticated user can read profiles:
+    //   needed for friend search, global stats, BAC display.
+    // Owners can write their own profile except admin-only fields.
+    // Admins can write anything on any profile.
+    match /users/{uid} {
+      allow read: if isAuthenticated();
+
+      // New user creating their profile for the first time.
+      allow create: if isOwner(uid) &&
+        !('isAdmin' in request.resource.data) &&
+        !('isBanned' in request.resource.data);
+
+      // Owner updates: blocked if trying to touch admin-only fields.
+      allow update: if (isOwner(uid) && !writingAdminOnlyFields()) || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // ── User Notifications (subcollection) ────────────────────
+    // Owner can read and manage their notifications.
+    // Admins can create notifications (adminSendMessage).
+    match /users/{uid}/notifications/{notifId} {
+      allow read, update, delete: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid) || isAdmin();
+    }
+
+    // ── Drinks ────────────────────────────────────────────────
+    // Any authenticated user can read drinks:
+    //   needed for friends' BAC calculation and global leaderboard.
+    // Only the owner or an admin can write.
+    match /drinks/{uid} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(uid) || isAdmin();
+    }
+
+    // ── Live Status ───────────────────────────────────────────
+    // Any authenticated user can read live status:
+    //   needed to show friends' real-time BAC.
+    // Only the owner or an admin can write.
+    match /live_status/{uid} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(uid) || isAdmin();
+    }
+
+    // ── Friend Requests ───────────────────────────────────────
+    // A user can read requests they sent or received.
+    // A user can only create a request where "from" is themselves.
+    // Sender or recipient can delete (cancel / respond).
+    match /friend_requests/{requestId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.from == request.auth.uid ||
+         resource.data.to   == request.auth.uid);
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.from == request.auth.uid;
+
+      allow delete: if isAuthenticated() &&
+        (resource.data.from == request.auth.uid ||
+         resource.data.to   == request.auth.uid);
+    }
+
+    // ── Groups ────────────────────────────────────────────────
+    // Members and pending invitees can read.
+    // Any authenticated user can create (they must be listed as creator).
+    // Current members can update (join, leave, invite, change settings).
+    // Only the creator or an admin can delete.
+    match /groups/{groupId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.memberIds.hasAny([request.auth.uid]) ||
+         resource.data.pendingInviteIds.hasAny([request.auth.uid]));
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.creatorId == request.auth.uid;
+
+      allow update: if isAuthenticated() &&
+        resource.data.memberIds.hasAny([request.auth.uid]);
+
+      allow delete: if isAuthenticated() &&
+        (resource.data.creatorId == request.auth.uid || isAdmin());
+    }
+
+    // ── Deleted Drinks (admin soft-delete history) ────────────
+    // Owner can read their own deleted drinks history.
+    // Only admins can write (restore / permanent delete).
+    match /deleted_drinks/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}

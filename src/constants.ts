@@ -4,7 +4,7 @@ export const METABOLISM_RATES = {
   low: 0.012,     // 0.12 g/L/h (Occasional/Slow)
   average: 0.015, // 0.15 g/L/h (Average/Standard)
   high: 0.020,    // 0.20 g/L/h (Frequent/Moderate MEOS induction)
-  chronic: 0.025, // 0.25 g/L/h (Chronic/Fast — calibrated to medical literature)
+  chronic: 0.020, // 0.20 g/L/h (Chronic/Fast — upper bound per recent meta-analyses)
 };
 export const ALCOHOL_DENSITY = 0.789; // g/ml
 

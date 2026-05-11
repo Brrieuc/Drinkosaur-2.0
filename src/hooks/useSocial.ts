@@ -120,21 +120,23 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
         if (friendIds.length === 0) return;
 
         // Fetch details for ALL friends not in cache yet
-        const uidsToFetch = friendIds
-            .filter(uid => !detailsCache[uid]);
+        const uidsToFetch = friendIds.filter(uid => !detailsCache[uid]);
 
         if (uidsToFetch.length === 0) return;
+
+        let isMounted = true;
 
         const fetchDetails = async () => {
             const updates: Record<string, Partial<FriendStatus>> = {};
 
             await Promise.all(uidsToFetch.map(async (uid) => {
                 try {
-                    // Start fetching drinks immediately to fill gaps
                     const [profileSnap, drinksSnap] = await Promise.all([
                         getDoc(doc(db, "users", uid)),
                         getDoc(doc(db, "drinks", uid))
                     ]);
+
+                    if (!isMounted) return;
 
                     if (profileSnap.exists()) {
                         const p = profileSnap.data() as UserProfile;
@@ -150,7 +152,6 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
                             heightCm: p.heightCm,
                             birthDate: p.birthDate,
                             stomachState: p.stomachState,
-                            // Ensure photo is fetched from source of truth, respecting privacy
                             photoURL: (p.photoVisibleToFriends !== false) ? (p.customPhotoURL || p.photoURL || undefined) : undefined,
                             drinkosaurPassConfig: p.drinkosaurPassConfig
                         };
@@ -160,12 +161,14 @@ export const useSocial = (myBacStatus?: BacStatus, myProfile?: UserProfile, myDr
                 }
             }));
 
-            if (Object.keys(updates).length > 0) {
+            if (isMounted && Object.keys(updates).length > 0) {
                 setDetailsCache(prev => ({ ...prev, ...updates }));
             }
         };
 
         fetchDetails();
+
+        return () => { isMounted = false; };
     }, [friendIds]);
 
     const friends = useMemo(() => {

@@ -92,7 +92,7 @@ function canSeeIdentity(
         case 'friends_of_friends': return isFriend || isFriendOfFriend;
         case 'friends_only': return isFriend;
         case 'hidden': return false;
-        default: return true; // Change default to true (public by default for identity)
+        default: return false; // Default to private — unknown visibility settings should not expose identity
     }
 }
 

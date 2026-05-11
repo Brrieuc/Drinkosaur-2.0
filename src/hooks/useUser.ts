@@ -85,17 +85,21 @@ export const useUser = () => {
     // Upload avatar to Firebase Storage
     const uploadAvatar = async (base64Image: string): Promise<string> => {
         if (!authUser) throw new Error("Not logged in");
+
+        // base64 strings are ~33% larger than the raw file — 5MB file ≈ 6.7MB base64
+        const MAX_BASE64_LENGTH = 7 * 1024 * 1024; // ~5MB raw file limit
+        if (base64Image.length > MAX_BASE64_LENGTH) {
+            throw new Error("Image too large (max 5 MB)");
+        }
+
         console.log("[uploadAvatar] Uploading to Firebase Storage...");
 
         try {
-            // Create a unique filename based on UID and timestamp
             const timestamp = Date.now();
             const storageRef = ref(storage, `avatars/${authUser.uid}_${timestamp}.jpg`);
 
-            // Upload the base64 string (data_url format)
             await uploadString(storageRef, base64Image, 'data_url');
 
-            // Get the download URL
             const downloadURL = await getDownloadURL(storageRef);
             console.log("[uploadAvatar] Upload success, URL:", downloadURL);
             return downloadURL;

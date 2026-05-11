@@ -16,35 +16,49 @@ export const useDrinks = () => {
         }
     });
 
+    // Guard: block user writes until the initial Firestore sync completes,
+    // to avoid local state overwriting remote data mid-flight.
+    const [hasSyncedFromFirestore, setHasSyncedFromFirestore] = useState(false);
+
     const { user: authUser } = useAuthContext();
 
     // Sync with Firestore when auth user changes
     useEffect(() => {
-        const fetchDrinks = async () => {
-            if (authUser) {
-                try {
-                    const docRef = doc(db, "drinks", authUser.uid);
-                    const docSnap = await getDoc(docRef);
+        if (!authUser) {
+            setHasSyncedFromFirestore(false);
+            return;
+        }
 
-                    if (docSnap.exists()) {
-                        // Merging remote data with local if needed, or fully overwriting
-                        // For simplicity, let's say remote is source of truth if it exists
-                        const remoteData = docSnap.data();
-                        if (remoteData.list) {
-                            setDrinksState(remoteData.list);
-                            try {
-                                window.localStorage.setItem('drinkosaur_drinks', JSON.stringify(remoteData.list));
-                            } catch (e) {
-                                console.warn("Storage Blocked:", e);
-                            }
+        setHasSyncedFromFirestore(false);
+
+        const fetchDrinks = async () => {
+            try {
+                const docRef = doc(db, "drinks", authUser.uid);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const remoteData = docSnap.data();
+                    if (remoteData.list) {
+                        setDrinksState(remoteData.list);
+                        try {
+                            window.localStorage.setItem('drinkosaur_drinks', JSON.stringify(remoteData.list));
+                        } catch (e) {
+                            console.warn("Storage Blocked:", e);
                         }
-                    } else {
-                        // If no remote data, upload current local drinks to init it
-                        await setDoc(docRef, { list: drinks });
                     }
-                } catch (e) {
-                    console.error("Error fetching drinks:", e);
+                } else {
+                    // No remote data yet — push local drinks to initialise the doc
+                    setDrinksState(prev => {
+                        setDoc(docRef, { list: prev }).catch(e =>
+                            console.error("Error initialising drinks in Firestore:", e)
+                        );
+                        return prev;
+                    });
                 }
+            } catch (e) {
+                console.error("Error fetching drinks:", e);
+            } finally {
+                setHasSyncedFromFirestore(true);
             }
         };
 
@@ -53,23 +67,27 @@ export const useDrinks = () => {
 
     // Wrapper for setDrinks that updates both LocalStorage and Firestore
     const setDrinks = (val: Drink[] | ((prev: Drink[]) => Drink[])) => {
+        // Don't allow writes until initial Firestore sync is done
+        if (authUser && !hasSyncedFromFirestore) {
+            console.warn("useDrinks: ignoring write — Firestore sync not yet complete");
+            return;
+        }
+
         setDrinksState(prev => {
             const newDrinks = val instanceof Function ? val(prev) : val;
 
-            // 2. Update Local Storage
+            // Update Local Storage
             try {
                 window.localStorage.setItem('drinkosaur_drinks', JSON.stringify(newDrinks));
             } catch (e) {
                 console.warn("Storage Blocked:", e);
             }
 
-            // 3. Update Firestore if auth
+            // Update Firestore if authenticated
             if (authUser) {
-                try {
-                    setDoc(doc(db, "drinks", authUser.uid), { list: newDrinks });
-                } catch (e) {
-                    console.error("Error saving drinks to firestore:", e);
-                }
+                setDoc(doc(db, "drinks", authUser.uid), { list: newDrinks }).catch(e =>
+                    console.error("Error saving drinks to Firestore:", e)
+                );
             }
 
             return newDrinks;

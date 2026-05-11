@@ -99,7 +99,8 @@ const simulateBac = (drinks: Drink[], user: UserProfile, startTime: number, endT
 
     // k parameter for exponential: chosen so that 95% is absorbed by end of window
     // Integral of k*e^(-kt) from 0 to T = 1 - e^(-kT) = 0.95 → k = -ln(0.05)/T
-    const k = -Math.log(0.05) / absorptionWindowMs; // ~= 3 / absorptionWindowMs
+    // If absorptionWindowMs is 0 (chug), k = Infinity → fraction absorbed instantly = 1
+    const k = absorptionWindowMs > 0 ? -Math.log(0.05) / absorptionWindowMs : Infinity;
 
     return {
       start: d.timestamp,
